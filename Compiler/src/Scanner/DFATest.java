@@ -55,7 +55,7 @@ public class DFATest {
             
             recognizer.reset();
             
-            Scanner scanner = new Scanner(System.in);
+            java.util.Scanner scanner = new java.util.Scanner(System.in);
             System.out.print("Enter a string: ");
             String userInput = scanner.nextLine();
             while(!userInput.equals("EXIT")) {
