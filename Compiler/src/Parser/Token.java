@@ -1,16 +1,18 @@
 /**
  * Created by Siddarth on 3/2/2016.
  */
-public class Token {
+public class Token extends Symbol {
 
     private String type;
     private String content;
 
-    public Token() {
-
-    }
-
     public Token(String type, String content) {
+        super(true, type);
+
+        if (type.equals("Keyword")) {
+            setValue(content);
+        }
+
         this.type = type;
         this.content = content;
     }
