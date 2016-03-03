@@ -55,7 +55,7 @@ public class Scanner {
             if (whitespace_match == false) {
                 for (String word : wordlist) {
                     if (word.equals(token) == true) {
-                        System.out.println("Keyword: " + word);
+                        System.out.println("Keyword? " + word);
                         keyword_match = true;
                         break;
                     }
@@ -71,13 +71,13 @@ public class Scanner {
             if ((keyword_match == false) & (whitespace_match == false)) {
                 if (Character.toString(token.charAt(0)).matches("[A-Z?]|[a-z?]")) {
                     if (token.matches("[_]+|[A-Z?]+|[a-z?]+|[0-9?]+")) {
-                        System.out.println("Id: " + token);
+                        System.out.println("Id? " + token);
                         identifier_match = true;
                     }
 
                 } else if (Character.toString(token.charAt(0)).matches("_")) {
                     if (token.matches("[_]&([A-Z?]|[a-z?]|[0-9?])")) {
-                        System.out.println("Id: " + token);
+                        System.out.println("Id? " + token);
                         identifier_match = true;
                     }
                 } else {
@@ -89,7 +89,7 @@ public class Scanner {
             boolean intliteral_match = false;
             if ((keyword_match == false) & (whitespace_match == false) & (identifier_match == false)) {
                 if (token.matches("[0-9?]+")) {
-                    System.out.println("Intlit: " + token);
+                    System.out.println("Intlit? " + token);
                     intliteral_match = true;
                 }
             }
@@ -98,9 +98,9 @@ public class Scanner {
             boolean floatliteral_match = false;
             if ((keyword_match == false) & (whitespace_match == false) & (identifier_match == false)
                     & (intliteral_match == false)) {
-                System.out.println("floatlit: Entered ");
+                System.out.println("floatlit? Entered ");
                 if (token.matches("[0-9?]+ | .")) {
-                    System.out.println("floatlit: " + token);
+                    System.out.println("floatlit? " + token);
                 }
             }
         }
