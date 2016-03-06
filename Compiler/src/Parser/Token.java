@@ -9,7 +9,7 @@ public class Token extends Symbol {
     public Token(String type, String content) {
         super(true, type);
 
-        if (type.equals("Keyword")) {
+        if (type.equalsIgnoreCase("Keyword")) {
             setValue(content);
         }
 
@@ -26,6 +26,6 @@ public class Token extends Symbol {
     }
 
     public String toString() {
-        return content + " is a " + type;
+        return getValue();
     }
 }

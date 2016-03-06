@@ -1,0 +1,17 @@
+keyword let
+keyword var
+Id _a
+keyword :
+keyword int
+keyword ;
+keyword in
+Id a
+keyword :=
+Intlit 1
+keyword ;
+Id printi
+keyword (
+Id a
+keyword )
+keyword ;
+keyword end

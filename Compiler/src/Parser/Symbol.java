@@ -4,13 +4,15 @@
 public class Symbol {
 
     private boolean terminal;
+    private boolean isEpsilon;
     private boolean dollarToken;
     private String value;
 
     public Symbol(boolean isTerminal, String value) {
         this.terminal = isTerminal;
-        this.value = value;
+        this.value = value.toLowerCase();
         this.dollarToken = value.equals("$");
+        this.isEpsilon = value.equals("''");
     }
 
     public void setValue(String value) {
@@ -29,6 +31,7 @@ public class Symbol {
         return dollarToken;
     }
 
+    public boolean isEpsilon() { return isEpsilon; }
     public String getValue() {
         return value;
     }

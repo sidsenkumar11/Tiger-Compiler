@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
@@ -14,11 +13,11 @@ public class ParseTable {
 
     private Hashtable<Integer, LinkedList<Symbol>> parseTable;
     private HashMap<String, Symbol> symbolList;
-    public ParseTable() {
+    public ParseTable(String file) {
         parseTable = new Hashtable<Integer, LinkedList<Symbol>>();
         symbolList = new HashMap<String, Symbol>();
         generateSymbolList();
-        generateParseTable();
+        generateParseTable(file);
     }
 
     private void generateSymbolList() {
@@ -208,11 +207,11 @@ public class ParseTable {
         symbolList.put("const", consts);
     }
 
-    public void generateParseTable() {
+    public void generateParseTable(String file) {
 
         // Read in file containing parse table
         // Note that question mark means comma from csv file
-        String[] rows = readIn("resources/Parse Table.csv");
+        String[] rows = readIn(file);
         String[] columns = rows[0].split(",");
 
         for (int i = 1; i < rows.length; i++) {
