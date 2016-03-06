@@ -53,9 +53,9 @@ public class Parser {
                 }
             } else if(!parseTable.isEmpty(stackSymbol, nextToken)) {
                 // Push symbols from table in reverse order onto stack.
-                Symbol[] nextStackSymbols = parseTable.get(stackSymbol, nextToken);
-                for (int i = nextStackSymbols.length; i >= 0; i--) {
-                    stack.push(nextStackSymbols[i]);
+                LinkedList<Symbol> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
+                for (int i = nextStackSymbols.size() - 1; i >= 0; i--) {
+                    stack.push(nextStackSymbols.get(i));
                 }
             } else {
                 // The table didn't have something for this case.

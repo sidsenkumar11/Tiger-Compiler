@@ -37,4 +37,14 @@ public class Symbol {
     public int hashCode() {
         return value.hashCode();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return value.toString().equals(o.toString());
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }

@@ -26,10 +26,10 @@ public class DFATest {
         states.add(s2);
         states.add(s3);
         
-        DFA recognizer = null;
+        Edge.DFA recognizer = null;
         
         try {
-            recognizer = new DFA(states);
+            recognizer = new Edge.DFA(states);
         } catch(Exception e) {
             System.out.println(e.getMessage());
         }
@@ -72,7 +72,7 @@ public class DFATest {
         }
     }
     
-    public static boolean matchString(DFA recognizer, String input) {
+    public static boolean matchString(Edge.DFA recognizer, String input) {
         for(int i = 0; i < input.length(); i++) {
             recognizer.nextChar(input.charAt(i) + "");
         }
