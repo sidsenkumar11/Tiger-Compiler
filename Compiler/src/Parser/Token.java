@@ -26,6 +26,10 @@ public class Token extends Symbol {
     }
 
     public String toString() {
-        return getValue();
+        String res = getContent();
+        if(getType().equalsIgnoreCase("intlit") || getType().equalsIgnoreCase("floatlit")) {
+            res += ":" + getType().toLowerCase();
+        }
+        return res;
     }
 }

@@ -22,15 +22,13 @@ public class DFAScanner {
     }
     
     private void readFileData(String filename) {
-        File f = new File(filename);
-
         try {
             String line = "";
             FileReader fileReader = new FileReader(filename);
             BufferedReader bufferedReader = new BufferedReader(fileReader);
             while ((line = bufferedReader.readLine()) != null) {
-//                fileData += line + "\n";
-                fileData += line + " "; // split each line with a space instead of newline so it's one long character string, much like this comment
+                fileData += line + "\n";
+//                fileData += line + " "; // split each line with a space instead of newline so it's one long character string, much like this comment
             }
             bufferedReader.close();
             fileReader.close();
@@ -40,10 +38,10 @@ public class DFAScanner {
             System.err.println("IO exception in Scanner");
         }
 
+        // Remove leading/trailing whitespace, replace tabs with spaces, and add the EOF character to the end
         fileData = fileData.trim();
         fileData = fileData.replace("\t", " ");
         fileData += "$";
-//        System.out.println(fileData);
     }
     
     public List<Token> scan(String filename) {
@@ -53,6 +51,8 @@ public class DFAScanner {
 
         String lexeme = reset();
         
+        int lineNumber = 1;
+        
         List<Token> tokens = new ArrayList<Token>();
         
         if(!fileData.equals("")) {
@@ -61,29 +61,36 @@ public class DFAScanner {
             //running through each DFA to find a match
             int index = 0;
             boolean done = false;
+            boolean nl = false;
             while(!done) {
                 String character = fileData.charAt(index) + "";
-                if(character.equals(" ") || character.equals("$") || character.equals("\t")) {
+                if(character.equals(" ") || character.equals("$") || character.equals("\t") || character.equals("\n")) {
+                    //Debug statements
 //                    System.out.println("character: '" + character + "'");
 //                    System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
+                    if(character.equals("\n") && !nl) {
+                        lineNumber += 1;
+                        nl = true;
+                    }
                     if(keywordRecognizer.isAccepted()) {
                         //add keyword token
                         Token keyword = new Token("Keyword", lexeme);
 //                        System.out.println(keyword);
                         tokens.add(keyword);
                         lexeme = reset();
+                        nl = false;
                         if (character.equals("$")) {
                             done = true;
                         } else {
                             index += 1;
                         }
                     } else if(idRecognizer.isAccepted()) {
-//                    } else if(false) { // no longer using the id recognizer
                         //add ID token
                         Token id = new Token("Id", lexeme);
 //                        System.out.println(id);
                         tokens.add(id);
                         lexeme = reset();
+                        nl = false;
                         if(character.equals("$")) {
                             done = true;
                         } else {
@@ -95,6 +102,7 @@ public class DFAScanner {
 //                        System.out.println(intlit);
                         tokens.add(intlit);
                         lexeme = reset();
+                        nl = false;
                         if(character.equals("$")) {
                             done = true;
                         } else {
@@ -106,7 +114,7 @@ public class DFAScanner {
 //                        System.out.println(token);
                         tokens.add(token);
                         lexeme = reset();
-                        
+                        nl = false;
                         if(character.equals("$")) {
                             done = true;
                         } else {
@@ -166,7 +174,8 @@ public class DFAScanner {
                             }
                             
                             if(!accepted) { //rolling back didn't find anything
-                                System.err.println("Couldn't recognize '" + oldLexeme + "'. Cancelling scan");
+                                System.err.println("Error on line: " + lineNumber + ". Couldn't recognize " + oldLexeme);
+//                                System.err.println("Couldn't recognize '" + oldLexeme + "'. Cancelling scan");
                                 return tokens;
                             }
 
