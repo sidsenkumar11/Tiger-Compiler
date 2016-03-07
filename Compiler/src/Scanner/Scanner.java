@@ -8,6 +8,8 @@ public class Scanner {
 
     public static void main(String[] args) {
         // String fileName = args[0];
+
+
         String fileName = "resources/tests/test4.tgr";
         String fullFileText = "";
         String line = null;

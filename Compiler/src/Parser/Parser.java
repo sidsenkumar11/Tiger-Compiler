@@ -2,7 +2,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.LinkedList;
 
 public class Parser {
@@ -14,6 +13,7 @@ public class Parser {
     
     public Parser() {
         parseTable = new ParseTable("resources/ParseTable.csv");
+//        parseTable = new ParseTable("../../../resources/ParseTable.csv");
         initializeStack();
     }
 
@@ -113,7 +113,7 @@ public class Parser {
             System.out.println("Error reading file '" + fileName + "'");
             // ex.printStackTrace();
         }
-
+        System.out.println(fullFileText);
         Parser parser = new Parser(fullFileText);
         parser.parse();
     }
