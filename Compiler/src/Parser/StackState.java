@@ -9,7 +9,10 @@ public class StackState {
     private int tokenNumber;
 
     public StackState(LinkedList<Symbol> stack, int tokenNumber) {
-        this.stack = stack;
+        this.stack = new LinkedList<>();
+        for (int i = stack.size() - 1; i >=0; i--) {
+            this.stack.push(stack.get(i));
+        }
         this.tokenNumber = tokenNumber;
     }
 
@@ -19,5 +22,10 @@ public class StackState {
 
     public LinkedList<Symbol> getStack() {
         return stack;
+    }
+
+    @Override
+    public String toString() {
+        return getStack().toString();
     }
 }

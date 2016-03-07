@@ -9,7 +9,6 @@ public class Parser {
     private Token[] tokenList;
     private LinkedList<Symbol> stack;
     private LinkedList<StackState> backtrackStack;
-    private int currentBTS;
     private int currentTokenNum;
     private ParseTable parseTable;
     
@@ -54,7 +53,6 @@ public class Parser {
     public void initializeStack() {
         this.stack = new LinkedList<Symbol>();
         this.backtrackStack = new LinkedList<>();
-        this.currentBTS = 0;
         stack.push(new Token("$", "$"));
         stack.push(new Symbol(false, "program"));
     }
@@ -77,10 +75,11 @@ public class Parser {
                     // Parsed this token successfully. All is well.
                     currentTokenNum++;
                 } else {
-                    if (currentBTS < backtrackStack.size()) {
+                    if (backtrackStack.size() > 0) {
                         // So this rule didn't work. Try backtracking and using a different rule.
-                        currentBTS++;
-
+                        StackState nextTry = backtrackStack.pop();
+                        stack = nextTry.getStack();
+                        currentTokenNum = nextTry.getTokenNumber();
                     } else {
                         throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
                     }
@@ -88,6 +87,27 @@ public class Parser {
             } else if(!parseTable.isEmpty(stackSymbol, nextToken)) {
                 // Push symbols from table in reverse order onto stack.
                 LinkedList<LinkedList<Symbol>> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
+                if (nextStackSymbols.size() > 1) {
+                    for (int i = 1; i < nextStackSymbols.size(); i++) {
+                        LinkedList<Symbol> entryInEntry = nextStackSymbols.get(i);
+                        for (int j = entryInEntry.size() - 1; j >= 0; j--) {
+                            if (!entryInEntry.get(j).isEpsilon()) {
+                                stack.push(entryInEntry.get(j));
+                            } else {
+                                System.out.println("Didn't push the epsilon");
+                            }
+                        }
+                        backtrackStack.push(new StackState(stack, currentTokenNum));
+                        // Pop off those values we just pushed. We don't actually push here; we're just doing it to save the potential stack state.
+                        for (int j = entryInEntry.size() - 1; j >= 0; j--) {
+                            if (!entryInEntry.get(j).isEpsilon()) {
+                                stack.pop();
+                            } else {
+                                System.out.println("Didn't pop the epsilon (cuz you can't!)");
+                            }
+                        }
+                    }
+                }
                 for (int i = nextStackSymbols.get(0).size() - 1; i >= 0; i--) {
                     if (!nextStackSymbols.get(0).get(i).isEpsilon()) {
                         stack.push(nextStackSymbols.get(0).get(i));
@@ -97,7 +117,14 @@ public class Parser {
                 }
             } else {
                 // The table didn't have something for this case.
-                throw new ParseException("No rule to parse " + stackSymbol.getValue() + " on input " + nextToken.getValue());
+                if (backtrackStack.size() > 0) {
+                    // So this rule didn't work. Try backtracking and using a different rule.
+                    StackState nextTry = backtrackStack.pop();
+                    stack = nextTry.getStack();
+                    currentTokenNum = nextTry.getTokenNumber();
+                } else {
+                    throw new ParseException("No rule to parse " + stackSymbol.getValue() + " on input " + nextToken.getValue());
+                }
             }
         } while (!stackSymbol.isDollarToken());
         System.out.println("Hooray! Successfully parsed input.");
@@ -123,7 +150,7 @@ public class Parser {
             System.out.println("Error reading file '" + fileName + "'");
             // ex.printStackTrace();
         }
-        System.out.println(fullFileText);
+//        System.out.println(fullFileText);
         Parser parser = new Parser(fullFileText);
         parser.parse();
     }
