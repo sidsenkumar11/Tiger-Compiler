@@ -28,6 +28,7 @@ public class Compiler {
                 System.out.print(t + " ");
             }
         }
+        System.out.println("");
         Token[] tokenList = new Token[tokens.size()];
         
         for(int i = 0; i < tokenList.length; i++) {
