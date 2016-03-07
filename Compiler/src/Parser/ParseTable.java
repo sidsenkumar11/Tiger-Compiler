@@ -11,10 +11,10 @@ import java.util.LinkedList;
  */
 public class ParseTable {
 
-    private Hashtable<Integer, LinkedList<Symbol>> parseTable;
+    private Hashtable<Integer, LinkedList<LinkedList<Symbol>>> parseTable;
     private HashMap<String, Symbol> symbolList;
     public ParseTable(String file) {
-        parseTable = new Hashtable<Integer, LinkedList<Symbol>>();
+        parseTable = new Hashtable<Integer, LinkedList<LinkedList<Symbol>>>();
         symbolList = new HashMap<String, Symbol>();
         generateSymbolList();
         generateParseTable(file);
@@ -211,6 +211,7 @@ public class ParseTable {
 
         // Read in file containing parse table
         // Note that question mark means comma from csv file
+        // zzz separates multiple entries for the same cell
         String[] rows = readIn(file);
         String[] columns = rows[0].split(",");
 
@@ -219,9 +220,15 @@ public class ParseTable {
             String firstArgument = row[0];
             for (int j = 1; j < row.length; j++) {
                 if (!row[j].equals("NULL")) {
-                    String[] singleEntry = row[j].split(" -> ");
-                    String[] actualEntry = singleEntry[1].split(" ");
-                    set(getSymbol(firstArgument), getSymbol(columns[j]), createEntry(actualEntry));
+                    LinkedList<LinkedList<Symbol>> netEntry = new LinkedList<>();
+                    // Handle multiple entries per cell.
+                    String[] multipleEntries = row[j].split("zzz");
+                    for (String x : multipleEntries) {
+                        String[] singleEntry = x.split(" -> ");
+                        String[] actualEntry = singleEntry[1].split(" ");
+                        netEntry.add(createEntry(actualEntry));
+                    }
+                    set(getSymbol(firstArgument), getSymbol(columns[j]), netEntry);
                 }
             }
         }
@@ -239,7 +246,7 @@ public class ParseTable {
         return symbolList.get(symbolText);
     }
 
-    private void set(Symbol row, Symbol col, LinkedList<Symbol> entry) {
+    private void set(Symbol row, Symbol col, LinkedList<LinkedList<Symbol>> entry) {
         SymbolArray key = new SymbolArray(row, col);
         parseTable.put(key.hashCode(), entry);
     }
@@ -250,7 +257,7 @@ public class ParseTable {
      * @param nextTokenSymbol The next input token.
      * @return The expanded symbol list for this input token on this stack value.
      */
-    public LinkedList<Symbol> get(Symbol stackSymbol, Symbol nextTokenSymbol) {
+    public LinkedList<LinkedList<Symbol>> get(Symbol stackSymbol, Symbol nextTokenSymbol) {
         SymbolArray key = new SymbolArray(stackSymbol, nextTokenSymbol);
         return parseTable.get(key.hashCode());
     }

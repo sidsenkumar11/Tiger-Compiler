@@ -8,12 +8,14 @@ public class Parser {
 
     private Token[] tokenList;
     private LinkedList<Symbol> stack;
+    private LinkedList<StackState> backtrackStack;
+    private int currentBTS;
     private int currentTokenNum;
     private ParseTable parseTable;
     
     public Parser() {
-        parseTable = new ParseTable("resources/ParseTable.csv");
-//        parseTable = new ParseTable("../../../resources/ParseTable.csv");
+//        parseTable = new ParseTable("resources/ParseTable.csv");
+        parseTable = new ParseTable("../../../resources/ParseTable.csv");
         initializeStack();
     }
 
@@ -51,6 +53,8 @@ public class Parser {
      */
     public void initializeStack() {
         this.stack = new LinkedList<Symbol>();
+        this.backtrackStack = new LinkedList<>();
+        this.currentBTS = 0;
         stack.push(new Token("$", "$"));
         stack.push(new Symbol(false, "program"));
     }
@@ -73,14 +77,20 @@ public class Parser {
                     // Parsed this token successfully. All is well.
                     currentTokenNum++;
                 } else {
-                    throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
+                    if (currentBTS < backtrackStack.size()) {
+                        // So this rule didn't work. Try backtracking and using a different rule.
+                        currentBTS++;
+
+                    } else {
+                        throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
+                    }
                 }
             } else if(!parseTable.isEmpty(stackSymbol, nextToken)) {
                 // Push symbols from table in reverse order onto stack.
-                LinkedList<Symbol> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
-                for (int i = nextStackSymbols.size() - 1; i >= 0; i--) {
-                    if (!nextStackSymbols.get(i).isEpsilon()) {
-                        stack.push(nextStackSymbols.get(i));
+                LinkedList<LinkedList<Symbol>> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
+                for (int i = nextStackSymbols.get(0).size() - 1; i >= 0; i--) {
+                    if (!nextStackSymbols.get(0).get(i).isEpsilon()) {
+                        stack.push(nextStackSymbols.get(0).get(i));
                     } else {
                         System.out.println("Didn't push the epsilon");
                     }
