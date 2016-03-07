@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by nick on 2/16/16.
@@ -20,6 +21,7 @@ public class Edge {
     public static class DFA {
 
         List<State> acceptingStates, states;
+        Stack<State> previousStates;
         State currentState = null;
         State initialState = null;
 
@@ -45,6 +47,16 @@ public class Edge {
                 throw new Exception("Must define one initial state");
             }
             currentState = initialState;
+            
+            previousStates = new Stack<State>();
+        }
+        
+        public void rollback() {
+            if(previousStates.isEmpty()) {
+                currentState = initialState;
+            } else {
+                currentState = previousStates.pop();
+            }
         }
 
         public boolean isAccepted() {
@@ -52,6 +64,7 @@ public class Edge {
         }
 
         public void nextChar(String s) {
+            previousStates.push(currentState);
             currentState = currentState.transition(s);
         }
 

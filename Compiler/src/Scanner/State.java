@@ -42,9 +42,11 @@ public class State {
     public boolean isAccepting() {
         return accepting;
     }
+    
+    public boolean isError() { return label == -1; };
 
-    public void setAccepting(boolean accepting) {
-        this.accepting = accepting;
+    public void setAccepting() {
+        this.accepting = true;
     }
 
     public int getLabel() {

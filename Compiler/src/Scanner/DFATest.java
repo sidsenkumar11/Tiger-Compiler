@@ -14,7 +14,7 @@ public class DFATest {
         State s2 = new State();
         
         State s3 = new State();
-        s3.setAccepting(true);
+        s3.setAccepting();
         
         s0.addNeighbor("n", s1);
         s1.addNeighbor("e", s2);
