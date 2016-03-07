@@ -37,7 +37,7 @@ public class DFAScanner {
         fileData = fileData.trim();
         fileData = fileData.replace("\t", " ");
         fileData += "$";
-        System.out.println(fileData);
+//        System.out.println(fileData);
         
         keywordRecognizer = initializeKeywordDFA();
         idRecognizer = initializeIdDFA();
@@ -153,7 +153,7 @@ public class DFAScanner {
                     transition(character);
                     
                     lexeme += character;
-                    System.out.println("Current lexeme: " + lexeme);
+//                    System.out.println("Current lexeme: " + lexeme);
                     
                     index += 1;
                 }
