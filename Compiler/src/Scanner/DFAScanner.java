@@ -14,10 +14,16 @@ public class DFAScanner {
     
     String fileData = "";
     
-    public DFAScanner(String filename) {
-        
+    public DFAScanner() {
+        keywordRecognizer = initializeKeywordDFA();
+        idRecognizer = initializeIdDFA();
+        intRecognizer = initializeIntDFA();
+        floatRecognizer = initializeFloatDFA();
+    }
+    
+    private void readFileData(String filename) {
         File f = new File(filename);
-        
+
         try {
             String line = "";
             FileReader fileReader = new FileReader(filename);
@@ -33,24 +39,23 @@ public class DFAScanner {
         } catch(IOException ioe) {
             System.err.println("IO exception in Scanner");
         }
-        
+
         fileData = fileData.trim();
         fileData = fileData.replace("\t", " ");
         fileData += "$";
 //        System.out.println(fileData);
-        
-        keywordRecognizer = initializeKeywordDFA();
-        idRecognizer = initializeIdDFA();
-        intRecognizer = initializeIntDFA();
-        floatRecognizer = initializeFloatDFA();
     }
     
-    public List<Token> scan() {
+    public List<Token> scan(String filename) {
+//        System.out.println("Scanning from " + filename);
+        fileData = "";
+        readFileData(filename);
+
+        String lexeme = reset();
+        
         List<Token> tokens = new ArrayList<Token>();
         
         if(!fileData.equals("")) {
-            
-            String lexeme = "";
             
             //Search the file data character-by-character
             //running through each DFA to find a match
@@ -59,8 +64,8 @@ public class DFAScanner {
             while(!done) {
                 String character = fileData.charAt(index) + "";
                 if(character.equals(" ") || character.equals("$") || character.equals("\t")) {
-                    System.out.println("character: '" + character + "'");
-                    System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
+//                    System.out.println("character: '" + character + "'");
+//                    System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
                     if(keywordRecognizer.isAccepted()) {
                         //add keyword token
                         Token keyword = new Token("Keyword", lexeme);
@@ -117,14 +122,16 @@ public class DFAScanner {
 //                        floatRecognizer.rollback();
                         
                         //Remove after here to get back to working:
-                        if(lexeme.equals("") || character.equals("\t")) {
+                        if(lexeme.equals("") || character.equals("\t")) { // skip over tabs and spaces
                             index += 1;
                         } else {
                             int numRemoved = 0;
+                            String oldLexeme = lexeme;
+                            boolean accepted = false;
                             while (!lexeme.equals("")) {
-                                System.out.print("rolling back " + lexeme);
+//                                System.out.print("rolling back " + lexeme);
                                 lexeme = lexeme.substring(0, lexeme.length() - 1);
-                                System.out.print(" to " + lexeme + "\n");
+//                                System.out.print(" to " + lexeme + "\n");
                                 numRemoved += 1;
 
                                 keywordRecognizer.rollback();
@@ -132,26 +139,35 @@ public class DFAScanner {
                                 intRecognizer.rollback();
                                 floatRecognizer.rollback();
                                 
-                                System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
+//                                System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
 
                                 if (keywordRecognizer.isAccepted()) {
                                     //add keyword token
                                     tokens.add(new Token("Keyword", lexeme));
                                     lexeme = reset();
+                                    accepted = true;
                                 } else if (idRecognizer.isAccepted()) {
 //                                } else if(false) { //no longer using the id recognizer
                                     //add ID token
                                     tokens.add(new Token("Id", lexeme));
                                     lexeme = reset();
+                                    accepted = true;
                                 } else if (intRecognizer.isAccepted()) {
                                     //add int token
                                     tokens.add(new Token("Intlit", lexeme));
                                     lexeme = reset();
+                                    accepted = true;
                                 } else if (floatRecognizer.isAccepted()) {
                                     //add float token
                                     tokens.add(new Token("Floatlit", lexeme));
                                     lexeme = reset();
+                                    accepted = true;
                                 }
+                            }
+                            
+                            if(!accepted) { //rolling back didn't find anything
+                                System.err.println("Couldn't recognize '" + oldLexeme + "'. Cancelling scan");
+                                return tokens;
                             }
 
                             index -= numRemoved;
@@ -161,7 +177,7 @@ public class DFAScanner {
                     transition(character);
                     
                     lexeme += character;
-                    System.out.println("Current lexeme: " + lexeme);
+//                    System.out.println("Current lexeme: " + lexeme);
                     
                     index += 1;
                 }

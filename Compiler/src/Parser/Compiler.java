@@ -24,8 +24,8 @@ public class Compiler {
         }
 
         // Scan the input.
-        DFAScanner scanner = new DFAScanner(filename);
-        List<Token> tokens = scanner.scan();
+        DFAScanner scanner = new DFAScanner();
+        List<Token> tokens = scanner.scan(filename);
 
         // Print tokens if asked to.
         if(printTokens) {
