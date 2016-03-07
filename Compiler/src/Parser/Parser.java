@@ -11,14 +11,23 @@ public class Parser {
     private LinkedList<Symbol> stack;
     private int currentTokenNum;
     private ParseTable parseTable;
+    
+    public Parser() {
+        parseTable = new ParseTable("resources/ParseTable.csv");
+        initializeStack();
+    }
 
     public Parser(String tokens) throws ParseException {
+        this();
         generateTokenList(tokens);
         if (tokenList.length == 0) {
             throw new ParseException("Cannot parse empty file");
         }
-        parseTable = new ParseTable("../../../resources/ParseTable.csv");
-        initializeStack();
+    }
+    
+    public Parser(Token[] tokenList) {
+        this();
+        this.tokenList = tokenList;
     }
 
     /**
