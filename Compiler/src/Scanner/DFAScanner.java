@@ -59,18 +59,21 @@ public class DFAScanner {
             while(!done) {
                 String character = fileData.charAt(index) + "";
                 if(character.equals(" ") || character.equals("$") || character.equals("\t")) {
+                    System.out.println("character: '" + character + "'");
+                    System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
                     if(keywordRecognizer.isAccepted()) {
                         //add keyword token
                         Token keyword = new Token("Keyword", lexeme);
 //                        System.out.println(keyword);
                         tokens.add(keyword);
                         lexeme = reset();
-                        if(character.equals("$")) {
+                        if (character.equals("$")) {
                             done = true;
                         } else {
                             index += 1;
                         }
                     } else if(idRecognizer.isAccepted()) {
+//                    } else if(false) { // no longer using the id recognizer
                         //add ID token
                         Token id = new Token("Id", lexeme);
 //                        System.out.println(id);
@@ -119,19 +122,24 @@ public class DFAScanner {
                         } else {
                             int numRemoved = 0;
                             while (!lexeme.equals("")) {
+                                System.out.print("rolling back " + lexeme);
                                 lexeme = lexeme.substring(0, lexeme.length() - 1);
+                                System.out.print(" to " + lexeme + "\n");
                                 numRemoved += 1;
 
                                 keywordRecognizer.rollback();
                                 idRecognizer.rollback();
                                 intRecognizer.rollback();
                                 floatRecognizer.rollback();
+                                
+                                System.out.println("Anything recognizes? " + (keywordRecognizer.isAccepted() || intRecognizer.isAccepted() || floatRecognizer.isAccepted()));
 
                                 if (keywordRecognizer.isAccepted()) {
                                     //add keyword token
                                     tokens.add(new Token("Keyword", lexeme));
                                     lexeme = reset();
                                 } else if (idRecognizer.isAccepted()) {
+//                                } else if(false) { //no longer using the id recognizer
                                     //add ID token
                                     tokens.add(new Token("Id", lexeme));
                                     lexeme = reset();
@@ -153,7 +161,7 @@ public class DFAScanner {
                     transition(character);
                     
                     lexeme += character;
-//                    System.out.println("Current lexeme: " + lexeme);
+                    System.out.println("Current lexeme: " + lexeme);
                     
                     index += 1;
                 }
@@ -292,6 +300,7 @@ public class DFAScanner {
         State ifA = new State();
         ifA.setAccepting();
         State i1 = new State();
+        i1.setAccepting();
         State intA = new State();
         intA.setAccepting();
         //i transitions
@@ -430,6 +439,66 @@ public class DFAScanner {
         initial.addNeighbor("-", symbol);
         initial.addNeighbor("&", symbol);
         initial.addNeighbor("|", symbol);
+        
+        //******ID DFA addition
+//        State underscore = new State();
+//        State idA = new State();
+//        idA.setAccepting();
+//        initial.addNeighbor("_", underscore);
+//        idA.addNeighbor("_", idA);
+//
+//        //loop through capital letters, adding transitions
+//        for(int i=65; i < 91; i++) {
+//            String s = String.valueOf((char) i);
+////            initial.addNeighbor(s, accepting);
+//            underscore.addNeighbor(s, idA);
+//            idA.addNeighbor(s, idA);
+//        }
+//
+//        //loop through lowercase letters, adding transitions
+//        for(int i=97; i < 123; i++) {
+//            String s = String.valueOf((char) i);
+//            underscore.addNeighbor(s, idA);
+//            idA.addNeighbor(s, idA);
+//        }
+//
+//        //loop through numbers, adding transitions
+//        for(int i = 0; i < 10; i++) {
+//            String s = Integer.toString(i);
+//            underscore.addNeighbor(s, idA);
+//            idA.addNeighbor(s, idA);
+//        }
+//        
+//        //all letters not covered by initial keyword DFA
+//        initial.addNeighbor("c", idA);
+//        initial.addNeighbor("g", idA);
+//        initial.addNeighbor("h", idA);
+//        initial.addNeighbor("j", idA);
+//        initial.addNeighbor("k", idA);
+//        initial.addNeighbor("m", idA);
+//        initial.addNeighbor("n", idA);
+//        initial.addNeighbor("p", idA);
+//        initial.addNeighbor("q", idA);
+//        initial.addNeighbor("s", idA);
+//        initial.addNeighbor("u", idA);
+//        initial.addNeighbor("x", idA);
+//        initial.addNeighbor("y", idA);
+//        initial.addNeighbor("z", idA);
+//
+//        initial.addNeighbor("c", idA);
+//        initial.addNeighbor("g", idA);
+//        initial.addNeighbor("h", idA);
+//        initial.addNeighbor("j", idA);
+//        initial.addNeighbor("k", idA);
+//        initial.addNeighbor("m", idA);
+//        initial.addNeighbor("n", idA);
+//        initial.addNeighbor("p", idA);
+//        initial.addNeighbor("q", idA);
+//        initial.addNeighbor("s", idA);
+//        initial.addNeighbor("u", idA);
+//        initial.addNeighbor("x", idA);
+//        initial.addNeighbor("y", idA);
+//        initial.addNeighbor("z", idA);
 
         List<State> states = new ArrayList<State>();
         states.add(initial);
@@ -508,6 +577,8 @@ public class DFAScanner {
         states.add(gt);
         states.add(gteq);
         states.add(symbol);
+//        states.add(underscore);
+//        states.add(idA);
         Edge.DFA recognizer = null;
 
         try {
