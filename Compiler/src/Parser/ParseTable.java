@@ -69,13 +69,14 @@ public class ParseTable {
         Symbol dollar = new Symbol(true, "$");
         Symbol epsilon = new Symbol(true, "''");
         Symbol nullSymbol = new Symbol(true, "NULL");
+        Symbol type = new Symbol(true, "type");
 
         // Create all non-termnal symbols
         Symbol program = new Symbol(false, "program");
         Symbol declseg = new Symbol(false, "declseg");
         Symbol typedecls = new Symbol(false, "typedecls");
         Symbol typedecl = new Symbol(false, "typedecl");
-        Symbol type = new Symbol(false, "type");
+        Symbol typeT = new Symbol(false, "typeT");
         Symbol vardecls = new Symbol(false, "vardecls");
         Symbol vardecl = new Symbol(false, "vardecl");
         Symbol ids = new Symbol(false, "ids");
@@ -168,6 +169,7 @@ public class ParseTable {
         symbolList.put("typedecls", typedecls);
         symbolList.put("typedecl", typedecl);
         symbolList.put("type", type);
+        symbolList.put("typeT", typeT);
         symbolList.put("vardecls", vardecls);
         symbolList.put("vardecl", vardecl);
         symbolList.put("ids", ids);

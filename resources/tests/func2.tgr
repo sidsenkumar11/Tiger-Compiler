@@ -9,17 +9,6 @@ let
         func twiced ( n : int ) : int begin
             return n + n;
         end;
-
-/*
-        func stupid( i : int ) begin
-            i := 2 + i;
-        end;
-*/
-
 in
         a := twiced(7);
-
-         /*
-        b := 1.5 + 2.5 + a;
-        a := a + a; */
 end

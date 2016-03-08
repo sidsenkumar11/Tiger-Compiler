@@ -13,8 +13,9 @@ public class Parser {
     private ParseTable parseTable;
     
     public Parser() {
-//        parseTable = new ParseTable("resources/ParseTable.csv");
-        parseTable = new ParseTable("../../../resources/ParseTable.csv");
+        parseTable = new ParseTable("resources/ParseTable.csv");
+//        Use this when testing just the Parser
+//        parseTable = new ParseTable("../../../resources/ParseTable.csv");
         initializeStack();
     }
 
@@ -134,7 +135,7 @@ public class Parser {
     public static void main(String[] args) throws ParseException, FileNotFoundException, IOException {
         /* Read in file into string of text */
         // String fileName = args[0];
-        String fileName = "../../../resources/test4.tokens";
+        String fileName = "../../../resources/test1.tokens";
         String fullFileText = "";
         String line = null;
 
