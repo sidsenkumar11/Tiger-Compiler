@@ -7,17 +7,17 @@ public class StackState {
 
     private LinkedList<Symbol> stack;
     private int tokenNumber;
-    private LinkedList<String> astString;
-    private int astLocation;
+    private LinkedList<ASTSymbol> astStack;
+    private int astStackTop;
 
-    public StackState(LinkedList<Symbol> stack, int tokenNumber, LinkedList<String> astString, int astLocation) {
+    public StackState(LinkedList<Symbol> stack, int tokenNumber, LinkedList<ASTSymbol> astStack, int stackTop) {
         this.stack = new LinkedList<>();
         for (int i = stack.size() - 1; i >=0; i--) {
             this.stack.push(stack.get(i));
         }
         this.tokenNumber = tokenNumber;
-        this.astString = astString;
-        this.astLocation = astLocation;
+        this.astStack = astStack;
+        this.astStackTop = stackTop;
     }
 
     public int getTokenNumber() {
@@ -28,12 +28,12 @@ public class StackState {
         return stack;
     }
 
-    public LinkedList<String> getAST() {
-        return astString;
+    public LinkedList<ASTSymbol> getAST() {
+        return astStack;
     }
 
-    public int getAstLocation() {
-        return astLocation;
+    public int getAstStackTop() {
+        return astStackTop;
     }
 
     @Override

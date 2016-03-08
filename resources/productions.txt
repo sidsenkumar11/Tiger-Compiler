@@ -2,14 +2,14 @@ program -> let declseg in stmts end
 declseg -> typedecls vardecls funcdecls
 typedecls -> ''
 typedecls -> typedecl typedecls
-typedecl -> type id := type ;
-type -> int
-type -> float
-type -> id
-type -> array [ intlit ] of type
+typedecl -> type id := typeT ;
+typeT -> int
+typeT -> float
+typeT -> id
+typeT -> array [ intlit ] of typeT
 vardecls -> ''
 vardecls -> vardecl vardecls
-vardecl -> var ids : type optinit ;
+vardecl -> var ids : typeT optinit ;
 ids -> id ids'
 ids' -> , id ids'
 ids' -> ''
@@ -23,12 +23,11 @@ params -> neparams
 neparams -> param neparams'
 neparams' -> , param neparams'
 neparams' -> ''
-param -> id : type
+param -> id : typeT
 optrettype -> ''
-optrettype -> : type
-stmts -> fullstmt stmts'
-stmts' -> fullstmt stmts'
-stmts' -> ''
+optrettype -> : typeT
+stmts -> fullstmt stmts
+stmts -> ''
 fullstmt -> stmt ;
 stmt -> lvalue := numexpr
 stmt -> if boolexpr then stmts stmt'

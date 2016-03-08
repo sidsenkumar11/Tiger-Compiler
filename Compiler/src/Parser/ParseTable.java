@@ -274,7 +274,7 @@ public class ParseTable {
         return get(stackSymbol, nextTokenSymbol) == null;
     }
 
-    private String[] readIn(String fileName) {
+    public static String[] readIn(String fileName) {
         String fullFileText = "";
         String line = null;
 
