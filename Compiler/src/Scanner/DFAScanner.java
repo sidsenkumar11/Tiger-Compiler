@@ -73,7 +73,10 @@ public class DFAScanner {
                         nl = true;
                     }
                     if(keywordRecognizer.isAccepted()) {
-                        //add keyword token
+                        //add keyword tokenSystem.out.println("keyword: " + lexeme);
+                        if(lexeme.equals(",")) {
+                            lexeme = "?";
+                        }
                         Token keyword = new Token("Keyword", lexeme);
 //                        System.out.println(keyword);
                         tokens.add(keyword);
@@ -151,6 +154,9 @@ public class DFAScanner {
 
                                 if (keywordRecognizer.isAccepted()) {
                                     //add keyword token
+                                    if(lexeme.equals(",")) {
+                                        lexeme = "?";
+                                    }
                                     tokens.add(new Token("Keyword", lexeme));
                                     lexeme = reset();
                                     accepted = true;
