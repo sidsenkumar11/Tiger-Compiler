@@ -61,15 +61,15 @@ public class Parser {
      * Parses the token array using an LL(1) parse table.
      * @throws Exception If the input program does not parse successfully.
      */
-    public void parse() throws ParseException {
+    public boolean parse() throws ParseException {
         Token nextToken = tokenList[currentTokenNum];
         Symbol stackSymbol;
         do {
             nextToken = tokenList[currentTokenNum];
-            System.out.println("STACK: " + stack);
-            System.out.println("TOKEN: " + nextToken);
+//            System.out.println("STACK: " + stack);
+//            System.out.println("TOKEN: " + nextToken);
             stackSymbol = stack.pop();
-            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
+//            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
             if (stackSymbol.isTerminal()) {
                 if (stackSymbol.getValue().equals(nextToken.getValue())) {
                     // Parsed this token successfully. All is well.
@@ -94,7 +94,7 @@ public class Parser {
                             if (!entryInEntry.get(j).isEpsilon()) {
                                 stack.push(entryInEntry.get(j));
                             } else {
-                                System.out.println("Didn't push the epsilon");
+//                                System.out.println("Didn't push the epsilon");
                             }
                         }
                         backtrackStack.push(new StackState(stack, currentTokenNum));
@@ -103,7 +103,7 @@ public class Parser {
                             if (!entryInEntry.get(j).isEpsilon()) {
                                 stack.pop();
                             } else {
-                                System.out.println("Didn't pop the epsilon (cuz you can't!)");
+//                                System.out.println("Didn't pop the epsilon (cuz you can't!)");
                             }
                         }
                     }
@@ -112,7 +112,7 @@ public class Parser {
                     if (!nextStackSymbols.get(0).get(i).isEpsilon()) {
                         stack.push(nextStackSymbols.get(0).get(i));
                     } else {
-                        System.out.println("Didn't push the epsilon");
+//                        System.out.println("Didn't push the epsilon");
                     }
                 }
             } else {
@@ -128,6 +128,7 @@ public class Parser {
             }
         } while (!stackSymbol.isDollarToken());
         System.out.println("Hooray! Successfully parsed input.");
+        return true;
     }
 
     public static void main(String[] args) throws ParseException, FileNotFoundException, IOException {

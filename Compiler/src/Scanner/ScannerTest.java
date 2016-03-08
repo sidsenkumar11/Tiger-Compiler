@@ -29,14 +29,27 @@ public class ScannerTest {
                     if (filename.substring(filename.length() - 4, filename.length()).equals(".tgr")) {
 
                         String fullFilename = filepath + "/" + filename;
-                        System.out.println(fullFilename + ":");
+                        System.out.println("\n" + fullFilename + ":");
                         List<Token> tokenList = scanner.scan(fullFilename);
 
                         if (tokenList != null) {
-                            for (Token t : tokenList) {
-                                System.out.print(t + " ");
+                            Token[] tokenL = new Token[tokenList.size()];
+                            for(int i = 0; i < tokenList.size(); i++) {
+                                tokenL[i] = tokenList.get(i);
                             }
-                            System.out.println("\n");
+
+                            Parser parser = new Parser(tokenL);
+                            try {
+                                if(parser.parse()) {
+                                    System.out.println("Successfully parsed " + filename);
+                                }
+                            } catch(ParseException pe) {
+                                System.err.println(pe.getMessage());
+                            }
+//                            for (Token t : tokenList) {
+//                                System.out.print(t + " ");
+//                            }
+//                            System.out.println("\n");
                         } else {
                             System.out.println("No tokens for " + filename);
                         }
