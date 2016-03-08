@@ -6,7 +6,7 @@ import java.util.List;
  */
 public class ScannerTest {
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ParseException {
         DFAScanner scanner = new DFAScanner();
         
         boolean scanTest = false, allPrograms = false;

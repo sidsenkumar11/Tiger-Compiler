@@ -11,11 +11,16 @@ public class Parser {
     private LinkedList<StackState> backtrackStack;
     private int currentTokenNum;
     private ParseTable parseTable;
+    private LinkedList<String> parseAST;
+    private int astAddLocation;
     
     public Parser() {
-        parseTable = new ParseTable("resources/ParseTable.csv");
 //        Use this when testing just the Parser
 //        parseTable = new ParseTable("../../../resources/ParseTable.csv");
+        this.parseAST = new LinkedList<>();
+        this.parseTable = new ParseTable("resources/ParseTable.csv");
+        this.backtrackStack = new LinkedList<>();
+        this.astAddLocation = 0;
         initializeStack();
     }
 
@@ -27,9 +32,12 @@ public class Parser {
         }
     }
     
-    public Parser(Token[] tokenList) {
+    public Parser(Token[] tokenList) throws ParseException {
         this();
         this.tokenList = tokenList;
+        if (tokenList.length == 0) {
+            throw new ParseException("Cannot parse empty file");
+        }
     }
 
     /**
@@ -53,7 +61,6 @@ public class Parser {
      */
     public void initializeStack() {
         this.stack = new LinkedList<Symbol>();
-        this.backtrackStack = new LinkedList<>();
         stack.push(new Token("$", "$"));
         stack.push(new Symbol(false, "program"));
     }
@@ -70,6 +77,19 @@ public class Parser {
 //            System.out.println("STACK: " + stack);
 //            System.out.println("TOKEN: " + nextToken);
             stackSymbol = stack.pop();
+
+            if (stackSymbol.getValue().equals("id") || stackSymbol.getValue().equals("intlit") || stackSymbol.getValue().equals("floatlit")) {
+                parseAST.add(astAddLocation++, nextToken.getContent());
+            } else {
+                if (stackSymbol.isTerminal()) {
+                    parseAST.add(astAddLocation++, stackSymbol.getValue());
+                } else {
+                    parseAST.add(astAddLocation++, "(");
+                    parseAST.add(astAddLocation++, stackSymbol.getValue());
+                    parseAST.add(astAddLocation, ")");
+                }
+            }
+
 //            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
             if (stackSymbol.isTerminal()) {
                 if (stackSymbol.getValue().equals(nextToken.getValue())) {
@@ -81,6 +101,8 @@ public class Parser {
                         StackState nextTry = backtrackStack.pop();
                         stack = nextTry.getStack();
                         currentTokenNum = nextTry.getTokenNumber();
+                        parseAST = nextTry.getAST();
+                        astAddLocation = nextTry.getAstLocation();
                     } else {
                         throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
                     }
@@ -98,7 +120,7 @@ public class Parser {
 //                                System.out.println("Didn't push the epsilon");
                             }
                         }
-                        backtrackStack.push(new StackState(stack, currentTokenNum));
+                        backtrackStack.push(new StackState(stack, currentTokenNum, parseAST, astAddLocation));
                         // Pop off those values we just pushed. We don't actually push here; we're just doing it to save the potential stack state.
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
                             if (!entryInEntry.get(j).isEpsilon()) {
@@ -109,10 +131,16 @@ public class Parser {
                         }
                     }
                 }
+
+                // Now actually push.
                 for (int i = nextStackSymbols.get(0).size() - 1; i >= 0; i--) {
-                    if (!nextStackSymbols.get(0).get(i).isEpsilon()) {
-                        stack.push(nextStackSymbols.get(0).get(i));
+                    Symbol current = nextStackSymbols.get(0).get(i);
+                    if (!current.isEpsilon()) {
+                        stack.push(current);
                     } else {
+                        parseAST.remove(astAddLocation);
+                        parseAST.remove(astAddLocation - 2);
+                        astAddLocation--;
 //                        System.out.println("Didn't push the epsilon");
                     }
                 }
@@ -123,13 +151,23 @@ public class Parser {
                     StackState nextTry = backtrackStack.pop();
                     stack = nextTry.getStack();
                     currentTokenNum = nextTry.getTokenNumber();
+                    parseAST = nextTry.getAST();
+                    astAddLocation = nextTry.getAstLocation();
                 } else {
                     throw new ParseException("No rule to parse " + stackSymbol.getValue() + " on input " + nextToken.getValue());
                 }
             }
         } while (!stackSymbol.isDollarToken());
-        System.out.println("Hooray! Successfully parsed input.");
+//        System.out.println("Hooray! Successfully parsed input.");
         return true;
+    }
+
+    public String getParseAST() {
+        String retString = "";
+        for (int i = 0; i < parseAST.size(); i++) {
+            retString += parseAST.get(i) + " ";
+        }
+        return retString;
     }
 
     public static void main(String[] args) throws ParseException, FileNotFoundException, IOException {
