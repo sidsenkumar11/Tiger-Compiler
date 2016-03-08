@@ -193,6 +193,7 @@ public class DFAScanner {
             }
         }
         
+        tokens.add(new Token("$", "$"));
         return tokens;
     }
     
