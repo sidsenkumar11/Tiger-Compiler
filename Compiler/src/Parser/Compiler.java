@@ -45,11 +45,11 @@ public class Compiler {
         // Decide which flags have been inputted.
         boolean printTokens = false, printAst = false;
         for(String s : args) {
-            if(s.equals("--tokens")) {
+            if(s.equals("-tokens") || s.equals("--tokens")) {
                 printTokens = true;
             }
 
-            if (s.equals("-ast")) {
+            if (s.equals("-ast") || s.equals("--ast")) {
                 printAst = true;
             }
         }
