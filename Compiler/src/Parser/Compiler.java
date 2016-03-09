@@ -25,23 +25,25 @@ public class Compiler {
             System.out.println();
         }
 
-        // Parse tokens.
-        Token[] tokenList = new Token[tokens.size()];
-        for(int i = 0; i < tokenList.length; i++) {
-            tokenList[i] = tokens.get(i);
-        }
+        // Parse tokens if there was no error
+        if(!tokens.get(tokens.size()-1).getType().equals("error")) { // only continue if an error Token wasn't added
+            Token[] tokenList = new Token[tokens.size()];
+            for (int i = 0; i < tokenList.length; i++) {
+                tokenList[i] = tokens.get(i);
+            }
 
-        Parser parser = new Parser(tokenList);
-        try {
-            parser.parse();
-            System.out.println("\n" + parser.getParseAST());
-        } catch(ParseException pe) {
-            System.err.println(pe.getMessage());
+            Parser parser = new Parser(tokenList);
+            try {
+                parser.parse();
+                System.out.println("\n" + parser.getParseAST());
+            } catch (ParseException pe) {
+                System.err.println(pe.getMessage());
+            }
         }
     }
     public static void main(String[] args) {
 
-        //String filename = args[0];
+        String filename = args[0];
         // Decide which flags have been inputted.
         boolean printTokens = false, printAst = false;
         for(String s : args) {
@@ -56,6 +58,7 @@ public class Compiler {
 
         try {
             Compiler.compile("resources/tests/test4.tgr", printTokens, printAst);
+//            Compiler.compile(filename, printTokens, printAst);
         } catch (ParseException e) {
             System.out.println("Parse Failed");
         }

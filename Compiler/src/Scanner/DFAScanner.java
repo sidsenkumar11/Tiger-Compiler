@@ -141,6 +141,9 @@ public class DFAScanner {
                             boolean accepted = false;
                             while (!lexeme.equals("")) {
 //                                System.out.print("rolling back " + lexeme);
+                                if(lexeme.charAt(lexeme.length()-1) == '\n') {
+                                    lineNumber -= 1;
+                                }
                                 lexeme = lexeme.substring(0, lexeme.length() - 1);
 //                                System.out.print(" to " + lexeme + "\n");
                                 numRemoved += 1;
@@ -180,8 +183,9 @@ public class DFAScanner {
                             }
                             
                             if(!accepted) { //rolling back didn't find anything
-                                System.err.println("Error while scanning. Couldn't recognize " + oldLexeme);
-//                                System.err.println("Couldn't recognize '" + oldLexeme + "'. Cancelling scan");
+//                                System.err.println("Error while scanning. Couldn't recognize " + oldLexeme);
+                                System.err.println("Error at line " + lineNumber + ". Couldn't recognize " + oldLexeme);
+                                tokens.add(new Token("error", "error"));
                                 return tokens;
                             }
 
