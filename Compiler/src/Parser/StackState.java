@@ -7,16 +7,16 @@ public class StackState {
 
     private LinkedList<Symbol> stack;
     private int tokenNumber;
-    private LinkedList<ASTSymbol> astStack;
+    private ASTNode astNode;
     private int astStackTop;
 
-    public StackState(LinkedList<Symbol> stack, int tokenNumber, LinkedList<ASTSymbol> astStack, int stackTop) {
+    public StackState(LinkedList<Symbol> stack, int tokenNumber, ASTNode myASTNode, int stackTop) {
         this.stack = new LinkedList<>();
         for (int i = stack.size() - 1; i >=0; i--) {
             this.stack.push(stack.get(i));
         }
         this.tokenNumber = tokenNumber;
-        this.astStack = astStack;
+        this.astNode = myASTNode.deepCopy();
         this.astStackTop = stackTop;
     }
 
@@ -28,8 +28,8 @@ public class StackState {
         return stack;
     }
 
-    public LinkedList<ASTSymbol> getAST() {
-        return astStack;
+    public ASTNode getAST() {
+        return astNode;
     }
 
     public int getAstStackTop() {

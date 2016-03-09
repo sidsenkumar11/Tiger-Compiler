@@ -52,7 +52,6 @@ public class Compiler {
 
         try {
             Compiler.compile("resources/tests/test4.tgr", printTokens, printAst);
-            System.out.println("Successful!");
         } catch (ParseException e) {
             System.out.println("Parse Failed");
         }

@@ -11,13 +11,15 @@ public class Parser {
     private LinkedList<StackState> backtrackStack;
     private int currentTokenNum;
     private ParseTable parseTable;
-    private LinkedList<ASTSymbol> parseAST;
+    private ASTNode currentNode;
     private int astAddLocation;
+    private ASTNode root;
 
     public Parser() {
 //        Use this when testing just the Parser
 //        parseTable = new ParseTable("../../../resources/ParseTable.csv");
-        this.parseAST = new LinkedList<>();
+        this.root = new ASTNode(new Symbol(false, "program"), null);
+        currentNode = root;
         this.parseTable = new ParseTable("resources/ParseTable.csv");
         this.backtrackStack = new LinkedList<>();
         this.astAddLocation = -1;
@@ -60,19 +62,20 @@ public class Parser {
      * Sets up stack by pushing EOF marker and the initial program symbol.
      */
     public void initializeStack() {
-        this.stack = new LinkedList<Symbol>();
+        this.stack = new LinkedList<>();
         stack.push(new Token("$", "$"));
         stack.push(new Symbol(false, "program"));
     }
 
     /**
      * Parses the token array using an LL(1) parse table.
-     * @throws Exception If the input program does not parse successfully.
+     * @throws ParseException If the input program does not parse successfully.
      */
     public boolean parse() throws ParseException {
         Token nextToken = tokenList[currentTokenNum];
         Symbol stackSymbol;
         do {
+            System.out.println(getParseAST());
             nextToken = tokenList[currentTokenNum];
 //            System.out.println("STACK: " + stack);
 //            System.out.println("TOKEN: " + nextToken);
@@ -80,152 +83,112 @@ public class Parser {
 
 //            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
             if (stackSymbol.isTerminal()) {
-                if (stackSymbol.getValue().equals(nextToken.getValue())) {
-                    // Parsed this token successfully. All is well.
-                    currentTokenNum++;
-                    if (stackSymbol.getValue().equals("id") || stackSymbol.getValue().equals("intlit") || stackSymbol.getValue().equals("floatlit")) {
-                        parseAST.set(astAddLocation, new ASTSymbol(nextToken, false, false));
-                    }
-                    astAddLocation++;
-                } else {
-                    if (backtrackStack.size() > 0) {
-                        // So this rule didn't work. Try backtracking and using a different rule.
-                        StackState nextTry = backtrackStack.pop();
-                        stack = nextTry.getStack();
-                        currentTokenNum = nextTry.getTokenNumber();
-                        parseAST = nextTry.getAST();
-                        astAddLocation = nextTry.getAstStackTop();
+                if (!stackSymbol.isEpsilon()) {
+                    if (stackSymbol.getValue().equals(nextToken.getValue())) {
+                        // Parsed this token successfully. All is well.
+                        currentTokenNum++;
                     } else {
-                        throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
+                        if (backtrackStack.size() > 0) {
+                            System.out.println("!!!! RULE FAILED !!! BACKTRACKING NOW");
+                            // So this rule didn't work. Try backtracking and using a different rule.
+                            StackState nextTry = backtrackStack.pop();
+                            stack = nextTry.getStack();
+                            currentTokenNum = nextTry.getTokenNumber();
+                            currentNode = nextTry.getAST();
+                            astAddLocation = nextTry.getAstStackTop();
+                        } else {
+                            throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
+                        }
                     }
+                } else {
+                    // Just let it pop off if it's epsilon.
+                }
+
+                // Handle ASTNode things with Terminal
+                if (stackSymbol.getValue().equalsIgnoreCase("id") || stackSymbol.getValue().equalsIgnoreCase("intlit") || stackSymbol.getValue().equalsIgnoreCase("floatlit")) {
+                    currentNode.setSymbol(nextToken);
+                }
+
+                currentNode = currentNode.getParent();
+                currentNode.incrementCurrentDeriv();
+                if (currentNode.getCurrentDeriv() < currentNode.getDerivation().size()) {
+                    currentNode = currentNode.getCurrent();
                 }
             } else if(!parseTable.isEmpty(stackSymbol, nextToken)) {
-                // Push symbols from table in reverse order onto stack.
+                // Non-Terminal found on stack.
+
+                // First create potential backup copies.
                 LinkedList<LinkedList<Symbol>> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
                 if (nextStackSymbols.size() > 1) {
                     for (int i = 1; i < nextStackSymbols.size(); i++) {
                         LinkedList<Symbol> entryInEntry = nextStackSymbols.get(i);
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
-                            if (!entryInEntry.get(j).isEpsilon()) {
-                                stack.push(entryInEntry.get(j));
-                            } else {
-//                                System.out.println("Didn't push the epsilon");
-                            }
+                            stack.push(entryInEntry.get(j));
                         }
-                        backtrackStack.push(new StackState(stack, currentTokenNum, parseAST, astAddLocation));
+                        backtrackStack.push(new StackState(stack, currentTokenNum, currentNode, astAddLocation));
                         // Pop off those values we just pushed. We don't actually push here; we're just doing it to save the potential stack state.
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
-                            if (!entryInEntry.get(j).isEpsilon()) {
-                                stack.pop();
-                            } else {
-//                                System.out.println("Didn't pop the epsilon (cuz you can't!)");
-                            }
+                            stack.pop();
                         }
                     }
                 }
 
-                // Now actually push.
-                boolean pushedParen = false;
-                int oldASTVal = astAddLocation;
-                int newASTVal = astAddLocation;
+                // Actually add the symbols to the stack now, in reverse order of the derivation.
                 for (int i = nextStackSymbols.get(0).size() - 1; i >= 0; i--) {
                     Symbol current = nextStackSymbols.get(0).get(i);
-                    if (!current.isEpsilon()) {
-                        stack.push(current);
-
-                        Symbol astCurrent = nextStackSymbols.get(0).get(nextStackSymbols.get(0).size() - 1 - i);
-                        if (i == nextStackSymbols.get(0).size() - 1) {
-                            // Add in the very first element
-                            if (astCurrent.isNonterminal()) {
-                                parseAST.add(astAddLocation + 1, new ASTSymbol(astCurrent, true, false));
-                                pushedParen = true;
-                            } else {
-                                parseAST.add(astAddLocation + 1, new ASTSymbol(astCurrent, false, false));
-                            }
-                        } else if (i == 0){
-                            // Add in the very last element
-                            if (pushedParen) {
-                                parseAST.add(astAddLocation + 1, new ASTSymbol(astCurrent, false, true));
-                            } else {
-                                parseAST.add(astAddLocation + 1, new ASTSymbol(astCurrent, false, false));
-                            }
-                        } else {
-                            // Add in a middle element
-                            if (astCurrent.isNonterminal()) {
-                                // If nonterminal, assume it will be matched. If it's not, remove the parens later.
-                                parseAST.add(astAddLocation + 1, new ASTSymbol(astCurrent, true, true));
-                            } else {
-                                parseAST.add(astAddLocation + 1, new ASTSymbol(astCurrent, false, false));
-                            }
-                        }
-                        astAddLocation++;
-                    } else {
-//                        System.out.println("Didn't push the epsilon");
-                    }
+                    stack.push(current);
+                    currentNode.addFirst(current, currentNode);
                 }
-                newASTVal = astAddLocation;
-                astAddLocation = oldASTVal + 1;
-//                for (int i = oldASTVal + 1; i < newASTVal; i++) {
-//                    if (parseAST.get(i).getSymbol().isNonterminal()) {
-//                        parseAST.get(i).setLeftParen(true);
-//                    }
-//                }
-//                while (parseAST.get(astAddLocation).isTerminal()) {
-//                    astAddLocation++;
-//                }
+                currentNode = currentNode.getCurrent();
+
             } else {
                 // The table didn't have something for this case.
                 if (backtrackStack.size() > 0) {
                     // So this rule didn't work. Try backtracking and using a different rule.
+                    System.out.println("!!!! RULE FAILED !!! BACKTRACKING NOW");
                     StackState nextTry = backtrackStack.pop();
                     stack = nextTry.getStack();
                     currentTokenNum = nextTry.getTokenNumber();
-                    parseAST = nextTry.getAST();
+                    currentNode = nextTry.getAST();
                     astAddLocation = nextTry.getAstStackTop();
                 } else {
                     throw new ParseException("No rule to parse " + stackSymbol.getValue() + " on input " + nextToken.getValue());
                 }
             }
-//            System.out.println(getParseAST());
         } while (!stackSymbol.isDollarToken());
-        parseAST.add(0, new ASTSymbol(new Symbol(false, "program"), true, true));
-//        System.out.println("Hooray! Successfully parsed input.");
-
-        // Remove direct epsilons - nonterminals that have right paren and immediately go to epsilon
-        // First, we need the productions for this non-terminal to know if any even go to epsilon directly.
-        String[] productions = ParseTable.readIn("resources/productions.txt");
-        for (int i = 0; i < parseAST.size(); i++) {
-            if (parseAST.get(i).isRightParen()) {
-                for (int j = 0; j < productions.length; j++) {
-                    String[] production = productions[j].split(" -> ");
-                    if (production[0].equals(parseAST.get(i).getSymbol().toString())) {
-                        // The LHS matches!
-                        if (production[1].equals("''")) {
-                            parseAST.remove(i);
-                            i--;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        System.out.println("Hooray! Successfully parsed input.");
         return true;
     }
 
     public String getParseAST() {
-        String retString = "";
-        for (int i = 0; i < parseAST.size(); i++) {
-            retString += parseAST.get(i) + " ";
-        }
-        return retString;
+        // Performs pre-order traversal on tree
+        StringBuilder traversal = new StringBuilder();
+        preOrder(root, traversal);
+        return traversal.toString();
     }
 
-    public static void main(String[] args) throws ParseException, FileNotFoundException, IOException {
+    private void preOrder(ASTNode node, StringBuilder traversal) {
+        if (node.getSymbol().isNonterminal()) {
+            traversal.append("(");
+        }
+        traversal.append(node.getSymbolValue()).append(" ");
+
+        for (int i = 0; i < node.getDerivation().size(); i++) {
+            preOrder(node.getDerivation().get(i), traversal);
+        }
+
+        traversal.deleteCharAt(traversal.length() - 1);
+        if (node.getSymbol().isNonterminal()) {
+            traversal.append(")");
+        }
+    }
+
+    public static void main(String[] args) throws ParseException, IOException {
         /* Read in file into string of text */
         // String fileName = args[0];
         String fileName = "../../../resources/test1.tokens";
         String fullFileText = "";
-        String line = null;
+        String line;
 
         try {
             FileReader fileReader = new FileReader(fileName);
