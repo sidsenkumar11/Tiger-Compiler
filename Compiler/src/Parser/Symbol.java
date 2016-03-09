@@ -48,6 +48,10 @@ public class Symbol {
 
     @Override
     public String toString() {
-        return value;
+        if (value.equals("?")) {
+            return ",";
+        } else {
+            return value;
+        }
     }
 }

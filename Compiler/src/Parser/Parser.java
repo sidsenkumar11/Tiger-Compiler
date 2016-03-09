@@ -73,13 +73,17 @@ public class Parser {
         Token nextToken = tokenList[currentTokenNum];
         Symbol stackSymbol;
         do {
-            System.out.println(getParseAST());
+//            System.out.println(getParseAST());
             nextToken = tokenList[currentTokenNum];
 //            System.out.println("STACK: " + stack);
 //            System.out.println("TOKEN: " + nextToken);
             stackSymbol = stack.pop();
 
 //            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
+//            System.out.println("THE CURRENT NODE IS " + currentNode);
+           // System.out.println("THE CURRENT NODE INDEX IS " + currentNode.getCurrentDeriv());
+//            printAST();
+
             if (stackSymbol.isTerminal()) {
                 if (!stackSymbol.isEpsilon()) {
                     if (stackSymbol.getValue().equals(nextToken.getValue())) {
@@ -87,7 +91,6 @@ public class Parser {
                         currentTokenNum++;
                     } else {
                         if (backtrackStack.size() > 0) {
-                            System.out.println("!!!! RULE FAILED !!! BACKTRACKING NOW");
                             // So this rule didn't work. Try backtracking and using a different rule.
                             StackState nextTry = backtrackStack.pop();
                             stack = nextTry.getStack();
@@ -111,11 +114,33 @@ public class Parser {
                     currentNode.setSymbol(nextToken);
                 }
 
-                currentNode = currentNode.getParent();
-                currentNode.incrementCurrentDeriv();
-                if (currentNode.getCurrentDeriv() < currentNode.getDerivation().size()) {
-                    currentNode = currentNode.getCurrent();
+//                if (currentNode != null) {
+//                    while (currentNode != null && (currentNode.getDerivation().size() == 1 || currentNode.getCurrentDeriv() == currentNode.getDerivation().size() - 1)) {
+//                        currentNode = currentNode.getParent();
+//                    }
+//                    if (currentNode != null) {
+//                        currentNode.incrementCurrentDeriv();
+//                        if (currentNode.getCurrentDeriv() < currentNode.getDerivation().size()) {
+//                            currentNode = currentNode.getCurrent();
+//                        }
+//                    }
+//                }
+                if (currentNode != null) {
+                    while (currentNode != null && (currentNode.getDerivation().size() == 1 || currentNode.getDerivation().size() - 1 == currentNode.getCurrentDeriv() || currentNode.getDerivation().size() == 0)) {
+                        currentNode = currentNode.getParent();
+                    }
+                    if (currentNode != null) {
+                        currentNode.incrementCurrentDeriv();
+                        currentNode = currentNode.getCurrent();
+                    }
+                } else {
+                    currentNode = root;
                 }
+
+                if (currentNode == null) {
+                    currentNode = root;
+                }
+
             } else if(!parseTable.isEmpty(stackSymbol, nextToken)) {
                 // Non-Terminal found on stack.
 
@@ -142,12 +167,10 @@ public class Parser {
                     currentNode.addFirst(current, currentNode);
                 }
                 currentNode = currentNode.getCurrent();
-
             } else {
                 // The table didn't have something for this case.
                 if (backtrackStack.size() > 0) {
                     // So this rule didn't work. Try backtracking and using a different rule.
-                    System.out.println("!!!! RULE FAILED !!! BACKTRACKING NOW");
                     StackState nextTry = backtrackStack.pop();
                     stack = nextTry.getStack();
                     currentTokenNum = nextTry.getTokenNumber();
@@ -169,8 +192,24 @@ public class Parser {
         return traversal.toString();
     }
 
+    public void printAST() {
+        printASTRecur(root);
+        System.out.println("-----------------------------------------------------------------------");
+    }
+
+    public void printASTRecur(ASTNode node) {
+        System.out.print(node + ": ");
+        for (int i = 0; i < node.getDerivation().size(); i++) {
+            System.out.print(node.getDerivation().get(i) + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < node.getDerivation().size(); i++) {
+            printASTRecur(node.getDerivation().get(i));
+        }
+    }
+
     private void preOrder(ASTNode node, StringBuilder traversal) {
-        // Don't print epsilons
+        // Don't print epsilons or nodes whose children are epsilons
         if (!node.getSymbol().isEpsilon()) {
             if (node.getSymbol().isNonterminal()) {
                 traversal.append("(");
@@ -186,30 +225,5 @@ public class Parser {
                 traversal.append(") ");
             }
         }
-    }
-
-    public static void main(String[] args) throws ParseException, IOException {
-        /* Read in file into string of text */
-        // String fileName = args[0];
-        String fileName = "../../../resources/test1.tokens";
-        String fullFileText = "";
-        String line;
-
-        try {
-            FileReader fileReader = new FileReader(fileName);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            while ((line = bufferedReader.readLine()) != null) {
-                fullFileText += line + "\n";
-            }
-            bufferedReader.close();
-        } catch (FileNotFoundException ex) {
-            System.out.println("Unable to open file '" + fileName + "'");
-        } catch (IOException ex) {
-            System.out.println("Error reading file '" + fileName + "'");
-            // ex.printStackTrace();
-        }
-//        System.out.println(fullFileText);
-        Parser parser = new Parser(fullFileText);
-        parser.parse();
     }
 }
