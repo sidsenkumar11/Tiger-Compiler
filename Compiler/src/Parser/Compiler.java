@@ -34,7 +34,9 @@ public class Compiler {
         Parser parser = new Parser(tokenList);
         try {
             parser.parse();
-            System.out.println("\n" + parser.getParseAST());
+            if (astFlag) {
+                System.out.println("\n" + parser.getParseAST());
+            }
         } catch(ParseException pe) {
             System.err.println(pe.getMessage());
         }

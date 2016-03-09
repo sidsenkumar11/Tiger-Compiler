@@ -12,7 +12,6 @@ public class Parser {
     private int currentTokenNum;
     private ParseTable parseTable;
     private ASTNode currentNode;
-    private int astAddLocation;
     private ASTNode root;
 
     public Parser() {
@@ -22,7 +21,6 @@ public class Parser {
         currentNode = root;
         this.parseTable = new ParseTable("resources/ParseTable.csv");
         this.backtrackStack = new LinkedList<>();
-        this.astAddLocation = -1;
         initializeStack();
     }
 
@@ -95,7 +93,7 @@ public class Parser {
                             stack = nextTry.getStack();
                             currentTokenNum = nextTry.getTokenNumber();
                             currentNode = nextTry.getAST();
-                            astAddLocation = nextTry.getAstStackTop();
+                            root = nextTry.getRoot();
                         } else {
                             throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
                         }
@@ -129,7 +127,7 @@ public class Parser {
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
                             stack.push(entryInEntry.get(j));
                         }
-                        backtrackStack.push(new StackState(stack, currentTokenNum, currentNode, astAddLocation));
+                        backtrackStack.push(new StackState(stack, currentTokenNum, currentNode, root));
                         // Pop off those values we just pushed. We don't actually push here; we're just doing it to save the potential stack state.
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
                             stack.pop();
@@ -154,13 +152,13 @@ public class Parser {
                     stack = nextTry.getStack();
                     currentTokenNum = nextTry.getTokenNumber();
                     currentNode = nextTry.getAST();
-                    astAddLocation = nextTry.getAstStackTop();
+                    root = nextTry.getRoot();
                 } else {
                     throw new ParseException("No rule to parse " + stackSymbol.getValue() + " on input " + nextToken.getValue());
                 }
             }
         } while (!stackSymbol.isDollarToken());
-        System.out.println("Hooray! Successfully parsed input.");
+//        System.out.println("Hooray! Successfully parsed input.");
         return true;
     }
 
@@ -172,18 +170,21 @@ public class Parser {
     }
 
     private void preOrder(ASTNode node, StringBuilder traversal) {
-        if (node.getSymbol().isNonterminal()) {
-            traversal.append("(");
-        }
-        traversal.append(node.getSymbolValue()).append(" ");
+        // Don't print epsilons
+        if (!node.getSymbol().isEpsilon()) {
+            if (node.getSymbol().isNonterminal()) {
+                traversal.append("(");
+            }
+            traversal.append(node.getSymbolValue()).append(" ");
 
-        for (int i = 0; i < node.getDerivation().size(); i++) {
-            preOrder(node.getDerivation().get(i), traversal);
-        }
+            for (int i = 0; i < node.getDerivation().size(); i++) {
+                preOrder(node.getDerivation().get(i), traversal);
+            }
 
-        //traversal.deleteCharAt(traversal.length() - 1);
-        if (node.getSymbol().isNonterminal()) {
-            traversal.append(")");
+            if (node.getSymbol().isNonterminal()) {
+                traversal.deleteCharAt(traversal.length() - 1);
+                traversal.append(") ");
+            }
         }
     }
 
