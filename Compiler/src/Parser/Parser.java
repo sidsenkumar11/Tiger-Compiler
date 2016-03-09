@@ -15,22 +15,12 @@ public class Parser {
     private ASTNode root;
 
     public Parser() {
-//        Use this when testing just the Parser
-//        parseTable = new ParseTable("../../../resources/ParseTable.csv");
         this.root = new ASTNode(new Symbol(false, "program"), null, null);
         root.setRoot(root);
         currentNode = root;
         this.parseTable = new ParseTable("resources/ParseTable.csv");
         this.backtrackStack = new LinkedList<>();
         initializeStack();
-    }
-
-    public Parser(String tokens) throws ParseException {
-        this();
-        generateTokenList(tokens);
-        if (tokenList.length == 0) {
-            throw new ParseException("Cannot parse empty file");
-        }
     }
     
     public Parser(Token[] tokenList) throws ParseException {
@@ -39,22 +29,6 @@ public class Parser {
         if (tokenList.length == 0) {
             throw new ParseException("Cannot parse empty file");
         }
-    }
-
-    /**
-     * Puts all the tokens from the scanner's output into an array.
-     * @param tokens The tokens scanned from the Scanner.
-     */
-    public void generateTokenList(String tokens) {
-        String[] lines = tokens.split("[\\r\\n]+");
-        tokenList = new Token[lines.length + 1];
-        for (int i = 0; i < lines.length; i++) {
-            // Assumes format: Keyword let
-            String[] separated = lines[i].split(" ");
-            Token current = new Token(separated[0].trim(), separated[1].trim());
-            tokenList[i] = current;
-        }
-        tokenList[lines.length] = new Token("$", "$");
     }
 
     /**
@@ -70,8 +44,8 @@ public class Parser {
      * Parses the token array using an LL(1) parse table.
      * @throws ParseException If the input program does not parse successfully.
      */
-    public boolean parse() throws ParseException {
-        Token nextToken = tokenList[currentTokenNum];
+    public boolean parse() throws ParseException, NullPointerException {
+        Token nextToken;
         Symbol stackSymbol;
         do {
             nextToken = tokenList[currentTokenNum];
@@ -81,8 +55,15 @@ public class Parser {
 
 //            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
 //            System.out.println("THE CURRENT NODE IS " + currentNode);
-//            System.out.println("IT's PARENT IS " + currentNode.getParent());
-//            System.out.println("THE CURRENT NODE INDEX IS " + currentNode.getCurrentDeriv());
+//            if (currentNode != null) {
+//                System.out.println("IT's PARENT IS " + currentNode.getParent());
+//                System.out.println("THE CURRENT NODE INDEX IS " + currentNode.getCurrentDeriv());
+//            } else {
+//                System.out.println("IT's PARENT IS " + null);
+//                System.out.println("THE CURRENT NODE INDEX IS " + null);
+//            }
+//
+//            System.out.println("---------------------------------------------------------");
 //            printAST();
 
             if (stackSymbol.isTerminal()) {
@@ -102,9 +83,8 @@ public class Parser {
                             throw new ParseException("Expected " + stackSymbol.getValue() + " but found " + nextToken.getValue());
                         }
                     }
-                } else {
-                    // Just let it pop off if it's epsilon.
                 }
+                // Just let it pop off if it's epsilon.
 
                 // Handle ASTNode things with Terminal
                 if (stackSymbol.getValue().equalsIgnoreCase("id")) {
@@ -115,12 +95,14 @@ public class Parser {
                     currentNode.setSymbol(nextToken);
                 }
 
-                if (!stackSymbol.getValue().equals("$") && !stackSymbol.getValue().equalsIgnoreCase("end")) {
-                    while (currentNode.getDerivation().size() == 1 || currentNode.getDerivation().size() - 1 == currentNode.getCurrentDeriv() || currentNode.getDerivation().size() == 0) {
+                if (stack.size() != 0 && !(stackSymbol.isDollarToken() && stack.size() == 1)) {
+                    while (currentNode != null && (currentNode.getDerivation().size() == 1 || currentNode.getDerivation().size() - 1 == currentNode.getCurrentDeriv() || currentNode.getDerivation().size() == 0)) {
                         currentNode = currentNode.getParent();
                     }
-                    currentNode.incrementCurrentDeriv();
-                    currentNode = currentNode.getCurrent();
+                    if (currentNode != null) {
+                        currentNode.incrementCurrentDeriv();
+                        currentNode = currentNode.getCurrent();
+                    }
                 }
 
 
@@ -227,9 +209,7 @@ public class Parser {
 
     private void preOrder(ASTNode node, StringBuilder traversal) {
         // Don't print epsilons or nodes whose children are epsilons
-        if (node.getSymbol().isPotentialSpecialParentOfEpsilon() && node.getDerivation().get(0).getSymbolValue().equalsIgnoreCase("''")) {
-
-        } else {
+        if (!(node.getSymbol().isPotentialSpecialParentOfEpsilon() && node.getDerivation().get(0).getSymbolValue().equalsIgnoreCase("''"))) {
             if (!node.getSymbol().isEpsilon()) {
                 if (node.getSymbol().isNonterminal()) {
                     traversal.append("(");

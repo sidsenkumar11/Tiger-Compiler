@@ -58,29 +58,28 @@ public class Compiler {
                 printAst = true;
             }
         }
-
+        String filename="resources/tests/test4.tgr";
         try {
-            Compiler.compile("resources/tests/test4.tgr", printTokens, printAst);
-//            Compiler.compile(filename, printTokens, printAst);
+            Compiler.compile(filename, printTokens, printAst);
         } catch (ParseException e) {
             System.out.println("Parse Failed");
         }
         // Look at all .tgr files in directory.
-//        File folder = new File("resources/tests");
-//        File[] listOfFiles = folder.listFiles();
-//
-//        for (int i = 0; i < listOfFiles.length; i++) {
-//            if (listOfFiles[i].isFile()) {
-//                if (listOfFiles[i].getName().substring(listOfFiles[i].getName().length() - 4).equals(".tgr")) {
-//                    String fileName = "resources/tests/" + listOfFiles[i].getName();
-//                    try {
-//                        Compiler.compile(fileName, printTokens, printAst);
-//                        System.out.println("SUCCESS: " + listOfFiles[i].getName());
-//                    } catch (ParseException e) {
-//                        System.out.println("Parse failed on: " + listOfFiles[i].getName());
-//                    }
-//                }
-//            }
-//        }
+        File folder = new File("resources/tests");
+        File[] listOfFiles = folder.listFiles();
+
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (listOfFiles[i].isFile()) {
+                if (listOfFiles[i].getName().substring(listOfFiles[i].getName().length() - 4).equals(".tgr")) {
+                    String fileName = "resources/tests/" + listOfFiles[i].getName();
+                    try {
+                        Compiler.compile(fileName, printTokens, printAst);
+                        System.out.println("SUCCESS: " + listOfFiles[i].getName());
+                    } catch (Exception e) {
+                        System.out.println("Parse failed on: " + listOfFiles[i].getName());
+                    }
+                }
+            }
+        }
     }
 }
