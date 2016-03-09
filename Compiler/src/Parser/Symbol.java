@@ -6,6 +6,7 @@ public class Symbol {
     private boolean terminal;
     private boolean isEpsilon;
     private boolean dollarToken;
+    private boolean isSpecial;
     private String value;
 
     public Symbol(boolean isTerminal, String value) {
@@ -13,6 +14,8 @@ public class Symbol {
         this.value = value.toLowerCase();
         this.dollarToken = value.equals("$");
         this.isEpsilon = value.equals("''");
+
+        this.isSpecial = (value.equals("ids'") || value.equals("neparams'") || value.equals("neexprs'") || value.equals("boolexpr'") || value.equals("clause'") || value.equals("numexpr'") || value.equals("term'") || value.equals("factor'"));
     }
 
     public void setValue(String value) {
@@ -32,6 +35,10 @@ public class Symbol {
     }
 
     public boolean isEpsilon() { return isEpsilon; }
+
+    public boolean isPotentialSpecialParentOfEpsilon() {
+        return this.isSpecial;
+    }
     public String getValue() {
         return value;
     }

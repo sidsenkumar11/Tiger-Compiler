@@ -17,7 +17,8 @@ public class Parser {
     public Parser() {
 //        Use this when testing just the Parser
 //        parseTable = new ParseTable("../../../resources/ParseTable.csv");
-        this.root = new ASTNode(new Symbol(false, "program"), null);
+        this.root = new ASTNode(new Symbol(false, "program"), null, null);
+        root.setRoot(root);
         currentNode = root;
         this.parseTable = new ParseTable("resources/ParseTable.csv");
         this.backtrackStack = new LinkedList<>();
@@ -73,7 +74,6 @@ public class Parser {
         Token nextToken = tokenList[currentTokenNum];
         Symbol stackSymbol;
         do {
-//            System.out.println(getParseAST());
             nextToken = tokenList[currentTokenNum];
 //            System.out.println("STACK: " + stack);
 //            System.out.println("TOKEN: " + nextToken);
@@ -81,7 +81,8 @@ public class Parser {
 
 //            System.out.println("CURRENT STACK SYMBOL: " + stackSymbol);
 //            System.out.println("THE CURRENT NODE IS " + currentNode);
-           // System.out.println("THE CURRENT NODE INDEX IS " + currentNode.getCurrentDeriv());
+//            System.out.println("IT's PARENT IS " + currentNode.getParent());
+//            System.out.println("THE CURRENT NODE INDEX IS " + currentNode.getCurrentDeriv());
 //            printAST();
 
             if (stackSymbol.isTerminal()) {
@@ -114,32 +115,14 @@ public class Parser {
                     currentNode.setSymbol(nextToken);
                 }
 
-//                if (currentNode != null) {
-//                    while (currentNode != null && (currentNode.getDerivation().size() == 1 || currentNode.getCurrentDeriv() == currentNode.getDerivation().size() - 1)) {
-//                        currentNode = currentNode.getParent();
-//                    }
-//                    if (currentNode != null) {
-//                        currentNode.incrementCurrentDeriv();
-//                        if (currentNode.getCurrentDeriv() < currentNode.getDerivation().size()) {
-//                            currentNode = currentNode.getCurrent();
-//                        }
-//                    }
-//                }
-                if (currentNode != null) {
-                    while (currentNode != null && (currentNode.getDerivation().size() == 1 || currentNode.getDerivation().size() - 1 == currentNode.getCurrentDeriv() || currentNode.getDerivation().size() == 0)) {
+                if (!stackSymbol.getValue().equals("$") && !stackSymbol.getValue().equalsIgnoreCase("end")) {
+                    while (currentNode.getDerivation().size() == 1 || currentNode.getDerivation().size() - 1 == currentNode.getCurrentDeriv() || currentNode.getDerivation().size() == 0) {
                         currentNode = currentNode.getParent();
                     }
-                    if (currentNode != null) {
-                        currentNode.incrementCurrentDeriv();
-                        currentNode = currentNode.getCurrent();
-                    }
-                } else {
-                    currentNode = root;
+                    currentNode.incrementCurrentDeriv();
+                    currentNode = currentNode.getCurrent();
                 }
 
-                if (currentNode == null) {
-                    currentNode = root;
-                }
 
             } else if(!parseTable.isEmpty(stackSymbol, nextToken)) {
                 // Non-Terminal found on stack.
@@ -148,11 +131,25 @@ public class Parser {
                 LinkedList<LinkedList<Symbol>> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
                 if (nextStackSymbols.size() > 1) {
                     for (int i = 1; i < nextStackSymbols.size(); i++) {
+                        // Make copy of root. Note that this does not copy parent and root nodes into each one.
+                        ASTNode tempRoot = root.deepCopy();
+                        tempRoot.setRoot(tempRoot);
+
+                        // Set parent and root nodes for each node in the new tree.
+                        for (int j = 0; j < tempRoot.getDerivation().size(); j++) {
+                            setParentsAndRoots(tempRoot.getDerivation().get(j), tempRoot, tempRoot);
+                        }
+
+                        // Get "currentNode" from the new tree.
+                        ASTNode temp = getNodeFromInt(currentNode.getNum(), tempRoot);
+
                         LinkedList<Symbol> entryInEntry = nextStackSymbols.get(i);
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
                             stack.push(entryInEntry.get(j));
+                            temp.addFirst(entryInEntry.get(j), temp);
                         }
-                        backtrackStack.push(new StackState(stack, currentTokenNum, currentNode, root));
+                        temp = temp.getCurrent();
+                        backtrackStack.push(new StackState(stack, currentTokenNum, temp, tempRoot));
                         // Pop off those values we just pushed. We don't actually push here; we're just doing it to save the potential stack state.
                         for (int j = entryInEntry.size() - 1; j >= 0; j--) {
                             stack.pop();
@@ -185,6 +182,26 @@ public class Parser {
         return true;
     }
 
+    private ASTNode getNodeFromInt(int num, ASTNode tempRoot) {
+        if (tempRoot.getNum() == num) {
+            return tempRoot;
+        }
+        ASTNode node = null;
+        for (int i = 0; i < tempRoot.getDerivation().size() && node == null; i++) {
+            node = getNodeFromInt(num, tempRoot.getDerivation().get(i));
+        }
+        return node;
+    }
+
+    private void setParentsAndRoots(ASTNode node, ASTNode parent, ASTNode theRoot) {
+        node.setParent(parent);
+        node.setRoot(theRoot);
+
+        for (int i = 0; i < node.getDerivation().size(); i++) {
+            setParentsAndRoots(node.getDerivation().get(i), node, theRoot);
+        }
+    }
+
     public String getParseAST() {
         // Performs pre-order traversal on tree
         StringBuilder traversal = new StringBuilder();
@@ -210,19 +227,23 @@ public class Parser {
 
     private void preOrder(ASTNode node, StringBuilder traversal) {
         // Don't print epsilons or nodes whose children are epsilons
-        if (!node.getSymbol().isEpsilon()) {
-            if (node.getSymbol().isNonterminal()) {
-                traversal.append("(");
-            }
-            traversal.append(node.getSymbolValue()).append(" ");
+        if (node.getSymbol().isPotentialSpecialParentOfEpsilon() && node.getDerivation().get(0).getSymbolValue().equalsIgnoreCase("''")) {
 
-            for (int i = 0; i < node.getDerivation().size(); i++) {
-                preOrder(node.getDerivation().get(i), traversal);
-            }
+        } else {
+            if (!node.getSymbol().isEpsilon()) {
+                if (node.getSymbol().isNonterminal()) {
+                    traversal.append("(");
+                }
+                traversal.append(node.getSymbolValue()).append(" ");
 
-            if (node.getSymbol().isNonterminal()) {
-                traversal.deleteCharAt(traversal.length() - 1);
-                traversal.append(") ");
+                for (int i = 0; i < node.getDerivation().size(); i++) {
+                    preOrder(node.getDerivation().get(i), traversal);
+                }
+
+                if (node.getSymbol().isNonterminal()) {
+                    traversal.deleteCharAt(traversal.length() - 1);
+                    traversal.append(") ");
+                }
             }
         }
     }

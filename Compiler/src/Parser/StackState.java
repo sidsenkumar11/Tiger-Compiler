@@ -16,8 +16,8 @@ public class StackState {
             this.stack.push(stack.get(i));
         }
         this.tokenNumber = tokenNumber;
-        this.astNode = myASTNode.deepCopy();
-        this.root = myRoot.deepCopy();
+        this.astNode = myASTNode;
+        this.root = myRoot;
     }
 
     public int getTokenNumber() {

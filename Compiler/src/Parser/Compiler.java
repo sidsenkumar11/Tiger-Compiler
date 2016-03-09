@@ -45,10 +45,10 @@ public class Compiler {
     }
     public static void main(String[] args) {
 
-        String filename = args[0];
+//        String filename = args[0];
 
         // Decide which flags have been inputted.
-        boolean printTokens = false, printAst = false;
+        boolean printTokens = false, printAst = true;
         for(String s : args) {
             if(s.equals("-tokens") || s.equals("--tokens")) {
                 printTokens = true;
@@ -60,8 +60,8 @@ public class Compiler {
         }
 
         try {
-//            Compiler.compile("resources/tests/test4.tgr", printTokens, printAst);
-            Compiler.compile(filename, printTokens, printAst);
+            Compiler.compile("resources/tests/test4.tgr", printTokens, printAst);
+//            Compiler.compile(filename, printTokens, printAst);
         } catch (ParseException e) {
             System.out.println("Parse Failed");
         }
