@@ -16,7 +16,11 @@ public class Compiler {
         // Print tokens if asked to.
         if(tokensFlag) {
             for(Token t : tokens) {
-                System.out.print(t + " ");
+                if(t.getType().equalsIgnoreCase("intlit") || t.getType().equalsIgnoreCase("floatlit")) {
+                    System.out.print(t.getContent() + ":" + t.getType().toLowerCase());
+                } else {
+                    System.out.print(t + " ");
+                }
             }
             System.out.println();
         }
@@ -41,7 +45,7 @@ public class Compiler {
         // Decide which flags have been inputted.
         boolean printTokens = false, printAst = false;
         for(String s : args) {
-            if(s.equals("-tokens")) {
+            if(s.equals("--tokens")) {
                 printTokens = true;
             }
 

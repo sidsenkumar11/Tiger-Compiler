@@ -105,7 +105,11 @@ public class Parser {
                 }
 
                 // Handle ASTNode things with Terminal
-                if (stackSymbol.getValue().equalsIgnoreCase("id") || stackSymbol.getValue().equalsIgnoreCase("intlit") || stackSymbol.getValue().equalsIgnoreCase("floatlit")) {
+                if (stackSymbol.getValue().equalsIgnoreCase("id")) {
+                    currentNode.setSymbol(nextToken);
+                }
+
+                if (stackSymbol.getValue().equalsIgnoreCase("intlit") || stackSymbol.getValue().equalsIgnoreCase("floatlit")) {
                     currentNode.setSymbol(nextToken);
                 }
 
@@ -177,7 +181,7 @@ public class Parser {
             preOrder(node.getDerivation().get(i), traversal);
         }
 
-        traversal.deleteCharAt(traversal.length() - 1);
+        //traversal.deleteCharAt(traversal.length() - 1);
         if (node.getSymbol().isNonterminal()) {
             traversal.append(")");
         }

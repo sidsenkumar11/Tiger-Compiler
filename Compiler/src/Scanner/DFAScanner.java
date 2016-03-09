@@ -220,7 +220,7 @@ public class DFAScanner {
 
     /**
      * Creates the DFA the scanner uses as a recognizer. The DFA should
-     * probable be created before hand and serialized so it can be loaded
+     * probably be created before hand and serialized so it can be loaded
      * instead of having to be created.
      * 
      * @return The DFA that recognizes keywords in a Tiger program
