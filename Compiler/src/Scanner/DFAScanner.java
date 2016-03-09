@@ -180,7 +180,7 @@ public class DFAScanner {
                             }
                             
                             if(!accepted) { //rolling back didn't find anything
-                                System.err.println("Error on line: " + lineNumber + ". Couldn't recognize " + oldLexeme);
+                                System.err.println("Error while scanning. Couldn't recognize " + oldLexeme);
 //                                System.err.println("Couldn't recognize '" + oldLexeme + "'. Cancelling scan");
                                 return tokens;
                             }
