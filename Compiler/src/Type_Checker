@@ -1,0 +1,194 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+
+class SymbolTable
+{
+    public String scope, name, type, attr;
+    public SymbolTable() {
+    }
+}	
+
+
+public class Runner {
+		
+	public static void main(String[] args) {
+		// String fileName = args[0];
+		String fileName = "factorial.ast";
+		String fullFileText = "";
+        String line = null;
+
+	    try {
+            FileReader fileReader = new FileReader(fileName);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            while((line = bufferedReader.readLine()) != null) {
+                fullFileText += line + "\n";
+            }   
+            bufferedReader.close();         
+        } catch(FileNotFoundException ex) {
+        	System.out.println("Unable to open file '" + fileName + "'");                
+        } catch(IOException ex) {
+            System.out.println("Error reading file '" + fileName + "'");                  
+            // ex.printStackTrace();
+        }   
+	  
+	    //String fullFileText1[] = (fullFileText.split("((?<=,)|(?=,)|(?<=;)|(?=;)|(?<=:)|(?=:))"));
+	    String fullFileText_token[] = (fullFileText.split("(\\s+)|((?=,)|(?=;)|(?=:)|(?<=\\()|(?=\\()|(?=\\))|(?<=\\)))"));
+	    
+	    int k = 0;
+	    int p = 0;
+	    int funcvar_no = 0;
+		String scope = "program";
+	    for (int i=0; i<fullFileText_token.length; i++)  
+	   {
+			SymbolTable[] MainSymbolTable = new SymbolTable[100];
+    		String[] m_var_name=new String[100];
+		   // System.out.println(fullFileText_token[i]);
+	    	switch(fullFileText_token[i]) {
+	    	
+	    	//Checking for variable Declaration
+	    	case "vardecl":
+	    	{
+
+	    		//System.out.println("Entered vardecl");
+	    		boolean var_loop_stop = false;
+	    		for(int j=i; var_loop_stop == false;j++)
+	    		{
+	    		   // System.out.println(fullFileText_token[j]);
+	    			switch(fullFileText_token[j]) {
+	    			case "ids":
+	    			{
+	    	    		m_var_name[k] = fullFileText_token[j+1];
+	    	    		//System.out.println(var_name[k]);
+	    	    		k++;
+	    	    		break;
+	    			}
+	    			
+	    			case "type":
+	    			{
+	    	    		for(; p<k;p++)
+	    	    		{
+	    	    			MainSymbolTable[k] = new SymbolTable();
+	    	    			MainSymbolTable[k].scope = scope;
+	    	    			MainSymbolTable[k].name = m_var_name[p];
+	    	    			MainSymbolTable[k].type = fullFileText_token[j+1];
+	    	    			MainSymbolTable[k].attr = "id";
+		    	    		System.out.printf("Scope: %s  M_Var_Name: %s \tType: %s \t"
+		    	    				+ "Attr: %s\n",MainSymbolTable[k].scope, 
+		    	    				MainSymbolTable[k].name, MainSymbolTable[k].type, 
+		    	    				MainSymbolTable[k].attr);
+	    	    		}
+	    	    		break;
+	    			}
+	    			
+	    			case "optinit":
+	    			{
+	        			var_loop_stop = true;
+	    	    		//System.out.println(fullFileText_token[j]);	    	    			    		
+	    	    		break;
+	    			}
+	    			default:
+	    			{
+	    				break;
+	    			}
+	    			}
+	    			i=j;
+	    		}
+    		    break;
+	    	}
+	    		    	
+	    	//Checking for function Declaration
+	    	case "funcdecl":
+	    	{
+	   			//System.out.println("Entered funcdecl");
+	    		boolean f_loop_stop = false;
+	    		for(int j=i; f_loop_stop == false;j++)
+	    		{
+	    			switch(fullFileText_token[j]) {
+	    			case "func":
+	    			{
+	    	    		//System.out.println(fullFileText_token[j]);
+	    	    		m_var_name[k] = fullFileText_token[j+1];
+	    	    		i=j;
+	    	    		break;
+	    			}
+	    			
+	    	//Checking for variable declaration in a function
+	    			case "param":
+	    			{
+	    				//System.out.println("Entered Param");
+	    				String f_scope = m_var_name[k];
+	    				
+	    				SymbolTable[] FuncSymbolTable = new SymbolTable[100];
+    	    			FuncSymbolTable[funcvar_no] = new SymbolTable();
+	    	    		
+	    	    		FuncSymbolTable[funcvar_no].scope = f_scope;
+	    	    		FuncSymbolTable[funcvar_no].name = fullFileText_token[j+1];
+	    	    		FuncSymbolTable[funcvar_no].type = fullFileText_token[j+7];;
+	    	    		FuncSymbolTable[funcvar_no].attr = "id";
+	    	    		System.out.printf("Scope: %s  \tF_Var_Name: %s  \tType: %s \t"
+	    	    				+ "Attr: %s\n",FuncSymbolTable[funcvar_no].scope, 
+	    	    				FuncSymbolTable[funcvar_no].name, FuncSymbolTable[funcvar_no].type, 
+	    	    				FuncSymbolTable[funcvar_no].attr);
+
+	    				j=j+7;
+	    				break;
+	    			}
+	    //Checking type for the function declared				    			
+	    			case "optrettype":
+	    			{
+    	    			MainSymbolTable[k] = new SymbolTable();
+    	    			MainSymbolTable[k].scope = scope;
+    	    			MainSymbolTable[k].name = m_var_name[k];
+    	    			MainSymbolTable[k].attr = "func";
+	    				
+	    				if(fullFileText_token[j+5].matches("type"))
+	    				{
+	    	    			MainSymbolTable[k].type = fullFileText_token[j+6];
+	    	    			j=j+6;
+	    				}
+	    				else
+	    				{
+	    					MainSymbolTable[k].type = "void";
+	    				}
+
+		    	    		System.out.printf("Scope: %s  M_Var_Name: %s "
+		    	    				+ "Type: %s \tAttr: %s\n",MainSymbolTable[k].scope, 
+		    	    				MainSymbolTable[k].name, MainSymbolTable[k].type, 
+		    	    				MainSymbolTable[k].attr);
+		    	    		k++;
+		    	    		p++;
+	    	    		break;
+	    			}
+	    			
+	    	//Checking the end of function declaration		
+	    			case "begin":
+	    			{
+	        			f_loop_stop = true;	    		
+	    	    		break;
+	    			}
+	    			} 
+	    			i=j;
+	    		}	
+	    		break;
+	    	}
+	    	
+	    	
+	    	default :
+	    	{
+    			//System.out.println(i);
+	    		break;
+	    	}
+
+	    	
+	    	
+	    	}
+	   }
+	
+	   }
+	}
+
