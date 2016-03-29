@@ -14,6 +14,8 @@ public class TypeChecker {
         String T_type;
         ArrayList<SymbolTableEntry> MainSymbolTable = new ArrayList<>();
         ArrayList<TypeTableEntry> TypeSymbolTable = new ArrayList<>();
+        ArrayList<SymbolTableEntry> FuncSymbolTable = new ArrayList<>();
+
         String[] m_var_name = new String[100];
         String[] type_name = { "int", "float", "int array", "float array" };
 
@@ -30,6 +32,7 @@ public class TypeChecker {
         }
 
         for (int i = 0; i < fullFileText_token.length; i++) {
+
 
             // System.out.println(fullFileText_token[i]);
             switch (fullFileText_token[i]) {
@@ -165,7 +168,6 @@ public class TypeChecker {
 
                                 String f_scope = m_var_name[k];
 
-                                ArrayList<SymbolTableEntry> FuncSymbolTable = new ArrayList<>();
 
                                 // Checking if the type is correct for function
 
@@ -184,9 +186,7 @@ public class TypeChecker {
                                     System.out.printf("Scope: %s  \tF_Var_Name: %s  \tType: %s \t"
 
                                                     + "Attr: %s\n", FuncSymbolTable.get(funcvar_no).scope(),
-
                                             FuncSymbolTable.get(funcvar_no).name(), FuncSymbolTable.get(funcvar_no).type(),
-
                                             FuncSymbolTable.get(funcvar_no).attr());
                                     j = j + 7;
                                 } else {
@@ -232,6 +232,70 @@ public class TypeChecker {
                             // Checking the end of function declaration
                             case "begin": {
                                 f_loop_stop = true;
+
+                                boolean functionFinished = false;
+                                for (int m = i; !functionFinished; m++) {
+                                    switch (fullFileText_token[m]) {
+                                        case "return": {
+                                            // Make sure return type matches function type
+                                            SymbolTableEntry functionEntry = FuncSymbolTable.get(FuncSymbolTable.size() - 1);
+                                            boolean semicolonFound = false;
+                                            for (int l = m; !semicolonFound; l++) {
+                                                switch (fullFileText_token[l]) {
+                                                    case "factor": {
+                                                        for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+                                                            // Need to check if type of this factor matches that of function.
+                                                            if (fullFileText_token[l + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
+                                                                SymbolTableEntry entry = MainSymbolTable.get(mainSymbolTableIndex);
+                                                                if (entry.scope().equals(functionEntry.name()) ||
+                                                                        entry.scope().equals("program")) {
+                                                                    // Variable is in scope
+                                                                    if (functionEntry.type().equals("float")) {
+                                                                        // Accept both floats and ints
+                                                                        if (!entry.type().equals("float") && !entry.type().equals("int")) {
+                                                                            System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
+//                                                            System.exit(0);
+                                                                        }
+                                                                    } else {
+                                                                        if (!entry.type().equals(functionEntry.type())) {
+                                                                            System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
+//                                                            System.exit(0);
+                                                                        }
+                                                                    }
+                                                                } else {
+                                                                    System.out.println("Variable " + fullFileText_token[l+1] + " out of scope.");
+//                                                        System.exit(0);
+                                                                }
+                                                                break;
+                                                            }
+                                                        }
+                                                        break;
+                                                    }
+                                                    case ";": {
+                                                        semicolonFound = true;
+                                                        break;
+                                                    }
+                                                    default: {
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                        case "lvalue": {
+                                            // Check if RHS of assignment is valid
+                                            String variableName = fullFileText_token[m + 1];
+                                            break;
+                                        }
+                                        case "end": {
+                                            functionFinished = true;
+                                            break;
+                                        }
+                                        default: {
+                                            break;
+                                        }
+                                    }
+                                }
                                 break;
                             }
                         }
