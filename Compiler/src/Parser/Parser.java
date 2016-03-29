@@ -188,7 +188,46 @@ public class Parser {
         // Performs pre-order traversal on tree
         StringBuilder traversal = new StringBuilder();
         preOrder(root, traversal);
-        return traversal.toString();
+        String fullTree = traversal.toString();
+
+        // Get rid of parenthesized variables (evaluated to null) as well as stmts which evaluate to null
+        String[] tokens = fullTree.split(" ");
+        for (int i = 0; i < tokens.length; i++) {
+            String currentToken = tokens[i];
+
+            // Checks paranthesised nulls
+            if (currentToken.charAt(0) == '(' && currentToken.charAt(currentToken.length() - 1) == ')') {
+                if (currentToken.contains("(stmts)")) {
+                    String desired = currentToken.substring(currentToken.indexOf(")") + 1);
+                    tokens[i] = desired;
+                } else {
+                    if (currentToken.indexOf(')') != currentToken.length() - 1) {
+                        // There are multiple right parentheses in the token.
+                        // Ex. (ids')))
+                        String desired = currentToken.substring(1);
+                        int indexOfFirstRightParen = desired.indexOf(")");
+                        desired = desired.substring(0, indexOfFirstRightParen) + desired.substring(indexOfFirstRightParen + 1);
+                        tokens[i] = desired;
+                    } else {
+                        // Token looks like this: (typedecls)
+                        tokens[i] = currentToken.substring(1, currentToken.length() - 1);
+                    }
+                }
+            }
+        }
+
+        // Generate new string
+        String astTraversal = "";
+        for (int i = 0; i < tokens.length; i++) {
+//            if (tokens[i].matches("^[)]{2,}$")) {
+//                // If it's just right parentheses, no need to add space.
+//                astTraversal += tokens[i];
+//            } else {
+//                astTraversal += tokens[i] + " ";
+//            }
+            astTraversal += tokens[i] + " ";
+        }
+        return astTraversal;
     }
 
     public void printAST() {
@@ -208,23 +247,24 @@ public class Parser {
     }
 
     private void preOrder(ASTNode node, StringBuilder traversal) {
-        // Don't print epsilons or nodes whose children are epsilons
-        if (!(node.getSymbol().isPotentialSpecialParentOfEpsilon() && node.getDerivation().get(0).getSymbolValue().equalsIgnoreCase("''"))) {
-            if (!node.getSymbol().isEpsilon()) {
-                if (node.getSymbol().isNonterminal()) {
-                    traversal.append("(");
-                }
-                traversal.append(node.getSymbolValue()).append(" ");
 
+        if (!node.getSymbol().isSpecial()) {
+            // Only print if included in original grammar
+            if (node.getSymbol().isNonterminal()) {
+                traversal.append("(").append(node.getSymbolValue()).append(" ");
                 for (int i = 0; i < node.getDerivation().size(); i++) {
                     preOrder(node.getDerivation().get(i), traversal);
                 }
-
-                if (node.getSymbol().isNonterminal()) {
-                    traversal.deleteCharAt(traversal.length() - 1);
-                    traversal.append(") ");
+                traversal.deleteCharAt(traversal.length() - 1);
+                traversal.append(") ");
+            } else {
+                // Node is a terminal.
+                if (!node.getSymbol().isEpsilon()) {
+                    // Node is not an epsilon
+                    traversal.append(node.getSymbolValue()).append(" ");
                 }
             }
         }
     }
+
 }

@@ -41,7 +41,7 @@ public class Compiler {
                 }
 
                 // Begin TypeChecking
-                TypeChecker.typeCheck(ast);
+//                TypeChecker.typeCheck(ast);
             } catch (ParseException pe) {
                 System.err.println(pe.getMessage());
             }
@@ -62,7 +62,9 @@ public class Compiler {
 //                printAst = true;
 //            }
 //        }
-//        String filename="resources/tests/test4.tgr";
+//
+//
+//        String filename="resources/tests/count.tgr";
 //        try {
 //            Compiler.compile(filename, printTokens, printAst);
 //        } catch (ParseException e) {
@@ -89,7 +91,9 @@ public class Compiler {
 //            }
 //        }
 
-        String fileName = "resources/tests/factorial.ast";
+        // ---------------------------------------------------------------
+        // Test typechecker
+        String fileName = "resources/tests/test0.ast";
         String fullFileText = "";
         String line = null;
 

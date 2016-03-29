@@ -36,7 +36,7 @@ public class Symbol {
 
     public boolean isEpsilon() { return isEpsilon; }
 
-    public boolean isPotentialSpecialParentOfEpsilon() {
+    public boolean isSpecial() {
         return this.isSpecial;
     }
     public String getValue() {

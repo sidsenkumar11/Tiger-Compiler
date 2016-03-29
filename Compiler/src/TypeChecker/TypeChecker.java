@@ -81,12 +81,14 @@ public class TypeChecker {
                                 //System.out.println("Entered Param");
                                 String f_scope = m_var_name[k];
 
-                                SymbolTableEntry[] FuncSymbolTable = new SymbolTableEntry[100];
-                                FuncSymbolTable[funcvar_no] = new SymbolTableEntry(f_scope, fullFileText_token[j+1], fullFileText_token[j+7], "id");
+                                ArrayList<SymbolTableEntry> FuncSymbolTable = new ArrayList<>();
+                                while(funcvar_no >= FuncSymbolTable.size())
+                                    FuncSymbolTable.add(null);
+                                FuncSymbolTable.set(funcvar_no, new SymbolTableEntry(f_scope, fullFileText_token[j+1], fullFileText_token[j+7], "id"));
                                 System.out.printf("Scope: %s  \tF_Var_Name: %s  \tType: %s \t"
-                                                + "Attr: %s\n",FuncSymbolTable[funcvar_no].scope(),
-                                        FuncSymbolTable[funcvar_no].name(), FuncSymbolTable[funcvar_no].type(),
-                                        FuncSymbolTable[funcvar_no].attr());
+                                                + "Attr: %s\n",FuncSymbolTable.get(funcvar_no).scope(),
+                                        FuncSymbolTable.get(funcvar_no).name(), FuncSymbolTable.get(funcvar_no).type(),
+                                        FuncSymbolTable.get(funcvar_no).attr());
 
                                 j = j + 7;
                                 break;

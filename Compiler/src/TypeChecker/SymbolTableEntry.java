@@ -8,7 +8,7 @@ public class SymbolTableEntry {
     public SymbolTableEntry(String scope, String name, String type, String attr) {
         this.scope = scope;
         this.name = name;
-        this.type = name;
+        this.type = type;
         this.attr = attr;
     }
 
