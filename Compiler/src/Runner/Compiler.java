@@ -51,7 +51,7 @@ public class Compiler {
 
 //        String filename = args[0];
 
-        // Decide which flags have been inputted.
+//        // Decide which flags have been inputted.
 //        boolean printTokens = false, printAst = true;
 //        for(String s : args) {
 //            if(s.equals("-tokens") || s.equals("--tokens")) {
@@ -64,7 +64,7 @@ public class Compiler {
 //        }
 //
 //
-//        String filename="resources/tests/count.tgr";
+//        String filename="resources/tests/test1.tgr";
 //        try {
 //            Compiler.compile(filename, printTokens, printAst);
 //        } catch (ParseException e) {

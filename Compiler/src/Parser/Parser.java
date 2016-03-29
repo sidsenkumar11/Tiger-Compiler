@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 
 public class Parser {
 
@@ -161,6 +162,7 @@ public class Parser {
             }
         } while (!stackSymbol.isDollarToken());
 //        System.out.println("Hooray! Successfully parsed input.");
+        fixTree();
         return true;
     }
 
@@ -189,6 +191,7 @@ public class Parser {
         StringBuilder traversal = new StringBuilder();
         preOrder(root, traversal);
         String fullTree = traversal.toString();
+        printAST();
 
         // Get rid of parenthesized variables (evaluated to null) as well as stmts which evaluate to null
         String[] tokens = fullTree.split(" ");
@@ -219,31 +222,18 @@ public class Parser {
         // Generate new string
         String astTraversal = "";
         for (int i = 0; i < tokens.length; i++) {
-//            if (tokens[i].matches("^[)]{2,}$")) {
-//                // If it's just right parentheses, no need to add space.
-//                astTraversal += tokens[i];
-//            } else {
-//                astTraversal += tokens[i] + " ";
-//            }
-            astTraversal += tokens[i] + " ";
+            if (i != tokens.length - 1) {
+                if (tokens[i].charAt(tokens[i].length() - 1) == ')' && tokens[i+1].charAt(0) == ')') {
+                    // If it's just right parentheses, no need to add space.
+                    astTraversal += tokens[i];
+                } else {
+                    astTraversal += tokens[i] + " ";
+                }
+            } else {
+                astTraversal += tokens[i];
+            }
         }
-        return astTraversal;
-    }
-
-    public void printAST() {
-        printASTRecur(root);
-        System.out.println("-----------------------------------------------------------------------");
-    }
-
-    public void printASTRecur(ASTNode node) {
-        System.out.print(node + ": ");
-        for (int i = 0; i < node.getDerivation().size(); i++) {
-            System.out.print(node.getDerivation().get(i) + " ");
-        }
-        System.out.println();
-        for (int i = 0; i < node.getDerivation().size(); i++) {
-            printASTRecur(node.getDerivation().get(i));
-        }
+        return astTraversal.toLowerCase();
     }
 
     private void preOrder(ASTNode node, StringBuilder traversal) {
@@ -264,7 +254,229 @@ public class Parser {
                     traversal.append(node.getSymbolValue()).append(" ");
                 }
             }
+        } else {
+            System.out.println("found bad node");
         }
     }
 
+    public void fixTree() {
+        fixTree(root);
+    }
+
+    public void fixTree(ASTNode node) {
+        if (!node.getSymbol().isSpecial()) {
+            if (node.getSymbol().isNonterminal()) {
+                for (int i = 0; i < node.getDerivation().size(); i++) {
+                    fixTree(node.getDerivation().get(i));
+                }
+            }
+        } else if (node.getSymbol().getValue().equalsIgnoreCase("ids'")) {
+            // Fix tree for ids' case
+            ASTNode curNode = node;
+            while (curNode.getDerivation().size() > 1) {
+                curNode.setSymbol(new Symbol(false, "ids"));
+                curNode.getParent().getDerivation().add(1, curNode.getDerivation().get(0)); // Move comma up a level
+                curNode.getDerivation().remove(0);
+                curNode = curNode.getDerivation().get(1);
+            }
+            // Remove the last ids' that goes to epsilon
+            curNode = curNode.getParent();
+            curNode.getDerivation().remove(1);
+        } else if (node.getSymbol().getValue().equalsIgnoreCase("numexpr'")) {
+            // Fix tree for numexpr' case
+
+            if (node.getDerivation().size() == 1) {
+                // This numexpr' has only one child. Just remove from tree and move child up.
+                int index = node.getParent().getDerivation().indexOf(node);
+                node = node.getParent();
+                node.getDerivation().set(index, node.getDerivation().get(index).getDerivation().get(0));
+            } else {
+                ASTNode curNode = node;
+                node.getSymbol().setValue("numexpr");
+                while(curNode.getDerivation().size() > 1) {
+                    curNode = curNode.getDerivation().get(2);
+                }
+
+                // curNode is now bottom-most numexpr'
+
+                // Get rid of numexpr' from parent's derivation since it evaluates to null
+                curNode = curNode.getParent();
+                if (curNode.getDerivation().size() == 2) {
+                    curNode.getDerivation().remove(1);
+                    fixTree(node);
+                } else {
+                    curNode.getDerivation().remove(2);
+
+                    // Go until we get to the top numexpr' that started it all!
+                    while (curNode != node) {
+                        LinkedList<ASTNode> derivation = curNode.getDerivation();
+                        curNode = curNode.getParent();
+                        curNode.getDerivation().remove(2);
+                        curNode.getDerivation().addAll(derivation);
+                    }
+
+                    // The parent of this node is numexpr
+                    LinkedList<ASTNode> derivation = curNode.getDerivation();
+                    curNode = curNode.getParent();
+                    curNode.getDerivation().remove(1);
+                    curNode.getDerivation().addAll(derivation);
+
+                    // curNode is numexpr
+                /* The tree looks like:
+                    numexpr
+                        term
+                        linop
+                        term
+                        linop
+                        term
+
+                        numexpr
+                            numexpr
+                                numexpr
+                                    term
+                                linop
+                                term
+                            linop
+                            term
+                   Need to change to:
+                    numexpr
+                        numexpr
+                            numexpr
+                                term
+                            linop
+                            term
+                        linop
+                        term
+                 */
+
+                    // Keep the last linop and term, put the remainder "first" into a numexpr term
+                    while (curNode.getDerivation().size() > 1) {
+                        LinkedList<ASTNode> frontPortionOfDerivation = new LinkedList<>(curNode.getDerivation().subList(0, curNode.getDerivation().size() - 2));
+                        while (curNode.getDerivation().size() > 2) {
+                            curNode.getDerivation().removeFirst();
+                        }
+                        curNode.getDerivation().addFirst(new ASTNode(new Symbol(false, "numexpr"), frontPortionOfDerivation, 0, 0));
+                        curNode = curNode.getDerivation().get(0);
+                    }
+                    fixTree(node);
+                }
+            }
+        } else if (node.getSymbol().getValue().equalsIgnoreCase("factor'")) {
+            // Fix tree for factor' case
+
+            if (node.getDerivation().size() == 1) {
+                // Factor' is just epsilon. Remove from tree.
+                node = node.getParent();
+                node.getDerivation().remove(1);
+            } else {
+                // Factor' is [numexpr]
+                LinkedList<ASTNode> derivation = node.getDerivation();
+                node = node.getParent();
+                node.getDerivation().remove(1);
+                node.getDerivation().addAll(derivation);
+            }
+            fixTree(node);
+        } else if (node.getSymbol().getValue().equalsIgnoreCase("term'")) {
+            // Fix tree for term' case
+
+            if (node.getDerivation().size() == 1) {
+                // This term' has only one child. Just remove from tree and move child up.
+                int index = node.getParent().getDerivation().indexOf(node);
+                node = node.getParent();
+                node.getDerivation().set(index, node.getDerivation().get(index).getDerivation().get(0));
+            } else {
+                ASTNode curNode = node;
+                node.getSymbol().setValue("factor");
+                while(curNode.getDerivation().size() > 1) {
+                    curNode = curNode.getDerivation().get(2);
+                }
+
+                // curNode is now bottom-most numexpr'
+
+                // Get rid of numexpr' from parent's derivation since it evaluates to null
+                curNode = curNode.getParent();
+                if (curNode.getDerivation().size() == 2) {
+                    curNode.getDerivation().remove(1);
+                    fixTree(node);
+                } else if (curNode.getDerivation().size() == 1) {
+
+                } else {
+                    curNode.getDerivation().remove(2);
+
+                    // Go until we get to the top numexpr' that started it all!
+                    while (curNode != node) {
+                        LinkedList<ASTNode> derivation = curNode.getDerivation();
+                        curNode = curNode.getParent();
+                        curNode.getDerivation().remove(2);
+                        curNode.getDerivation().addAll(derivation);
+                    }
+
+                    // The parent of this node is numexpr
+                    LinkedList<ASTNode> derivation = curNode.getDerivation();
+                    curNode = curNode.getParent();
+                    curNode.getDerivation().remove(1);
+                    curNode.getDerivation().addAll(derivation);
+
+                    // curNode is numexpr
+                /* The tree looks like:
+                    numexpr
+                        term
+                        linop
+                        term
+                        linop
+                        term
+
+                        numexpr
+                            numexpr
+                                numexpr
+                                    term
+                                linop
+                                term
+                            linop
+                            term
+                   Need to change to:
+                    numexpr
+                        numexpr
+                            numexpr
+                                term
+                            linop
+                            term
+                        linop
+                        term
+                 */
+
+                    // Keep the last linop and term, put the remainder "first" into a numexpr term
+                    while (curNode.getDerivation().size() > 1) {
+                        LinkedList<ASTNode> frontPortionOfDerivation = new LinkedList<>(curNode.getDerivation().subList(0, curNode.getDerivation().size() - 2));
+                        while (curNode.getDerivation().size() > 2) {
+                            curNode.getDerivation().removeFirst();
+                        }
+                        curNode.getDerivation().addFirst(new ASTNode(new Symbol(false, "numexpr"), frontPortionOfDerivation, 0, 0));
+                        curNode = curNode.getDerivation().get(0);
+                    }
+                    fixTree(node);
+                }
+            }
+        }
+    }
+
+    public void printAST() {
+        printASTRecur(root, 0);
+        System.out.println("-----------------------------------------------------------------------");
+    }
+
+    public void printASTRecur(ASTNode node, int indentation) {
+
+        for (int i = 0; i < indentation; i++) {
+            System.out.print("    ");
+        }
+        System.out.print(node + ": ");
+        for (int i = 0; i < node.getDerivation().size(); i++) {
+            System.out.print(node.getDerivation().get(i) + " ");
+        }
+        System.out.println();
+        for (int i = 0; i < node.getDerivation().size(); i++) {
+            printASTRecur(node.getDerivation().get(i), indentation + 1);
+        }
+    }
 }
