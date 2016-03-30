@@ -71,7 +71,8 @@ public class TypeChecker {
                         typevar_no++;
                         i = i + 8;
                     } else {
-                        System.out.println("Type Mismatch\n");
+                        System.out.println(T_type + " not defined");
+                        System.exit(0);
                     }
                     break;
                 }
@@ -112,7 +113,8 @@ public class TypeChecker {
                                             boolean isInteger = !fullFileText_token[j + 11].contains(".");
                                             // System.out.println(isInteger);
                                             if (!isInteger) {
-                                                System.out.println("Initialized variable Type Mismatch\n");
+                                                System.out.println("Initialized variable Type Mismatch: " + fullFileText_token[j + 1]);
+                                                System.exit(0);
                                             }
                                         }
 
@@ -127,7 +129,8 @@ public class TypeChecker {
                                                 MainSymbolTable.get(p).attr());
                                         // break;
                                     } else {
-                                        System.out.println("Variable Type Mismatch\n");
+                                        System.out.println("Variable Type Mismatch: " + fullFileText_token[j + 1]);
+                                        System.exit(0);
                                     }
                                     // }
                                 }
@@ -191,7 +194,8 @@ public class TypeChecker {
                                     funcvar_no++;
                                     j = j + 7;
                                 } else {
-                                    System.out.println("Function Variable Type Mismatch\n");
+                                    System.out.println("Function Variable Type Mismatch: " + fullFileText_token[j + 7]);
+                                    System.exit(0);
                                 }
                                 break;
                             }
@@ -209,7 +213,7 @@ public class TypeChecker {
                                     MainSymbolTable.get(k).setType("void");
                                 }
 
-
+                                functionEntry = MainSymbolTable.get(k);
                                 boolean func_type_match=false;
 
                                 //System.out.println(MainSymbolTable.get(k).type());
@@ -237,7 +241,8 @@ public class TypeChecker {
 
                                 } else {
 
-                                    System.out.println("Function Type Mismatch\n");
+                                    System.out.println("Function Type Mismatch: " + MainSymbolTable.get(k).name());
+                                    System.exit(0);
                                 }
 
 
@@ -264,10 +269,17 @@ public class TypeChecker {
                                                         if (fullFileText_token[l + 3].equals("const")) {
                                                             String theConstant = fullFileText_token[l + 4];
                                                             if (theConstant.contains(".")) {
-                                                                // It is a double
-
+                                                                // It is a float
+                                                                if (!functionEntry.type().equals("float") && functionEntry.type().equals("int")) {
+                                                                    System.out.println("Const " + theConstant + " must be a " + functionEntry.type());
+                                                                    System.exit(0);
+                                                                }
                                                             } else {
                                                                 // It is an integer
+                                                                if (!functionEntry.type().equals("int")) {
+                                                                    System.out.println("Const " + theConstant + " must be a " + functionEntry.type());
+                                                                    System.exit(0);
+                                                                }
                                                             }
                                                         } else {
 
@@ -282,17 +294,17 @@ public class TypeChecker {
                                                                             // Accept both floats and ints
                                                                             if (!entry.type().equals("float") && !entry.type().equals("int")) {
                                                                                 System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
-//                                                            System.exit(0);
+                                                                                System.exit(0);
                                                                             }
                                                                         } else {
                                                                             if (!entry.type().equals(functionEntry.type())) {
                                                                                 System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
-//                                                            System.exit(0);
+                                                                                System.exit(0);
                                                                             }
                                                                         }
                                                                     } else {
                                                                         System.out.println("Variable " + fullFileText_token[l+1] + " out of scope.");
-//                                                        System.exit(0);
+                                                                        System.exit(0);
                                                                     }
                                                                     break;
                                                                 }
@@ -323,6 +335,7 @@ public class TypeChecker {
 
                                             if (LHSType == null) {
                                                 System.out.println("Variable " + variableName + " not declared.");
+                                                System.exit(0);
                                             }
 
                                             boolean semicolonFound = false;
@@ -350,6 +363,7 @@ public class TypeChecker {
                                             functionFinished = true;
                                             if (!foundFactor && !functionEntry.type().equals("void")) {
                                                 System.out.println("Function " + functionEntry.name() + " never returns a(n) " + functionEntry.type());
+                                                System.exit(0);
                                             }
                                             break;
                                         }
