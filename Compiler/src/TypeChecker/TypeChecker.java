@@ -1,3 +1,5 @@
+import sun.applet.Main;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -11,6 +13,7 @@ public class TypeChecker {
         int typevar_no = 0;
         int T_index = 0;
         String scope = "program";
+        String f_scope= null;
         String T_type;
         ArrayList<SymbolTableEntry> MainSymbolTable = new ArrayList<>();
         ArrayList<TypeTableEntry> TypeSymbolTable = new ArrayList<>();
@@ -152,12 +155,13 @@ public class TypeChecker {
                     // System.out.println("Entered funcdecl");
 
                     boolean f_loop_stop = false;
-
+                    SymbolTableEntry functionEntry = null;
                     for (int j = i; !f_loop_stop; j++) {
                         switch (fullFileText_token[j]) {
                             case "func": {
                                 // System.out.println(fullFileText_token[j]);
                                 m_var_name[k] = fullFileText_token[j + 1];
+                                f_scope = fullFileText_token[j + 1];
                                 i = j;
                                 break;
                             }
@@ -165,9 +169,6 @@ public class TypeChecker {
                             case "param": {
 
                                 // System.out.println("Entered Param");
-
-                                String f_scope = m_var_name[k];
-
 
                                 // Checking if the type is correct for function
 
@@ -182,12 +183,12 @@ public class TypeChecker {
                                 if (funcvar_type_match) {
                                     FuncSymbolTable.add(new SymbolTableEntry(f_scope, fullFileText_token[j + 1],
                                             fullFileText_token[j + 7], "id"));
-
                                     System.out.printf("Scope: %s  \tF_Var_Name: %s  \tType: %s \t"
 
                                                     + "Attr: %s\n", FuncSymbolTable.get(funcvar_no).scope(),
                                             FuncSymbolTable.get(funcvar_no).name(), FuncSymbolTable.get(funcvar_no).type(),
                                             FuncSymbolTable.get(funcvar_no).attr());
+                                    funcvar_no++;
                                     j = j + 7;
                                 } else {
                                     System.out.println("Function Variable Type Mismatch\n");
@@ -198,78 +199,106 @@ public class TypeChecker {
                             // Checking type for the function declared
 
                             case "optrettype": {
-                                MainSymbolTable.add(new SymbolTableEntry(scope, m_var_name[k], "", "func"));
 
-                                if (fullFileText_token[j + 5].matches("type")) {
-                                    boolean func_type_match = false;
-                                    for (int r = 0; r < typevar_no && !func_type_match; r++) {
-                                        if (fullFileText_token[j + 6].equals(TypeSymbolTable.get(r).name())) {
-                                            // T_type = fullFileText_token[i+8];
-                                            func_type_match = true;
-                                        }
-                                    }
-                                    if (func_type_match) {
-                                        MainSymbolTable.get(k).setType(fullFileText_token[j + 6]);
-                                        j = j + 6;
-                                    } else {
-                                        System.out.println("Function Type Mismatch\n");
-                                    }
+                                //System.out.println(f_scope);
+                                MainSymbolTable.add(new SymbolTableEntry(scope, f_scope, "", "func"));
+                                if(fullFileText_token[j+5].matches("type")) {
+
+                                    MainSymbolTable.get(k).setType(fullFileText_token[j+6]);
                                 } else {
                                     MainSymbolTable.get(k).setType("void");
                                 }
-                                System.out.printf("Scope: %s  M_Var_Name: %s "
-                                                + "Type: %s \tAttr: %s\n", MainSymbolTable.get(k).scope(),
-                                        MainSymbolTable.get(k).name(), MainSymbolTable.get(k).type(),
-                                        MainSymbolTable.get(k).attr());
-                                // else
-                                {
-                                    //
-                                    System.out.println("Variable Type Mismatch");
+
+
+                                boolean func_type_match=false;
+
+                                //System.out.println(MainSymbolTable.get(k).type());
+
+                                for(int r=0; r< typevar_no;r++) {
+
+                                    if((MainSymbolTable.get(k).type().equals(TypeSymbolTable.get(r).name()) || (MainSymbolTable.get(k).type()).matches("void")) && func_type_match==false) {
+
+                                        func_type_match = true;
+
+                                        break;
+
+                                    }
+
                                 }
+
+                                if(func_type_match == true) {
+
+                                    MainSymbolTable.get(k).setName(f_scope);
+                                    System.out.printf("Scope: %s  M_Var_Name: %s "
+                                                    + "Type: %s \tAttr: %s\n",MainSymbolTable.get(k).scope(),
+                                            MainSymbolTable.get(k).name(), MainSymbolTable.get(k).type(),
+                                            MainSymbolTable.get(k).attr());
+                                    j = j + 6;
+
+                                } else {
+
+                                    System.out.println("Function Type Mismatch\n");
+                                }
+
+
                                 break;
+
+
                             }
 
                             // Checking the end of function declaration
                             case "begin": {
                                 f_loop_stop = true;
 
+                                boolean foundFactor = false;
                                 boolean functionFinished = false;
                                 for (int m = i; !functionFinished; m++) {
                                     switch (fullFileText_token[m]) {
                                         case "return": {
                                             // Make sure return type matches function type
-                                            SymbolTableEntry functionEntry = FuncSymbolTable.get(FuncSymbolTable.size() - 1);
                                             boolean semicolonFound = false;
                                             for (int l = m; !semicolonFound; l++) {
                                                 switch (fullFileText_token[l]) {
                                                     case "factor": {
-                                                        for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
-                                                            // Need to check if type of this factor matches that of function.
-                                                            if (fullFileText_token[l + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
-                                                                SymbolTableEntry entry = MainSymbolTable.get(mainSymbolTableIndex);
-                                                                if (entry.scope().equals(functionEntry.name()) ||
-                                                                        entry.scope().equals("program")) {
-                                                                    // Variable is in scope
-                                                                    if (functionEntry.type().equals("float")) {
-                                                                        // Accept both floats and ints
-                                                                        if (!entry.type().equals("float") && !entry.type().equals("int")) {
-                                                                            System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
+                                                        foundFactor = true;
+                                                        if (fullFileText_token[l + 3].equals("const")) {
+                                                            String theConstant = fullFileText_token[l + 4];
+                                                            if (theConstant.contains(".")) {
+                                                                // It is a double
+
+                                                            } else {
+                                                                // It is an integer
+                                                            }
+                                                        } else {
+
+                                                            for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+                                                                // Need to check if type of this factor matches that of function.
+                                                                if (fullFileText_token[l + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
+                                                                    SymbolTableEntry entry = MainSymbolTable.get(mainSymbolTableIndex);
+                                                                    if (entry.scope().equals(functionEntry.name()) ||
+                                                                            entry.scope().equals("program")) {
+                                                                        // Variable is in scope
+                                                                        if (functionEntry.type().equals("float")) {
+                                                                            // Accept both floats and ints
+                                                                            if (!entry.type().equals("float") && !entry.type().equals("int")) {
+                                                                                System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
 //                                                            System.exit(0);
+                                                                            }
+                                                                        } else {
+                                                                            if (!entry.type().equals(functionEntry.type())) {
+                                                                                System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
+//                                                            System.exit(0);
+                                                                            }
                                                                         }
                                                                     } else {
-                                                                        if (!entry.type().equals(functionEntry.type())) {
-                                                                            System.out.println("Variable " + fullFileText_token[l+1] + " does not match return type of function.");
-//                                                            System.exit(0);
-                                                                        }
-                                                                    }
-                                                                } else {
-                                                                    System.out.println("Variable " + fullFileText_token[l+1] + " out of scope.");
+                                                                        System.out.println("Variable " + fullFileText_token[l+1] + " out of scope.");
 //                                                        System.exit(0);
+                                                                    }
+                                                                    break;
                                                                 }
-                                                                break;
                                                             }
+                                                            break;
                                                         }
-                                                        break;
                                                     }
                                                     case ";": {
                                                         semicolonFound = true;
@@ -285,10 +314,43 @@ public class TypeChecker {
                                         case "lvalue": {
                                             // Check if RHS of assignment is valid
                                             String variableName = fullFileText_token[m + 1];
+                                            String LHSType = null;
+                                            for (int symbolIndex = 0; symbolIndex < MainSymbolTable.size() && LHSType == null; symbolIndex++) {
+                                                if (MainSymbolTable.get(symbolIndex).name().equals(variableName)) {
+                                                    LHSType = MainSymbolTable.get(symbolIndex).type();
+                                                }
+                                            }
+
+                                            if (LHSType == null) {
+                                                System.out.println("Variable " + variableName + " not declared.");
+                                            }
+
+                                            boolean semicolonFound = false;
+                                            for (int l = m; !semicolonFound; l++) {
+                                                switch (fullFileText_token[l]) {
+                                                    case "": {
+
+                                                    }
+//                                                    case "": {
+//
+//                                                    }
+                                                    case ";": {
+                                                        semicolonFound = true;
+                                                        break;
+                                                    }
+                                                    default: {
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
                                             break;
                                         }
                                         case "end": {
                                             functionFinished = true;
+                                            if (!foundFactor && !functionEntry.type().equals("void")) {
+                                                System.out.println("Function " + functionEntry.name() + " never returns a(n) " + functionEntry.type());
+                                            }
                                             break;
                                         }
                                         default: {
