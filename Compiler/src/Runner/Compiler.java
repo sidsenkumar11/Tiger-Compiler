@@ -14,9 +14,9 @@ public class Compiler {
         List<Token> tokens = scanner.scan(fileName);
 
         // Print tokens if asked to.
-        if(tokensFlag) {
-            for(Token t : tokens) {
-                if(t.getType().equalsIgnoreCase("intlit") || t.getType().equalsIgnoreCase("floatlit")) {
+        if (tokensFlag) {
+            for (Token t : tokens) {
+                if (t.getType().equalsIgnoreCase("intlit") || t.getType().equalsIgnoreCase("floatlit")) {
                     System.out.print(t.getContent() + ":" + t.getType().toLowerCase());
                 } else {
                     System.out.print(t + " ");
@@ -26,7 +26,7 @@ public class Compiler {
         }
 
         // Parse tokens if there was no error
-        if(!tokens.get(tokens.size()-1).getType().equals("error")) { // only continue if an error Token wasn't added
+        if (!tokens.get(tokens.size() - 1).getType().equals("error")) { // only continue if an error Token wasn't added
             Token[] tokenList = new Token[tokens.size()];
             for (int i = 0; i < tokenList.length; i++) {
                 tokenList[i] = tokens.get(i);
@@ -47,6 +47,7 @@ public class Compiler {
             }
         }
     }
+
     public static void main(String[] args) {
 
 //        String filename = args[0];
@@ -92,27 +93,28 @@ public class Compiler {
 //        }
 
         // ---------------------------------------------------------------
-        // Test typechecker
-        String fileName = "resources/tests/test0.ast";
-        String fullFileText = "";
-        String line = null;
-
-        try {
-            FileReader fileReader = new FileReader(fileName);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            while((line = bufferedReader.readLine()) != null) {
-                fullFileText += line + "\n";
-            }
-            bufferedReader.close();
-        } catch(FileNotFoundException ex) {
-            System.out.println("Unable to open file '" + fileName + "'");
-        } catch(IOException ex) {
-            System.out.println("Error reading file '" + fileName + "'");
-            // ex.printStackTrace();
-        }
-
-        TypeChecker.typeCheck(fullFileText);
-
-
+//        // Test typechecker
+//        String fileName = "resources/tests/te.ast";
+//        String fullFileText = "";
+//        String line = null;
+//
+//        try {
+//            FileReader fileReader = new FileReader(fileName);
+//            BufferedReader bufferedReader = new BufferedReader(fileReader);
+//            while((line = bufferedReader.readLine()) != null) {
+//                fullFileText += line + "\n";
+//            }
+//            bufferedReader.close();
+//        } catch(FileNotFoundException ex) {
+//            System.out.println("Unable to open file '" + fileName + "'");
+//        } catch(IOException ex) {
+//            System.out.println("Error reading file '" + fileName + "'");
+//            // ex.printStackTrace();
+//        }
+//
+//        TypeChecker.typeCheck(fullFileText);
+//
+//
+//    }
     }
 }
