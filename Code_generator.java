@@ -47,6 +47,7 @@ public class Runner {
 
 }
 
+	
 //	public static String checkfactor(String[] fullFileText_token, int b, String RHS_value, int LHS_value) {
 //		if (fullFileText_token[b + 3].equals("const")) {
 //			RHS_value = "#"+ fullFileText_token[b + 4];                                                    	
@@ -375,6 +376,7 @@ public class Runner {
                                 boolean foundFactor = false;
                                 boolean functionFinished = false;
                                 for (int m = i; !functionFinished; m++) {
+                                    //System.out.println(fullFileText_token[m]);
 
                                     switch (fullFileText_token[m]) {
                                     	case "if": {
@@ -455,21 +457,13 @@ public class Runner {
                                                     
                                                     
                                                     case "return": {
-                                                		//System.out.printf("Entered return loop \n");
                                                         // Make sure return type matches function type
                                                         boolean semicolonFound = false;
                                                         functionFinished = false;
                                                         for (int b = l; !semicolonFound; b++) {
                                                             switch (fullFileText_token[b]) {
                                                             
-                                                            case "end": {
-                                                                //functionFinished = true;
-                                                                if (!foundFactor && !functionEntry.type().equals("void")) {
-                                                                    System.out.println("Function " + functionEntry.name() + " never returns a(n) " + functionEntry.type());
-                                                                    System.exit(0);
-                                                                }
-                                                                break;
-                                                            }
+
                                                             case "factor": {
                                                           if (fullFileText_token[b + 3].equals("const")) {
                                                           	//System.out.printf(fullFileText_token[l + 4]);
@@ -537,34 +531,61 @@ public class Runner {
                                                                 default: {
                                                                     break;
                                                                 }
+
                                                             }
+                                                            l=b;
                                                             }
+                                                      
                                                         }	
                                                     
                                                     case "else": {
+                                                     // System.out.println("Enters else loop \n");
+
                                                     	
                                                     }
                                                     case "endif": {
+                                                       // System.out.println("Enters endif loop \n");
                                                     	endifFound = true;
                                                         System.out.printf("label %s:\n", label_counter);
                                                         label_counter++;
+                                                        break;
                                                     }
                                                     	
-                                                }m=l;
+                                                }
+                                                
+                                                m=l;
+
                                             }
-                                            
+//                                            System.out.println(fullFileText_token[m-2]);
+//                                            System.out.println(fullFileText_token[m-1]);
+//                                            System.out.println(fullFileText_token[m]);
+//                                            System.out.println(fullFileText_token[m+1]);
+//                                            System.out.println(fullFileText_token[m+2]);
+//                                            System.out.println(fullFileText_token[m+3]);
+//                                            System.out.println(fullFileText_token[m+4]);
+//                                            System.out.println(fullFileText_token[m+5]);
                                     		break;
                                     	}
                                     		
-                                    	
+                                        case "end": {
+                                            System.out.printf("label end\n");
+                                            functionFinished = true;
+
+                                   		//System.out.printf("Entered end loop \n");
+//                                            if (!foundFactor && !functionEntry.type().equals("void")) {
+//                                                System.out.println("Function " + functionEntry.name() + " never returns a(n) " + functionEntry.type());
+//                                                System.exit(0);
+//                                            }
+                                            break;
+                                        }
                                     	
                                     	case "while": {
-                                    		//System.out.printf("Entered while loop \n");
+                                 //   		System.out.printf("Entered while loop \n");
                                     		break;
 
                                     	}
                                     	case "for": {
-                                    		//System.out.printf("Entered for loop \n");
+                                   // 		System.out.printf("Entered for loop \n");
                                     		break;
 
                                     	}
@@ -574,12 +595,24 @@ public class Runner {
                                     		//System.out.printf("Entered return loop \n");
                                             // Make sure return type matches function type
                                             boolean semicolonFound = false;
+                                            boolean src1_written = false;
+                                            boolean src2_written = false;
                                             functionFinished = false;
+                                            String RHS_imm = null;
+                                            int RHS_src1 =-1;
+                                            int RHS_src2 = -1;
+                                            for (int symbolIndex = 0; symbolIndex < MainSymbolTable.size(); symbolIndex++) {
+                                                if (MainSymbolTable.get(symbolIndex).name().equals(f_scope)) {
+                                                    LHS_value = MainSymbolTable.get(symbolIndex).reg_no();
+                                                }
+                                            }
+                                            
+                                            
                                             for (int l = m; !semicolonFound; l++) {
                                                 switch (fullFileText_token[l]) {
                                                 
                                                 case "end": {
-                                                    functionFinished = true;
+                                                   // functionFinished = true;
                                                     if (!foundFactor && !functionEntry.type().equals("void")) {
                                                         System.out.println("Function " + functionEntry.name() + " never returns a(n) " + functionEntry.type());
                                                         System.exit(0);
@@ -587,57 +620,75 @@ public class Runner {
                                                     break;
                                                 }
                                                 case "factor": {
+                                                	//System.out.printf(fullFileText_token[l + 1]);
                                               if (fullFileText_token[l + 3].equals("const")) {
                                               	//System.out.printf(fullFileText_token[l + 4]);
-                                              	RHS_value = "#"+ fullFileText_token[l + 4];                                                    	
+                                              	RHS_imm = "#"+ fullFileText_token[l + 4];                                                    	
                                               }
                                               else {
                                               	for (int funcSymbolTableIndex = 0; funcSymbolTableIndex < FuncSymbolTable.size(); funcSymbolTableIndex++) {
-                                                      // Need to check if type of this factor matches that of function.
-                                                      if (fullFileText_token[l + 1].equals(FuncSymbolTable.get(funcSymbolTableIndex).name())) {
-                                                      	LHS_value = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
+                                                     
+                                                      if (fullFileText_token[l + 1].equals(FuncSymbolTable.get(funcSymbolTableIndex).name()) && src1_written == false) {
+                                                      	RHS_src1 = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
+                                                      	src1_written = true;
+                                                      } else if(fullFileText_token[l + 1].equals(FuncSymbolTable.get(funcSymbolTableIndex).name()) && src2_written == false && src1_written == true){
+                                                        RHS_src2 = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
+                                                        src2_written = true;
                                                       }
   
                                               }
+                                              	for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+                                                    
+                                                    if (fullFileText_token[l + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name()) && src1_written == false) {
+                                                    	RHS_src1 = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+                                                    	src1_written = true;
+                                                    } else if(fullFileText_token[l + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name()) && src2_written == false && src1_written == true){
+                                                      RHS_src2 = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+                                                      src2_written = true;
+                                                    }
+
+                                            }
                                               }
                                       		//System.out.printf("Entered numexpr loop \n");
                                       		break;
                                           }
                                               	 case "linop":{
                                                  	linop = checklinop(fullFileText_token, l, linop,linopFound);
+                                                 	linopFound=true;
                                               		break;
                                                   }
                                                   
                                                   case "nonlinop":{
-                                                  	nonlinop = checknonlinop(fullFileText_token, l, nonlinop,nonlinopFound);                                                    	
+                                                  	nonlinop = checknonlinop(fullFileText_token, l, nonlinop,nonlinopFound);
+                                                  	nonlinopFound=true;
                                               		break;
                                                   }	
                                              	
                                                     case ";": {
-                                                    	for (int MainSymbolTableIndex = 0; MainSymbolTableIndex < MainSymbolTable.size(); MainSymbolTableIndex++) {
-                                                            // Need to check if type of this factor matches that of function.
-                                                            if (scope.equals(MainSymbolTable.get(MainSymbolTableIndex).name())) {
-                                                            	LHS_value = MainSymbolTable.get(MainSymbolTableIndex).reg_no();
-                                                            }
-                                                    	}
+                                                    	//System.out.println(linopFound);
+                                                    	//System.out.println(RHS_src1);
+                                                    	//System.out.println(RHS_src2);
+                                                    	//System.out.println(LHS_value);
+                                                    	//System.out.println(nonlinopFound);
                                                         semicolonFound = true;
-                                                        if(linopFound == true && RHS_value!=null && LHS_value !=-1) {
-                                     
-                                                        	System.out.printf("%s r%d %s \n",linop, LHS_value, RHS_value);
+                                                        if(linopFound == true && RHS_src1!=-1 && RHS_src2!=-1 && LHS_value !=-1) {
+                                                        	System.out.printf("%s r%d r%d r%d \n",linop, LHS_value, RHS_src1, RHS_src2);
                                                         	linopFound = false;
                                                         	linop = null;
                                                             LHS_value = -1;
-                                                            RHS_value = null;
+                                                            RHS_src1 = -1;
+                                                            RHS_src2 = -1;
                                                         	}
-                                                        else if(nonlinopFound == true && RHS_value!=null && LHS_value !=-1) {
-                                                        	System.out.printf("%s r%d %s \n",nonlinop, LHS_value, RHS_value);
+                                                        else if(nonlinopFound == true && RHS_src1!=-1 && RHS_src2!=-1 && LHS_value !=-1) {
+                                                        	System.out.printf("%s r%d r%d r%d \n",nonlinop, LHS_value, RHS_src1, RHS_src2);
                                                         	nonlinopFound = false;
                                                         	nonlinop = null;
                                                             LHS_value = -1;
-                                                            RHS_value = null;
+                                                            RHS_src1 = -1;
+                                                            RHS_src2 = -1;
                                                         }
                                                         else {
-                                                        	System.out.printf("move r%d %s \n", LHS_value, RHS_value);
+                                                        	System.out.printf("move r%d %s \n", LHS_value, RHS_imm);
                                                         }
                                                         
                                                      
@@ -656,68 +707,79 @@ public class Runner {
                                     		//System.out.printf("Entered lvalue loop \n");
                                             // Check if RHS of assignment is valid
                                             String variableName = fullFileText_token[m + 1];
-                                            String LHSType = null;
-                                            for (int symbolIndex = 0; symbolIndex < MainSymbolTable.size() && LHSType == null; symbolIndex++) {
+                                           // String LHSType = null;
+                                            for (int symbolIndex = 0; symbolIndex < MainSymbolTable.size(); symbolIndex++) {
                                                 if (MainSymbolTable.get(symbolIndex).name().equals(variableName)) {
-                                                    LHSType = MainSymbolTable.get(symbolIndex).type();
+                                                    LHS_value = MainSymbolTable.get(symbolIndex).reg_no();
                                                 }
                                             }
-
-//                                            if (LHSType == null) {
-//                                                System.out.println("Variable " + variableName + " not declared.");
-//                                                System.exit(0);
-//                                            }
-
+                                            String func_call_label = null;
+                                            int RHS_source = -1;
                                             boolean semicolonFound = false;
-                                            for (int l = m; !functionFinished; l++) {
+                                            for (int l = m; !semicolonFound; l++) {
+                                            	//System.out.println(fullFileText_token[l]);
                                                 switch (fullFileText_token[l]) {
+                                                case ":=": {
+                                                	
+                                              		
+                                                    for (int symbolIndex = 0; symbolIndex < MainSymbolTable.size(); symbolIndex++) {
+                                                        if (MainSymbolTable.get(symbolIndex).name().equals(fullFileText_token[l+2])) {
+                                                            func_call_label = MainSymbolTable.get(symbolIndex).name();
+                                                        }
+                                                    }
+
+                                                }
+                                                	
                                                 case "end": {
-                                                    functionFinished = true;
-//                                                    if (!foundFactor && !functionEntry.type().equals("void")) {
-//                                                        System.out.println("Function " + functionEntry.name() + " never returns a(n) " + functionEntry.type());
-//                                                        System.exit(0);
-//                                                    }
+                                                    //functionFinished = true;
                                                     break;
                                                 }
                                                 case "factor": {
                                               if (fullFileText_token[l + 3].equals("const")) {
-                                              	//System.out.printf(fullFileText_token[l + 4]);
+                                              	//System.out.println(fullFileText_token[l + 4]);
                                               	RHS_value = "#"+ fullFileText_token[l + 4];                                                    	
                                               }
                                               else {
                                               	for (int funcSymbolTableIndex = 0; funcSymbolTableIndex < FuncSymbolTable.size(); funcSymbolTableIndex++) {
                                                       // Need to check if type of this factor matches that of function.
                                                       if (fullFileText_token[l + 1].equals(FuncSymbolTable.get(funcSymbolTableIndex).name())) {
-                                                      	LHS_value = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
+                                                      	RHS_source = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
+                                                      	//System.out.println(RHS_source);
+
                                                       }
   
                                               }
                                               }
-                                      		//System.out.printf("Entered numexpr loop \n");
                                       		break;
                                           }
                                               	 case "linop":{
+                                                   
                                                  	linop = checklinop(fullFileText_token, l, linop,linopFound);
-                                              		break;
+                                                	linopFound = true;
+                                                 	break;
                                                   }
                                                   
                                                   case "nonlinop":{
                                                   	nonlinop = checknonlinop(fullFileText_token, l, nonlinop,nonlinopFound);                                                    	
-                                              		break;
+                                                  	break;
                                                   }	
                                              	
                                                     case ";": {
+
+                                                    
                                                         semicolonFound = true;
                                                         if(linopFound == true && RHS_value!=null && LHS_value !=-1) {
-                                     
-                                                        	System.out.printf("%s r%d %s \n",linop, LHS_value, RHS_value);
+
+                                                        	System.out.printf("%s r%d r%d %s \n",linop, LHS_value,RHS_source, RHS_value);
+                                                        	System.out.printf("call %s\n",func_call_label);
                                                         	linopFound = false;
                                                         	linop = null;
                                                             LHS_value = -1;
                                                             RHS_value = null;
                                                         	}
                                                         if(nonlinopFound == true && RHS_value!=null && LHS_value !=-1) {
-                                                        	System.out.printf("%s r%d %s \n",nonlinop, LHS_value, RHS_value);
+                                                        	System.out.printf("%s r%d r%d r%d \n",nonlinop, LHS_value, RHS_source, RHS_value);
+                                                        	System.out.printf("call %s",func_call_label);
                                                         	nonlinopFound = false;
                                                         	nonlinop = null;
                                                             LHS_value = -1;
@@ -732,6 +794,7 @@ public class Runner {
                                                         break;
                                                     }
                                                 }
+                                                m=l;
                                             }
 
                                             break;
@@ -750,7 +813,6 @@ public class Runner {
                     break;
                 }
                 default: {
-                    // System.out.println(fullFileText_token[i]);
                     break;
                 }
                 
