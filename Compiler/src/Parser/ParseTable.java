@@ -13,7 +13,7 @@ public class ParseTable {
 
     private Hashtable<Integer, LinkedList<LinkedList<Symbol>>> parseTable;
     private HashMap<String, Symbol> symbolList;
-    public ParseTable(String file) {
+    public ParseTable(String file) throws IOException, FileNotFoundException {
         parseTable = new Hashtable<Integer, LinkedList<LinkedList<Symbol>>>();
         symbolList = new HashMap<String, Symbol>();
         generateSymbolList();
@@ -209,7 +209,7 @@ public class ParseTable {
         symbolList.put("const", consts);
     }
 
-    public void generateParseTable(String file) {
+    public void generateParseTable(String file) throws FileNotFoundException, IOException {
 
         // Read in file containing parse table
         // Note that question mark means comma from csv file
@@ -274,23 +274,16 @@ public class ParseTable {
         return get(stackSymbol, nextTokenSymbol) == null;
     }
 
-    public static String[] readIn(String fileName) {
+    public static String[] readIn(String fileName) throws IOException, FileNotFoundException {
         String fullFileText = "";
         String line = null;
 
-        try {
-            FileReader fileReader = new FileReader(fileName);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            while ((line = bufferedReader.readLine()) != null) {
-                fullFileText += line + "\n";
-            }
-            bufferedReader.close();
-        } catch (FileNotFoundException ex) {
-            System.out.println("Unable to open file '" + fileName + "'");
-        } catch (IOException ex) {
-            System.out.println("Error reading file '" + fileName + "'");
-            // ex.printStackTrace();
+        FileReader fileReader = new FileReader(fileName);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        while ((line = bufferedReader.readLine()) != null) {
+            fullFileText += line + "\n";
         }
+        bufferedReader.close();
 
         return fullFileText.split("\n");
     }

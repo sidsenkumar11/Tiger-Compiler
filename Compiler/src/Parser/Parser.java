@@ -15,16 +15,16 @@ public class Parser {
     private ASTNode currentNode;
     private ASTNode root;
 
-    public Parser() {
+    public Parser() throws IOException, FileNotFoundException {
         this.root = new ASTNode(new Symbol(false, "program"), null, null);
         root.setRoot(root);
         currentNode = root;
-        this.parseTable = new ParseTable("resources/ParseTable.csv");
+        this.parseTable = new ParseTable("../../resources/ParseTable.csv");
         this.backtrackStack = new LinkedList<>();
         initializeStack();
     }
     
-    public Parser(Token[] tokenList) throws ParseException {
+    public Parser(Token[] tokenList) throws IOException, FileNotFoundException, ParseException {
         this();
         this.tokenList = tokenList;
         if (tokenList.length == 0) {
@@ -191,7 +191,7 @@ public class Parser {
         StringBuilder traversal = new StringBuilder();
         preOrder(root, traversal);
         String fullTree = traversal.toString();
-        printAST();
+//        printAST();
 
         // Get rid of parenthesized variables (evaluated to null) as well as stmts which evaluate to null
         String[] tokens = fullTree.split(" ");
@@ -255,7 +255,7 @@ public class Parser {
                 }
             }
         } else {
-            System.out.println("found bad node");
+            //System.out.println("found bad node");
         }
     }
 

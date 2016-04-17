@@ -14,29 +14,23 @@ public class DFAScanner {
     
     String fileData = "";
     
-    public DFAScanner() {
+    public DFAScanner() throws ScanException {
         keywordRecognizer = initializeKeywordDFA();
         idRecognizer = initializeIdDFA();
         intRecognizer = initializeIntDFA();
         floatRecognizer = initializeFloatDFA();
     }
     
-    private void readFileData(String filename) {
-        try {
-            String line = "";
-            FileReader fileReader = new FileReader(filename);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
-            while ((line = bufferedReader.readLine()) != null) {
-                fileData += line + "\n";
+    private void readFileData(String filename) throws IOException {
+        String line = "";
+        FileReader fileReader = new FileReader(filename);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        while ((line = bufferedReader.readLine()) != null) {
+            fileData += line + "\n";
 //                fileData += line + " "; // split each line with a space instead of newline so it's one long character string, much like this comment
-            }
-            bufferedReader.close();
-            fileReader.close();
-        } catch(FileNotFoundException fnfe) {
-            System.err.println("No file found");
-        } catch(IOException ioe) {
-            System.err.println("IO exception in Scanner");
         }
+        bufferedReader.close();
+        fileReader.close();
 
         // Remove leading/trailing whitespace, replace tabs with spaces, and add the EOF character to the end
         fileData = fileData.trim();
@@ -44,7 +38,7 @@ public class DFAScanner {
         fileData += "$";
     }
     
-    public List<Token> scan(String filename) {
+    public List<Token> scan(String filename) throws IOException {
 //        System.out.println("Scanning from " + filename);
         fileData = "";
         readFileData(filename);
@@ -229,7 +223,7 @@ public class DFAScanner {
      * 
      * @return The DFA that recognizes keywords in a Tiger program
      */
-    private Edge.DFA initializeKeywordDFA() {
+    private Edge.DFA initializeKeywordDFA() throws ScanException{
         State initial = new State();
         initial.setInitial();
         
@@ -617,15 +611,11 @@ public class DFAScanner {
 //        states.add(idA);
         Edge.DFA recognizer = null;
 
-        try {
-            recognizer = new Edge.DFA(states);
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        recognizer = new Edge.DFA(states);
         return recognizer;
     }
     
-    private Edge.DFA initializeIdDFA() {
+    private Edge.DFA initializeIdDFA() throws ScanException{
         State initial = new State();
         initial.setInitial();
         
@@ -670,15 +660,11 @@ public class DFAScanner {
 
         Edge.DFA recognizer = null;
 
-        try {
-            recognizer = new Edge.DFA(states);
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        recognizer = new Edge.DFA(states);
         return recognizer;
     }
     
-    private Edge.DFA initializeIntDFA() {
+    private Edge.DFA initializeIntDFA() throws ScanException{
         State initial = new State();
         initial.setInitial();
         
@@ -696,15 +682,11 @@ public class DFAScanner {
 
         Edge.DFA recognizer = null;
 
-        try {
-            recognizer = new Edge.DFA(states);
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        recognizer = new Edge.DFA(states);
         return recognizer;
     }
     
-    private Edge.DFA initializeFloatDFA() {
+    private Edge.DFA initializeFloatDFA() throws ScanException {
         State initial = new State();
         initial.setInitial();
         
@@ -745,11 +727,7 @@ public class DFAScanner {
 
         Edge.DFA recognizer = null;
 
-        try {
-            recognizer = new Edge.DFA(states);
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-        }
+        recognizer = new Edge.DFA(states);
         return recognizer;
     }
 }

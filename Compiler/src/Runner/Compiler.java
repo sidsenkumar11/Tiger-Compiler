@@ -6,7 +6,7 @@ import java.util.List;
  */
 public class Compiler {
 
-    public static void compile(String fileName, boolean tokensFlag, boolean astFlag, boolean printIL) throws ParseException {
+    public static void compile(String fileName, boolean tokensFlag, boolean astFlag, boolean printIL) throws IOException, ScanException, ParseException {
 
         // Scan the input.
         DFAScanner scanner = new DFAScanner();
@@ -49,13 +49,13 @@ public class Compiler {
                 System.err.println(pe.getMessage());
             }
         } else {
-            System.out.println("ERROR TOKEN");
+            throw new ScanException("Scanning tokens failed");
         }
     }
 
     public static void main(String[] args) {
 //        productionMain(args);
-        String filename="resources/tests/test1.tgr";
+        String filename="../../resources/p1tests/count.tgr";
         mainOne(filename, args);
 //        mainAllFiles(args);
     }
@@ -85,6 +85,10 @@ public class Compiler {
 
         try {
             Compiler.compile(filename, printTokens, printAst, printIL);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        } catch (ScanException e) {
+            System.out.println(e.getMessage());
         } catch (ParseException e) {
             System.out.println("Parse Failed");
         }
@@ -100,6 +104,10 @@ public class Compiler {
 
         try {
             Compiler.compile(filename, printTokens, printAst, printIL);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        } catch (ScanException e) {
+            System.out.println(e.getMessage());
         } catch (ParseException e) {
             System.out.println("Parse Failed");
         }
@@ -114,18 +122,21 @@ public class Compiler {
         // Decide which flags have been inputted.
         boolean printTokens = false, printAst = true, printIL = false;
 
-        File folder = new File("resources/tests");
+        File folder = new File("../../resources/tests");
         File[] listOfFiles = folder.listFiles();
 
         for (int i = 0; i < listOfFiles.length; i++) {
             if (listOfFiles[i].isFile()) {
                 if (listOfFiles[i].getName().substring(listOfFiles[i].getName().length() - 4).equals(".tgr")) {
-                    String fileName = "resources/tests/" + listOfFiles[i].getName();
+                    String filename = "../../resources/tests/" + listOfFiles[i].getName();
                     try {
-                        Compiler.compile(fileName, printTokens, printAst, printIL);
-                        System.out.println("SUCCESS: " + listOfFiles[i].getName());
+                        Compiler.compile(filename, printTokens, printAst, printIL);
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
+                    } catch (ScanException e) {
+                        System.out.println(e.getMessage());
                     } catch (ParseException e) {
-                        System.out.println("Parse failed on: " + listOfFiles[i].getName());
+                        System.out.println("Parse Failed");
                     }
                 }
             }

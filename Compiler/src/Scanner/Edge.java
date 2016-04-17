@@ -25,7 +25,7 @@ public class Edge {
         State currentState = null;
         State initialState = null;
 
-        public DFA(List<State> states) throws Exception{
+        public DFA(List<State> states) throws ScanException{
             acceptingStates = new ArrayList<State>();
 
             this.states = states;
@@ -36,7 +36,7 @@ public class Edge {
 
                 if(s.getLabel() == 0) { // s is initial state
                     if(initialState != null) {
-                        throw new Exception("Only one initial state is allowed");
+                        throw new ScanException("Only one initial state is allowed");
                     }
 
                     initialState = s;
@@ -44,7 +44,7 @@ public class Edge {
             }
 
             if(initialState == null) {
-                throw new Exception("Must define one initial state");
+                throw new ScanException("Must define one initial state");
             }
             currentState = initialState;
             
