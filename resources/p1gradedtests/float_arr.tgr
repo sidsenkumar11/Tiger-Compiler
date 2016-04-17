@@ -1,0 +1,10 @@
+let
+	type ArrayFloat := array [5] of float;
+	var A : ArrayFloat := 2.5;
+	var i : int := 0;
+in
+	A[43] := 1.5;
+	for i := 0 to 8 do
+		printf(A[1]);
+	enddo;
+end

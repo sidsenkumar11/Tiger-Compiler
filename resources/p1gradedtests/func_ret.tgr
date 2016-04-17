@@ -1,0 +1,9 @@
+let
+	var b : int := 5;
+	func fact ( n : int ) : int begin
+		return n * 8;
+	end;
+in
+	b := fact(b);
+	printi(b);
+end

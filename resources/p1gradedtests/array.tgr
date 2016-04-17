@@ -1,0 +1,9 @@
+let
+        type int_arr := array [1000] of int;
+        var a : int_arr := 0;
+in
+        for i := 17 to 99 do
+                a[i] := a[i] - a[i+1];
+                printi(a[i]);
+        enddo;
+end

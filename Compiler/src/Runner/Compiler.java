@@ -1,5 +1,4 @@
 import java.io.*;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -7,7 +6,7 @@ import java.util.List;
  */
 public class Compiler {
 
-    public static void compile(String fileName, boolean tokensFlag, boolean astFlag) throws ParseException {
+    public static void compile(String fileName, boolean tokensFlag, boolean astFlag, boolean printIL) throws ParseException {
 
         // Scan the input.
         DFAScanner scanner = new DFAScanner();
@@ -37,84 +36,99 @@ public class Compiler {
                 parser.parse();
                 String ast = parser.getParseAST();
                 if (astFlag) {
+                    // Print the ast as a text file if asked to do so.
                     System.out.println("\n" + ast);
                 }
 
                 // Begin TypeChecking
 //                TypeChecker.typeCheck(ast);
+
+                // Create Intermediate Code
+
             } catch (ParseException pe) {
                 System.err.println(pe.getMessage());
             }
+        } else {
+            System.out.println("ERROR TOKEN");
         }
     }
 
     public static void main(String[] args) {
+//        productionMain(args);
+        String filename="resources/tests/test1.tgr";
+        mainOne(filename, args);
+//        mainAllFiles(args);
+    }
 
-//        String filename = args[0];
+    /**
+     * The main method to be run when we finally submit.
+     */
+    public static void productionMain(String[] args) {
+        String filename = args[0];
 
-//        // Decide which flags have been inputted.
-//        boolean printTokens = false, printAst = true;
-//        for(String s : args) {
-//            if(s.equals("-tokens") || s.equals("--tokens")) {
-//                printTokens = true;
-//            }
-//
-//            if (s.equals("-ast") || s.equals("--ast")) {
-//                printAst = true;
-//            }
-//        }
-//
-//
-//        String filename="resources/tests/test1.tgr";
-//        try {
-//            Compiler.compile(filename, printTokens, printAst);
-//        } catch (ParseException e) {
-//            System.out.println("Parse Failed");
-//        }
+        // Decide which flags have been inputted.
+        boolean printTokens = false, printAst = true, printIL = false;
 
+        for(String s : args) {
+            if(s.equals("--tokens")) {
+                printTokens = true;
+            }
 
-        // ------------------------------------------------------------------------
-        // Look at all .tgr files in directory.
-//        File folder = new File("resources/tests");
-//        File[] listOfFiles = folder.listFiles();
+            if (s.equals("--ast")) {
+                printAst = true;
+            }
 
-//        for (int i = 0; i < listOfFiles.length; i++) {
-//            if (listOfFiles[i].isFile()) {
-//                if (listOfFiles[i].getName().substring(listOfFiles[i].getName().length() - 4).equals(".tgr")) {
-//                    String fileName = "resources/tests/" + listOfFiles[i].getName();
-//                    try {
-//                        Compiler.compile(fileName, printTokens, printAst);
-//                        System.out.println("SUCCESS: " + listOfFiles[i].getName());
-//                    } catch (Exception e) {
-//                        System.out.println("Parse failed on: " + listOfFiles[i].getName());
-//                    }
-//                }
-//            }
-//        }
+            if (s.equals("--runil")) {
+                printIL = true;
+            }
+        }
 
-        // ---------------------------------------------------------------
-//        // Test typechecker
-//        String fileName = "resources/tests/te.ast";
-//        String fullFileText = "";
-//        String line = null;
-//
-//        try {
-//            FileReader fileReader = new FileReader(fileName);
-//            BufferedReader bufferedReader = new BufferedReader(fileReader);
-//            while((line = bufferedReader.readLine()) != null) {
-//                fullFileText += line + "\n";
-//            }
-//            bufferedReader.close();
-//        } catch(FileNotFoundException ex) {
-//            System.out.println("Unable to open file '" + fileName + "'");
-//        } catch(IOException ex) {
-//            System.out.println("Error reading file '" + fileName + "'");
-//            // ex.printStackTrace();
-//        }
-//
-//        TypeChecker.typeCheck(fullFileText);
-//
-//
-//    }
+        try {
+            Compiler.compile(filename, printTokens, printAst, printIL);
+        } catch (ParseException e) {
+            System.out.println("Parse Failed");
+        }
+    }
+
+    /**
+     * Compile one file.
+     */
+    public static void mainOne(String filename, String[] args) {
+
+        // Decide which flags have been inputted.
+        boolean printTokens = false, printAst = true, printIL = false;
+
+        try {
+            Compiler.compile(filename, printTokens, printAst, printIL);
+        } catch (ParseException e) {
+            System.out.println("Parse Failed");
+        }
+    }
+
+    /**
+     * Compile all the tests.
+     * @param args
+     */
+    public static void mainAllFiles(String[] args) {
+
+        // Decide which flags have been inputted.
+        boolean printTokens = false, printAst = true, printIL = false;
+
+        File folder = new File("resources/tests");
+        File[] listOfFiles = folder.listFiles();
+
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (listOfFiles[i].isFile()) {
+                if (listOfFiles[i].getName().substring(listOfFiles[i].getName().length() - 4).equals(".tgr")) {
+                    String fileName = "resources/tests/" + listOfFiles[i].getName();
+                    try {
+                        Compiler.compile(fileName, printTokens, printAst, printIL);
+                        System.out.println("SUCCESS: " + listOfFiles[i].getName());
+                    } catch (ParseException e) {
+                        System.out.println("Parse failed on: " + listOfFiles[i].getName());
+                    }
+                }
+            }
+        }
     }
 }

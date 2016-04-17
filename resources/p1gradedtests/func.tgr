@@ -1,0 +1,12 @@
+let
+
+    func return_it(n:int) : int begin
+            return(n);
+    end;
+    func dont_return_it(n:int) : int begin
+        n := n + 1;
+    end;
+in
+    return_it(5);
+    dont_return_it(4);
+end
