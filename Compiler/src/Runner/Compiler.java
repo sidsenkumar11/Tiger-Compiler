@@ -6,7 +6,7 @@ import java.util.List;
  */
 public class Compiler {
 
-    public static void compile(String fileName, boolean tokensFlag, boolean astFlag, boolean printIL) throws IOException, ScanException, ParseException {
+    public static void compile(String fileName, boolean tokensFlag, boolean astFlag, boolean interpret) throws IOException, ScanException, ParseException {
 
         // Scan the input.
         DFAScanner scanner = new DFAScanner();
@@ -44,7 +44,13 @@ public class Compiler {
 //                TypeChecker.typeCheck(ast);
 
                 // Create Intermediate Code
+                String[] IR = null;
 
+                // If asked to interpret, just run the interpreted code.
+                if (interpret) {
+                    Interpreter interpreter = new Interpreter(IR);
+                    interpreter.run();
+                }
             } catch (ParseException pe) {
                 System.err.println(pe.getMessage());
             }
@@ -67,7 +73,7 @@ public class Compiler {
         String filename = args[0];
 
         // Decide which flags have been inputted.
-        boolean printTokens = false, printAst = true, printIL = false;
+        boolean printTokens = false, printAst = false, interpret = false;
 
         for(String s : args) {
             if(s.equals("--tokens")) {
@@ -79,12 +85,12 @@ public class Compiler {
             }
 
             if (s.equals("--runil")) {
-                printIL = true;
+                interpret = true;
             }
         }
 
         try {
-            Compiler.compile(filename, printTokens, printAst, printIL);
+            Compiler.compile(filename, printTokens, printAst, interpret);
         } catch (IOException e) {
             System.out.println(e.getMessage());
         } catch (ScanException e) {
@@ -100,10 +106,10 @@ public class Compiler {
     public static void mainOne(String filename, String[] args) {
 
         // Decide which flags have been inputted.
-        boolean printTokens = false, printAst = true, printIL = false;
+        boolean printTokens = false, printAst = true, interpret = false;
 
         try {
-            Compiler.compile(filename, printTokens, printAst, printIL);
+            Compiler.compile(filename, printTokens, printAst, interpret);
         } catch (IOException e) {
             System.out.println(e.getMessage());
         } catch (ScanException e) {
@@ -120,7 +126,7 @@ public class Compiler {
     public static void mainAllFiles(String[] args) {
 
         // Decide which flags have been inputted.
-        boolean printTokens = false, printAst = true, printIL = false;
+        boolean printTokens = false, printAst = false, interpret = false;
 
         File folder = new File("../../resources/tests");
         File[] listOfFiles = folder.listFiles();
@@ -130,7 +136,7 @@ public class Compiler {
                 if (listOfFiles[i].getName().substring(listOfFiles[i].getName().length() - 4).equals(".tgr")) {
                     String filename = "../../resources/tests/" + listOfFiles[i].getName();
                     try {
-                        Compiler.compile(filename, printTokens, printAst, printIL);
+                        Compiler.compile(filename, printTokens, printAst, interpret);
                     } catch (IOException e) {
                         System.out.println(e.getMessage());
                     } catch (ScanException e) {
