@@ -1,0 +1,3 @@
+movarrf r6 5 #2.5
+loadi r7 i 
+movimmi r7 #0
