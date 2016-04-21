@@ -80,13 +80,21 @@ public class Interpreter {
     private void execute(String instruction) {
 
         try {
-            String[] ir = instruction.split(",");
+            String[] ir = instruction.split(" ");
             for (int i = 0; i < ir.length; i++) {
                 ir[i] = ir[i].trim();
             }
             switch (ir[0]) {
                 case "debug":
                     System.out.println(ir[1]);
+                    break;
+                case "addi":
+                    state.setInt(false, ir[1],
+                            state.getInt(ir[2]) + state.getInt(ir[3]));
+                    break;
+                case "addf":
+                    state.setFloat(false, ir[1],
+                            state.getFloat(ir[2]) + state.getFloat(ir[3]));
                     break;
                 case "addimmi":
                     state.setInt(false, ir[1],
@@ -96,6 +104,14 @@ public class Interpreter {
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) + Float.parseFloat(ir[3]));
                     break;
+                case "subi":
+                    state.setInt(false, ir[1],
+                            state.getInt(ir[2]) - state.getInt(ir[3]));
+                    break;
+                case "subf":
+                    state.setFloat(false, ir[1],
+                            state.getFloat(ir[2]) - state.getFloat(ir[3]));
+                    break;
                 case "subimmi":
                     state.setInt(false, ir[1],
                             state.getInt(ir[2]) - Integer.parseInt(ir[3]));
@@ -103,6 +119,14 @@ public class Interpreter {
                 case "subimmf":
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) - Float.parseFloat(ir[3]));
+                    break;
+                case "multi":
+                    state.setInt(false, ir[1],
+                            state.getInt(ir[2]) * state.getInt(ir[3]));
+                    break;
+                case "multf":
+                    state.setFloat(false, ir[1],
+                            state.getFloat(ir[2]) * state.getFloat(ir[3]));
                     break;
                 case "multimmi":
                     state.setInt(false, ir[1],
@@ -112,6 +136,14 @@ public class Interpreter {
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) * Float.parseFloat(ir[3]));
                     break;
+                case "divi":
+                    state.setInt(false, ir[1],
+                            state.getInt(ir[2]) / state.getInt(ir[3]));
+                    break;
+                case "divf":
+                    state.setFloat(false, ir[1],
+                            state.getFloat(ir[2]) / state.getFloat(ir[3]));
+                    break;
                 case "divimmi":
                     state.setInt(false, ir[1],
                             state.getInt(ir[2]) / Integer.parseInt(ir[3]));
@@ -119,6 +151,42 @@ public class Interpreter {
                 case "divimmf":
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) / Float.parseFloat(ir[3]));
+                    break;
+                case "and":
+                    state.setInt(false, ir[1],
+                            state.getInt(ir[2]) & state.getInt(ir[3]));
+                    break;
+                case "or":
+                    state.setInt(false, ir[1],
+                            state.getInt(ir[2]) | state.getInt(ir[3]));
+                    break;
+                case "movi":
+                    state.setInt(false, ir[1], state.getInt(ir[2]));
+                    break;
+                case "movf":
+                    state.setFloat(false, ir[1], state.getFloat(ir[2]));
+                    break;
+                case "storeimmi":
+                    int storei_value = (ir.length == 3)
+                            ? Integer.parseInt(ir[2])
+                            : 0;
+                    state.setInt(false, ir[1], storei_value);
+                    break;
+                case "storeimmf":
+                    float storef_value = (ir.length == 3)
+                            ? Float.parseFloat(ir[2])
+                            : 0;
+                    state.setFloat(false, ir[1], storef_value);
+                    break;
+                case "decintarr":
+                    int arr_value = (ir.length == 4)
+                            ? Integer.parseInt(ir[3])
+                            : 0;
+                    state.initIntArray(false, ir[2], Integer.parseInt(ir[1]), arr_value);
+                    break;
+                case "loadarri":
+                    Integer val = state.loadIntArray(ir[1], state.getInt(ir[2]));
+                    state.setInt(false, ir[3], val);
                     break;
                 case "call":
                     switch (ir[1]) {
@@ -151,73 +219,6 @@ public class Interpreter {
                             processArgs(IR[labels.get(ir[1])], Arrays.copyOfRange(ir, 3, ir.length));
                             break;
                     }
-                    break;
-                case "addi":
-                    state.setInt(false, ir[1],
-                            state.getInt(ir[2]) + state.getInt(ir[3]));
-                    break;
-                case "addf":
-                    state.setFloat(false, ir[1],
-                            state.getFloat(ir[2]) + state.getFloat(ir[3]));
-                    break;
-                case "multi":
-                    state.setInt(false, ir[1],
-                            state.getInt(ir[2]) * state.getInt(ir[3]));
-                    break;
-                case "multf":
-                    state.setFloat(false, ir[1],
-                            state.getFloat(ir[2]) * state.getFloat(ir[3]));
-                    break;
-                case "divi":
-                    state.setInt(false, ir[1],
-                            state.getInt(ir[2]) / state.getInt(ir[3]));
-                    break;
-                case "divf":
-                    state.setFloat(false, ir[1],
-                            state.getFloat(ir[2]) / state.getFloat(ir[3]));
-                    break;
-                case "and":
-                    state.setInt(false, ir[1],
-                            state.getInt(ir[2]) & state.getInt(ir[3]));
-                    break;
-                case "or":
-                    state.setInt(false, ir[1],
-                            state.getInt(ir[2]) | state.getInt(ir[3]));
-                    break;
-                case "loadi":
-                    state.setInt(false, ir[2], state.getInt(ir[1]));
-                    break;
-                case "loadf":
-                    state.setFloat(false, ir[2], state.getFloat(ir[1]));
-                    break;
-                case "storei":
-                    state.setInt(false, ir[2], state.getInt(ir[1]));
-                    break;
-                case "storef":
-                    state.setFloat(false, ir[2], state.getFloat(ir[1]));
-                    break;
-                case "decint":
-                    int storei_value = (ir.length == 3)
-                            ? Integer.parseInt(ir[2])
-                            : 0;
-                    state.setInt(false, ir[1], storei_value);
-                    break;
-
-                case "decfloat":
-                    float storef_value = (ir.length == 3)
-                            ? Float.parseFloat(ir[2])
-                            : 0;
-                    state.setFloat(false, ir[1], storef_value);
-                    break;
-                case "decintarr":
-                    int arr_value = (ir.length == 4)
-                            ? Integer.parseInt(ir[3])
-                            : 0;
-                    state.initIntArray(false, ir[2], Integer.parseInt(ir[1]), arr_value);
-                    break;
-                case "loadarri":
-                    Integer val = state.loadIntArray(ir[1], state.getInt(ir[2]));
-                    state.setInt(false, ir[3], val);
                     break;
                 case "ret":
                     if (state.inGlobalScope()) {

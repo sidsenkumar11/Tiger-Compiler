@@ -1,0 +1,66 @@
+DEBUG r0
+	Outputs value of r0 to standard out
+
+===================================================================================
+ARITHMETIC INSTRUCTIONS
+===================================================================================
+ADDI r0 r1 r2
+	r0 = r1 + r2, all 3 registers must contain ints
+ADDF r0 r1 r2
+	r0 = r1 + r2, all 3 registers must contain floats
+ADDIMMI r0 r1 immValue
+	r0 = r1 + immValue, all must be ints
+ADDIMMF r0 r1 immValue
+	r0 = r1 + immValue, all must be floats
+SUBI r0 r1 r2
+	r0 = r1 - r2, all 3 registers must contain ints
+SUBF r0 r1 r2
+	r0 = r1 - r2, all 3 registers must contain floats
+SUBIMMI r0 r1 immValue
+	r0 = r1 - immValue, all must be ints
+SUBIMMF r0 r1 immValue
+	r0 = r1 - immValue, all must be floats
+MULTI r0 r1 r2
+	r0 = r1 * r2, all 3 registers must contain ints
+MULTF r0 r1 r2
+	r0 = r1 * r2, all 3 registers must contain floats
+MULTIMMI r0 r1 immValue
+	r0 = r1 * immValue, all must be ints
+MULTIMMF r0 r1 immValue
+	r0 = r1 * immValue, all must be floats
+DIVI r0 r1 r2
+	r0 = r1 / r2, all 3 must contain ints (will perform integer division)
+DIVF r0 r1 r2
+	r0 = r1 / r2, all 3 must contain floats (will perform normal division)
+DIVIMMI r0 r1 immValue
+	r0 = r1 / immValue, all 3 must be ints (will perform integer division)
+DIVIMMF r0 r1 immValue
+	r0 = r1 / immValue, all 3 must be floats (will perform normal division)
+AND r0 r1 r2
+	r0 = r1 & r2, all 3 must be ints
+OR r0 r1 r2
+	r0 = r1 | r2, all 3 must be ints
+
+===================================================================================
+DATA MOVEMENT INSTRUCTIONS
+===================================================================================
+movi r0 r1
+	r0 = r1, both must be integers
+movf r0 r1
+	r0 = r1, both must be floats
+storeimmi r0 immValue
+	r0 = immValue, both must be ints
+storeimmf r0 immValue
+	r0 = immValue, both must be floats
+
+===================================================================================
+FUNCTION CALLING INSTRUCTIONS
+===================================================================================
+CALL NAME_OF_FUNCTION [optional register]
+	-Sets PC to function's beginning. After function completes, should set PC value to register "returnAddress" by state.setInt(false, "PC", "returnAddress");
+	-CALL printi or CALL printf will just print the value in the register supplied by optional register.
+
+ CALL_RET NAME_OF_FUNCTION r0
+	-If name of function is readi, will read in an integer into r0
+	-If name of function is readf, will read in a float into r0
+	-If any other function, will set PC to start at function. Sets return address PC to be in register "returnAddress". "returnArgument" register will store ir[2].
