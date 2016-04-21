@@ -54,6 +54,29 @@ storeimmf r0 immValue
 	r0 = immValue, both must be floats
 
 ===================================================================================
+ARRAY INSTRUCTIONS
+===================================================================================
+initarri size r0 initial_val
+	r0 will contain address of first location in array.
+	The array will contain size elements and each element will be initialized to initial_val.
+	If initial_val is not specified, then the array is defaultly assigned to 0.
+	registers and array only hold ints
+loadarri r0 r1 r2
+	r2 = mem[r0 + r1].
+	r0 should contain the base address of the array
+	r1 should contain the index into the array that is desired
+	registers only hold ints
+initarrf size r0 initial_val
+	r0 will contain address of first location in array.
+	The array will contain size elements and each element will be initialized to initial_val.
+	If initial_val is not specified, then the array is defaultly assigned to 0.
+	register r0 and size should be ints. initial_val can be float
+loadarrf r0 r1 r2
+	r2 = mem[r0 + r1].
+	r0 should contain the base address of the array
+	r1 should contain the index into the array that is desired
+	r2 should be float register, r0 and r1 should be int registers
+===================================================================================
 FUNCTION CALLING INSTRUCTIONS
 ===================================================================================
 CALL NAME_OF_FUNCTION [optional register]

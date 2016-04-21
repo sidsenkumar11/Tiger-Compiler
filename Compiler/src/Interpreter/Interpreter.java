@@ -178,7 +178,7 @@ public class Interpreter {
                             : 0;
                     state.setFloat(false, ir[1], storef_value);
                     break;
-                case "decintarr":
+                case "initarri":
                     int arr_value = (ir.length == 4)
                             ? Integer.parseInt(ir[3])
                             : 0;
@@ -187,6 +187,16 @@ public class Interpreter {
                 case "loadarri":
                     Integer val = state.loadIntArray(ir[1], state.getInt(ir[2]));
                     state.setInt(false, ir[3], val);
+                    break;
+                case "initarrf":
+                    float arr_value_f = (ir.length == 4)
+                            ? Float.parseFloat(ir[3])
+                            : 0;
+                    state.initFloatArray(false, ir[2], Integer.parseInt(ir[1]), arr_value_f);
+                    break;
+                case "loadarrf":
+                    float val_f = state.loadFloatArray(ir[1], state.getInt(ir[2]));
+                    state.setFloat(false, ir[3], val_f);
                     break;
                 case "call":
                     switch (ir[1]) {
