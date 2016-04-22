@@ -1,0 +1,13 @@
+loadi r6 m 
+movimmi r6 #5
+label print:
+movi r7 n 
+breq r7 #1 label0 
+subimmi r9 r7 #1 
+call print(r9)
+call printi(r7)
+B endif0 
+label 0:
+call printi(r7)
+label endif0: 
+label end: pop
