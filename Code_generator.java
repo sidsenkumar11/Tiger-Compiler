@@ -225,6 +225,16 @@ for (int b = l; !semicolonFound; b++) {
 
               }	  
       	}
+      	for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+            // Need to check if type of this factor matches that of function.
+            if (fullFileText_token[b + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
+            	RHS_source = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+            	LHS_value = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+          	isInteger_LHS = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
+            	//System.out.println(LHS_value);
+            	//System.out.println(LHS_source);
+            }	  
+    	}
       }
 		break;
     }
@@ -244,7 +254,7 @@ for (int b = l; !semicolonFound; b++) {
       }	
  	
       case ";": {
-         	//System.out.println("Entered call1 loop"); 
+         	//System.out.println(LHS_value); 
         	//reg_counter++;
     	  if(linop!= null || nonlinop != null) reg_counter = semicolon_comm_print(reg_counter, null, linop, nonlinop,linopFound, nonlinopFound, isInteger_RHS, imm_value, isInteger_LHS, RHS_value, LHS_value);
             if(linop!= null || nonlinop != null) LHS_value = reg_counter;
@@ -459,27 +469,32 @@ public static int checklvalue(String[] fullFileText_token, int m, boolean semico
      	
             case ";": {
                 semicolonFound = true;
-                //System.out.println(RHS_src1);
+                //System.out.println(linop);
                 if(linopFound == true && RHS_src1!=-1 && RHS_src2!=-1 && LHS_value !=-1) {
-                	//System.out.printf("%s r%d r%d r%d \n",linop, LHS_value, RHS_src1, RHS_src2);
+                	//System.out.printf("Entered Here1 \n");
                 	if(isInteger_RHS1 == false || isInteger_RHS2 == false) System.out.printf("%sf r%d r%d r%d \n",linop,LHS_value, RHS_src1, RHS_src2);
                 	else System.out.printf("%si r%d r%d r%d \n",linop, LHS_value, RHS_src1, RHS_src2);
                  
                 	}
                 else if(nonlinopFound == true && RHS_src1!=-1 && RHS_src2!=-1 && LHS_value !=-1) {
-                	//System.out.printf("%s r%d r%d r%d \n",nonlinop, LHS_value, RHS_src1, RHS_src2);
+                	//System.out.printf("Entered Here2 \n");
                 	if(isInteger_RHS1 == false || isInteger_RHS2 == false) System.out.printf("%sf r%d r%d r%d \n",nonlinop, LHS_value,  RHS_src1, RHS_src2);
                 	else System.out.printf("%si r%d r%d r%d \n",nonlinop, LHS_value,  RHS_src1, RHS_src2);
 
                 }
                 else if((nonlinopFound == true || linopFound== true) && RHS_src1!=-1 && imm_value==true && LHS_value !=-1) {
-                	//System.out.printf("%s r%d r%d r%d \n",nonlinop, LHS_value, RHS_src1, RHS_src2);
+                	//System.out.printf("Entered Here3 \n");
+                	if(nonlinopFound == true) {
                 	if(isInteger_RHS1 == false || RHS_imm.contains(".")) System.out.printf("%simmf r%d r%d %s \n",nonlinop, LHS_value,  RHS_src1, RHS_imm);
                 	else System.out.printf("%simmi r%d r%d %s \n",nonlinop, LHS_value,  RHS_src1, RHS_imm);
+                	} else if(linopFound == true) {
+                    	if(isInteger_RHS1 == false || RHS_imm.contains(".")) System.out.printf("%simmf r%d r%d %s \n",linop, LHS_value,  RHS_src1, RHS_imm);
+                    	else System.out.printf("%simmi r%d r%d %s \n",linop, LHS_value,  RHS_src1, RHS_imm);
+                	}
 
                 }
                 else {
-                	//System.out.println("Entered 1\n");
+                	//System.out.printf("Entered Here4 \n");
                 	if(imm_value == true) {
                 		if(isInteger_LHS == false || RHS_imm.contains(".")) System.out.printf("movimmf r%d %s \n", LHS_value, RHS_imm);
                 		else System.out.printf("movimmi r%d %s \n", LHS_value, RHS_imm);
@@ -561,8 +576,14 @@ public static int checkif(String[] fullFileText_token, int m,int label_counter, 
                         	LHS_value = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
                           	isInteger_LHS = (FuncSymbolTable.get(funcSymbolTableIndex).type()).contains("int");
                         }
-
-                }
+                	}
+                	for (int MainSymbolTableIndex = 0; MainSymbolTableIndex < MainSymbolTable.size(); MainSymbolTableIndex++) {
+                        // Need to check if type of this factor matches that of function.
+                        if (fullFileText_token[l + 1].equals(MainSymbolTable.get(MainSymbolTableIndex).name())) {
+                        	LHS_value = MainSymbolTable.get(MainSymbolTableIndex).reg_no();
+                          	isInteger_LHS = (MainSymbolTable.get(MainSymbolTableIndex).type()).contains("int");
+                        }
+                	}
                 }
         		//System.out.printf("Entered numexpr loop \n");
         		break;
@@ -584,7 +605,7 @@ public static int checkif(String[] fullFileText_token, int m,int label_counter, 
             }
             
             case "then":{
-            	//System.out.println(f_scope);
+            	//System.out.println("Entered then");
 //            	System.out.println(LHS_value);
 //            	System.out.println(RHS_value);
             	if(both_imm == false) System.out.printf("%s r%d %s %s%d \n",boolop, LHS_value, RHS_value,f_scope, label_counter);
@@ -606,6 +627,14 @@ public static int checkif(String[] fullFileText_token, int m,int label_counter, 
             	l = checkoptstore(fullFileText_token, l, MainSymbolTable, FuncSymbolTable, reg_counter);                                                      
             	break;
             }
+            
+            case "lvalue": {
+        		//System.out.printf("Entered lvalue loop \n");
+            	String var_name = fullFileText_token[l+1];
+            	semicolonFound = false;
+            	l=checklvalue(fullFileText_token, l, semicolonFound, f_scope, var_name, MainSymbolTable, FuncSymbolTable, reg_counter);
+                break;
+                }
 //////////    ////////////////////////////////////////////////////////////////////////
          
             case "return": {
@@ -659,14 +688,11 @@ public static int checkif(String[] fullFileText_token, int m,int label_counter, 
 
 
 
-
-
-
 	
 	
 	public static void main(String[] args) {
 		// String fileName = args[0];
-		String fileName = "test3.ast";
+		String fileName = "count.ast";
 		String fullFileText = "";
         String line = null;
 
@@ -1082,8 +1108,80 @@ public static int checkif(String[] fullFileText_token, int m,int label_counter, 
                 }
                 case "in": {
                 	//System.out.println("Entered in");
-                	break;
+                	//System.out.println("Enters Begin");
+                    //f_loop_stop = true;
+                	boolopFound = false;
+                	linopFound = false;
+                	nonlinopFound = false;
+                	System.out.println("Main:");
+                    int endif_counter = 0;
+                    boolean functionFinished = false;
+                    label_counter =0;
+                    f_scope = "main";
+                    for (int m = i; !functionFinished; m++) {
+                        //System.out.println(fullFileText_token[m]);
+
+                        switch (fullFileText_token[m]) {
+                        	case "if": {   
+                        		//System.out.printf("Entered if loop \n");
+                        		m=checkif(fullFileText_token, m,label_counter, f_scope, MainSymbolTable, FuncSymbolTable, reg_counter); 
+                        		label_counter++;
+                        		break;
+                        	}                                    	                                        
+                            case "lvalue": {
+                        		//System.out.printf("Entered lvalue loop \n");
+                            	String var_name = fullFileText_token[m+1];
+                            	boolean semicolonFound = false;
+                            	m=checklvalue(fullFileText_token, m, semicolonFound, f_scope, var_name, MainSymbolTable, FuncSymbolTable, reg_counter);
+                                break;
+                                }
+
+                        	
+                        	case "while": {
+                        		System.out.printf("Entered while loop \n");
+                        		break;
+
+                        	}
+                        	case "for": {
+                        		System.out.printf("Entered for loop \n");
+                        		boolean semicolonFound = false;
+                        		//m =checkfor(fullFileText_token, m, semicolonFound, f_scope, MainSymbolTable, FuncSymbolTable, reg_counter);
+                        		break;
+
+                        	}
+                     
+                        
+                            case "return": {
+                        		System.out.printf("Entered return loop \n");
+                                boolean semicolonFound = false;
+                                String var_name = f_scope;                                            
+                				m=checklvalue(fullFileText_token, m, semicolonFound, f_scope, var_name, MainSymbolTable, FuncSymbolTable, reg_counter);
+                                break;
+                                }
+
+                            
+                            case "optstore": {
+                            	//System.out.println("Entered optstore");
+                            	m=checkoptstore(fullFileText_token, m, MainSymbolTable, FuncSymbolTable, reg_counter);                                                      
+                                break;
+                            }
+                            
+                            case "end": {
+                                System.out.printf("end%s\n", f_scope);
+                                functionFinished = true;
+                                break;
+                            }
+
+                            default: {
+                                break;
+                            }
+                        }
+                        i=m;
+                    }
+                    break;
                 }
+                	
+             
                 default: {
                     break;
                 }
