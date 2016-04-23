@@ -198,6 +198,36 @@ public class Interpreter {
                     float val_f = state.loadFloatArray(ir[1], state.getInt(ir[2]));
                     state.setFloat(false, ir[3], val_f);
                     break;
+                case "breq":
+                    if (Float.parseFloat(ir[1]) == Float.parseFloat(ir[2])) {
+                        state.setInt(false, "PC", labels.get(ir[3]));
+                    }
+                    break;
+                case "brneq":
+                    if (Float.parseFloat(ir[1]) != Float.parseFloat(ir[2])) {
+                        state.setInt(false, "PC", labels.get(ir[3]));
+                    }
+                    break;
+                case "brlt":
+                    if (Float.parseFloat(ir[1]) < Float.parseFloat(ir[2])) {
+                        state.setInt(false, "PC", labels.get(ir[3]));
+                    }
+                    break;
+                case "brgt":
+                    if (Float.parseFloat(ir[1]) > Float.parseFloat(ir[2])) {
+                        state.setInt(false, "PC", labels.get(ir[3]));
+                    }
+                    break;
+                case "brgeq":
+                    if (Float.parseFloat(ir[1]) >= Float.parseFloat(ir[2])) {
+                        state.setInt(false, "PC", labels.get(ir[3]));
+                    }
+                    break;
+                case "brleq":
+                    if (Float.parseFloat(ir[1]) <= Float.parseFloat(ir[2])) {
+                        state.setInt(false, "PC", labels.get(ir[3]));
+                    }
+                    break;
                 case "call":
                     switch (ir[1]) {
                         case "printi":

@@ -77,6 +77,21 @@ loadarrf r0 r1 r2
 	r1 should contain the index into the array that is desired
 	r2 should be float register, r0 and r1 should be int registers
 ===================================================================================
+BRANCH INSTRUCTIONS
+===================================================================================
+breq r0 r1 LABEL
+	if (r0 == r1) then goto: LABEL
+brneq r0 r1 LABEL
+	if (r0 != r1) then goto: LABEL
+brlt r0 r1 LABEL
+	if (r0 < r1) then goto: LABEL
+brgt r0 r1 LABEL
+	if (r0 > r1) then goto: LABEL
+brge r0 r1 LABEL
+	if (r0 >= r1) then goto: LABEL
+brle r0 r1 LABEL
+	if (r0 <= r1) then goto: LABEL
+===================================================================================
 FUNCTION CALLING INSTRUCTIONS
 ===================================================================================
 CALL NAME_OF_FUNCTION [optional register]
