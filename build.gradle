@@ -1,0 +1,29 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+
+libsDirName = '..'
+
+jar {
+	archiveName = "compiler.jar"
+	manifest {
+		attributes('Main-Class': 'Compiler',
+				'Class-Path': './lib/antlr-4.5.2-complete.jar')
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir 'Compiler/src/'
+			srcDir 'out/'
+			srcDir 'lib/'
+			exclude 'antlr/**'
+		}
+	}
+}
+dependencies {
+    compile files('./lib/antlr-4.5.2-complete.jar')
+}
+
