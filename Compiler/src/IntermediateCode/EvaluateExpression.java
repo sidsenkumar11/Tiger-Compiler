@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class EvaluateExpression {
 
-    public static ArrayList<String> evaluateExpression(String expression, int origReg)  {
+    public ArrayList<String> evaluateExpression(String expression, int origReg, ArrayList<SymbolTableEntry> MainSymbolTable)  {
 
         int reg = origReg;
         ArrayList<String> instructions = new ArrayList<>();
@@ -31,7 +31,6 @@ public class EvaluateExpression {
 
                     // Either a pure variable or an array variable
                     if (i + 2 < tokens.length && tokens[i+2].equals("[")) {
-                        // TODO: Replace array variable with value
                         // It is an array variable
                         // Get the index
                         String indexExpression = "";
@@ -41,23 +40,50 @@ public class EvaluateExpression {
                         }
 
                         // Add instructions to calculate index
-//                        System.out.println("Index expression: " + indexExpression);
-                        ArrayList<String> indexCalculations = evaluateExpression(indexExpression, reg);
+//	                        System.out.println("Index expression: " + indexExpression);
+                        ArrayList<String> indexCalculations = evaluateExpression(indexExpression, reg,MainSymbolTable);
                         instructions.addAll(indexCalculations);
                         reg++; // We just used a register to hold the index
-//                        System.out.println(indexCalculations);
+//	                        System.out.println(indexCalculations);
 
                         // If array holds ints, put into int register, else float
-                        int regOfArrayBase = 0; // TODO: Fill with array's base register
-                        if (true) {
+                        int regOfArrayBase = 0;
+                        boolean  isInteger_regOfArrayBase = false;
+                        for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+
+                            if (theVariableName.equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
+                                regOfArrayBase = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+                                isInteger_regOfArrayBase = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
+
+                            }
+                        }
+
+                        if (isInteger_regOfArrayBase) {
                             instructions.add("loadarri r" + regOfArrayBase + "i " + "r" + (reg - 1) + "i r" + (reg++) + "i");
+                            trueExpression += "r" + (reg - 1) + "i ";
                         } else {
                             instructions.add("loadarrf r" + regOfArrayBase + "i " + "r" + (reg - 1) + "i r" + (reg++) + "f");
+                            trueExpression += "r" + (reg - 1) + "f ";
+                        }
+                    } else {
+                        // It was only a variable - not an array
+                        int regOfValue = 0;
+                        boolean  isInteger = false;
+                        for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+
+                            if (theVariableName.equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
+                                regOfValue = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+                                isInteger = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
+
+                            }
+                        }
+
+                        if (isInteger) {
+                            trueExpression += "r" + (regOfValue) + "i ";
+                        } else {
+                            trueExpression += "r" + (regOfValue) + "f ";
                         }
                     }
-                    // TODO: Replace variable name with value
-                    String num = "1";
-                    trueExpression += num + " ";
                 }
             } else if (tokens[i].contains("linop") || tokens[i].contains("nonlinop")) {
                 // Addition / Subtraction
@@ -70,14 +96,12 @@ public class EvaluateExpression {
             i++;
         }
 
+        // TODO: Evaluate parenthesized expressions
+
         // Evaluate multiplication and division, store results
         String[] symbols = trueExpression.split(" ");
-
-        // Evaluate parenthesized expressions
-        // TODO:
-
-
         boolean notJustOne = false;
+
         for (i = 0; i < symbols.length; i++) {
             // Find any mults/divs
             if (symbols[i].equals("*")) {
@@ -197,34 +221,9 @@ public class EvaluateExpression {
                     symbols[i] = "";
                 }
             }
-//            if (symbols[i].equals("*")) {
-//                try {
-//                    Integer.parseInt(symbols[i - 1]);
-//                    Integer.parseInt(symbols[i + 1]);
-//                    instructions.add("multdubimmi r" + (reg++) + "i " + symbols[i - 1] + " " + symbols[i + 1]);
-//                    symbols[i-1] = "r" + (reg - 1) + "i";
-//                } catch (Exception e) {
-//                    instructions.add("multdubimmf r" + (reg++) + "f " + symbols[i - 1] + " " + symbols[i + 1]);
-//                    symbols[i-1] = "r" + (reg - 1) + "f";
-//                }
-//                symbols[i] = "";
-//                symbols[i + 1] = "";
-//            } else if (symbols[i].equals("/")) {
-//                try {
-//                    Integer.parseInt(symbols[i - 1]);
-//                    Integer.parseInt(symbols[i + 1]);
-//                    instructions.add("divdubimmi r" + (reg++) + "i " + symbols[i - 1] + " " + symbols[i + 1]);
-//                    symbols[i-1] = "r" + (reg - 1) + "i";
-//                } catch (Exception e) {
-//                    instructions.add("divdubimmf r" + (reg++) + "f " + symbols[i - 1] + " " + symbols[i + 1]);
-//                    symbols[i-1] = "r" + (reg - 1) + "f";
-//                }
-//                symbols[i] = "";
-//                symbols[i + 1] = "";
-//            }
         }
 
-        // Just go in order
+        // Take care of remaining addition and subtraction terms
         for (i = 0; i < symbols.length; i++) {
             if (symbols[i].equals("+")) {
                 notJustOne = true;
@@ -346,22 +345,21 @@ public class EvaluateExpression {
         }
         // Free up intermediate registers
         if (notJustOne && symbols[symbols.length - 1].contains("i") ) {
-            instructions.add("movi r" + origReg + "i " + symbols[symbols.length - 1]);
+            instructions.add("movi r" + origReg + " " + symbols[symbols.length - 1]);
         } else if (notJustOne){
-            instructions.add("movf r" + origReg + "f " + symbols[symbols.length - 1]);
+            instructions.add("movf r" + origReg + " " + symbols[symbols.length - 1]);
         } else {
             // Only had one term in expression
             if ((Double.parseDouble(symbols[0]) == (int) Double.parseDouble(symbols[0]))) {
                 // It was an int
-                instructions.add("movi r" + origReg + "i " + symbols[symbols.length - 1]);
+                instructions.add("storeimmi r" + origReg + " " + symbols[symbols.length - 1]);
             } else {
                 // It was a double
-                instructions.add("movf r" + origReg + "f " + symbols[symbols.length - 1]);
+                instructions.add("storeimmf r" + origReg + "f " + symbols[symbols.length - 1]);
             }
         }
 
-        reg = origReg + 1;
-//        System.out.println(trueExpression);
+//	        System.out.println(trueExpression);
         return instructions;
 
     }
