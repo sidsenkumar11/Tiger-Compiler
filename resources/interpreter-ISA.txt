@@ -1,6 +1,7 @@
 DEBUG r0
 	Outputs value of r0 to standard out
-
+LABEL:
+	Ex. print:
 ===================================================================================
 ARITHMETIC INSTRUCTIONS
 ===================================================================================
@@ -12,6 +13,10 @@ ADDIMMI r0 r1 immValue
 	r0 = r1 + immValue, all must be ints
 ADDIMMF r0 r1 immValue
 	r0 = r1 + immValue, all must be floats
+ADDDUBIMMI r0 immValue1 immValue2
+	r0 = immValue1 + immValue2, all must be ints
+ADDDUBIMMF r0 immValue1 immValue2
+	r0 = immValue1 + immValue2, all must be floats
 SUBI r0 r1 r2
 	r0 = r1 - r2, all 3 registers must contain ints
 SUBF r0 r1 r2
@@ -20,6 +25,10 @@ SUBIMMI r0 r1 immValue
 	r0 = r1 - immValue, all must be ints
 SUBIMMF r0 r1 immValue
 	r0 = r1 - immValue, all must be floats
+SUBDUBIMMI r0 immValue1 immValue2
+	r0 = immValue1 - immValue2, all must be ints
+SUBDUBIMMF r0 immValue1 immValue2
+	r0 = immValue1 - immValue2, all must be floats
 MULTI r0 r1 r2
 	r0 = r1 * r2, all 3 registers must contain ints
 MULTF r0 r1 r2
@@ -28,6 +37,10 @@ MULTIMMI r0 r1 immValue
 	r0 = r1 * immValue, all must be ints
 MULTIMMF r0 r1 immValue
 	r0 = r1 * immValue, all must be floats
+MULTDUBIMMI r0 immValue1 immValue2
+	r0 = immValue1 * immValue2, all must be ints
+MULTDUBIMMF r0 immValue1 immValue2
+	r0 = immValue1 * immValue2, all must be floats
 DIVI r0 r1 r2
 	r0 = r1 / r2, all 3 must contain ints (will perform integer division)
 DIVF r0 r1 r2
@@ -36,6 +49,10 @@ DIVIMMI r0 r1 immValue
 	r0 = r1 / immValue, all 3 must be ints (will perform integer division)
 DIVIMMF r0 r1 immValue
 	r0 = r1 / immValue, all 3 must be floats (will perform normal division)
+DIVDUBIMMI r0 immValue1 immValue2
+	r0 = immValue1 / immValue2, all must be ints
+DIVDUBIMMF r0 immValue1 immValue2
+	r0 = immValue1 / immValue2, all must be floats
 AND r0 r1 r2
 	r0 = r1 & r2, all 3 must be ints
 OR r0 r1 r2

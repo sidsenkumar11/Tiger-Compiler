@@ -16,6 +16,10 @@ public class Interpreter {
         this.IR = IR;
     }
 
+    public static void main(String[] args) {
+        Interpreter x = new Interpreter(new String[0]);
+        System.out.println(x.getLabel("print:"));
+    }
     private Pattern labelPattern = Pattern.compile("(.*):");
     private String getLabel(String instruction) {
         Matcher m = labelPattern.matcher(instruction);
@@ -104,6 +108,14 @@ public class Interpreter {
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) + Float.parseFloat(ir[3]));
                     break;
+                case "adddubimmi":
+                    state.setInt(false, ir[1],
+                            Integer.parseInt(ir[2]) + Integer.parseInt(ir[3]));
+                    break;
+                case "adddubimmf":
+                    state.setFloat(false, ir[1],
+                            Float.parseFloat(ir[2]) + Float.parseFloat(ir[3]));
+                    break;
                 case "subi":
                     state.setInt(false, ir[1],
                             state.getInt(ir[2]) - state.getInt(ir[3]));
@@ -119,6 +131,14 @@ public class Interpreter {
                 case "subimmf":
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) - Float.parseFloat(ir[3]));
+                    break;
+                case "subdubimmi":
+                    state.setInt(false, ir[1],
+                            Integer.parseInt(ir[2]) - Integer.parseInt(ir[3]));
+                    break;
+                case "subdubimmf":
+                    state.setFloat(false, ir[1],
+                            Float.parseFloat(ir[2]) - Float.parseFloat(ir[3]));
                     break;
                 case "multi":
                     state.setInt(false, ir[1],
@@ -136,6 +156,14 @@ public class Interpreter {
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) * Float.parseFloat(ir[3]));
                     break;
+                case "multdubimmi":
+                    state.setInt(false, ir[1],
+                            Integer.parseInt(ir[2]) * Integer.parseInt(ir[3]));
+                    break;
+                case "multdubimmf":
+                    state.setFloat(false, ir[1],
+                            Float.parseFloat(ir[2]) * Float.parseFloat(ir[3]));
+                    break;
                 case "divi":
                     state.setInt(false, ir[1],
                             state.getInt(ir[2]) / state.getInt(ir[3]));
@@ -151,6 +179,14 @@ public class Interpreter {
                 case "divimmf":
                     state.setFloat(false, ir[1],
                             state.getFloat(ir[2]) / Float.parseFloat(ir[3]));
+                    break;
+                case "divdubimmi":
+                    state.setInt(false, ir[1],
+                            Integer.parseInt(ir[2]) / Integer.parseInt(ir[3]));
+                    break;
+                case "divdubimmf":
+                    state.setFloat(false, ir[1],
+                            Float.parseFloat(ir[2]) / Float.parseFloat(ir[3]));
                     break;
                 case "and":
                     state.setInt(false, ir[1],
