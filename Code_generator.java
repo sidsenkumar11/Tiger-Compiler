@@ -27,403 +27,403 @@ public class Runner {
 		}
     }
 
-	//////////////////////////////////
-	 public ArrayList<String> evaluateExpression(String expression, int origReg, ArrayList<SymbolTableEntry> MainSymbolTable)  {
-
-	        int reg = origReg;
-	        ArrayList<String> instructions = new ArrayList<>();
-
-	        // Get the expression from the ast
-	        String[] tokens = expression.split(" ");
-	        System.out.println(java.util.Arrays.toString(tokens));
-	        String trueExpression = "";
-	        int i = 0;
-	        while (i < tokens.length && !tokens[i].contains(";")) {
-	            if (tokens[i].contains("factor")) {
-	                // Next token is either "const" or is variable name
-	                if (tokens[i+1].contains("const")) {
-	                    // Direct value
-	                    String theNum = "";
-	                    for (int j = 0; tokens[i+2].charAt(j) != ')'; j++) {
-	                        theNum += tokens[i+2].charAt(j);
-	                    }
-	                    trueExpression += theNum + " ";
-	                } else {
-	                    // Variable name
-	                    String theVariableName = "";
-	                    for (int j = 0; j < tokens[i+1].length() && tokens[i+1].charAt(j) != ')'; j++) {
-	                        theVariableName += tokens[i+1].charAt(j);
-	                    }
-	                    /// Get the regno for the variable and type///////////
-	                    
-	                    // Either a pure variable or an array variable
-	                    if (i + 2 < tokens.length && tokens[i+2].equals("[")) {
-	                        // TODO: Replace array variable with value
-	                        // It is an array variable
-	                        // Get the index
-	                        String indexExpression = "";
-	                        int currentIndex = i+2;
-	                        while (!tokens[currentIndex].contains("]")) {
-	                            indexExpression += tokens[currentIndex++] + " ";
-	                        }
-
-	                        // Add instructions to calculate index
-//	                        System.out.println("Index expression: " + indexExpression);
-	                        ArrayList<String> indexCalculations = evaluateExpression(indexExpression, reg,MainSymbolTable);
-	                        instructions.addAll(indexCalculations);
-	                        reg++; // We just used a register to hold the index
-//	                        System.out.println(indexCalculations);
-
-	                        // If array holds ints, put into int register, else float
-	                        int regOfArrayBase = 0; // TODO: Fill with array's base register /////
-	                       	   boolean  isInteger_regOfArrayBase = false;                  
-	                    	for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
-	                          
-	                          if (theVariableName.equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
-	                        	  regOfArrayBase = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
-	                        	  isInteger_regOfArrayBase = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
-	                      	
-	                          }
-	                    	}
-	                        
-	                        
-	                        if (isInteger_regOfArrayBase) {
-	                            instructions.add("loadarri r" + regOfArrayBase + "i " + "r" + (reg - 1) + "i r" + (reg++) + "i");
-	                        } else {
-	                            instructions.add("loadarrf r" + regOfArrayBase + "i " + "r" + (reg - 1) + "i r" + (reg++) + "f");
-	                        }
-	                    }
-	                    // TODO: Replace variable name with value
-	                    String num = "1";
-	                    trueExpression += num + " ";
-	                }
-	            } else if (tokens[i].contains("linop") || tokens[i].contains("nonlinop")) {
-	                // Addition / Subtraction
-	                String theOp = "";
-	                for (int j = 0; tokens[i+1].charAt(j) != ')'; j++) {
-	                    theOp += tokens[i+1].charAt(j);
-	                }
-	                trueExpression += theOp + " ";
-	            }
-	            i++;
-	        }
-
-	        // Evaluate multiplication and division, store results
-	        String[] symbols = trueExpression.split(" ");
-
-	        // Evaluate parenthesized expressions
-	        // TODO:
-
-
-	        boolean notJustOne = false;
-	        for (i = 0; i < symbols.length; i++) {
-	            // Find any mults/divs
-	            if (symbols[i].equals("*")) {
-	                notJustOne = true;
-	                String termOne = symbols[prevSymbol(symbols, i)];
-	                String termTwo = symbols[nextSymbol(symbols, i)];
-
-	                if (termOne.contains("r") && termTwo.contains("r")) {
-	                    // Both are registers
-	                    if (termOne.contains("i") && termTwo.contains("i")) {
-	                        // Both are int registers so int operation
-	                        instructions.add("multi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float register so result is a float reg.
-	                        instructions.add("multf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termOne.contains("r")) {
-	                    // One is a register
-	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("multimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("multimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termTwo.contains("r")) {
-	                    // Two is a register
-	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
-	                        // Both are ints so int operation
-	                        instructions.add("multimmi r" + (reg++) + "i " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("multimmf r" + (reg++) + "f " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else {
-	                    // Both are numbers
-	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("multdubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("multdubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                }
-	            } else if (symbols[i].equals("/")) {
-	                notJustOne = true;
-	                String termOne = symbols[prevSymbol(symbols, i)];
-	                String termTwo = symbols[nextSymbol(symbols, i)];
-
-	                if (termOne.contains("r") && termTwo.contains("r")) {
-	                    // Both are registers
-	                    if (termOne.contains("i") && termTwo.contains("i")) {
-	                        // Both are int registers so int operation
-	                        instructions.add("divi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float register so result is a float reg.
-	                        instructions.add("divf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termOne.contains("r")) {
-	                    // One is a register
-	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("divimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("divimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termTwo.contains("r")) {
-	                    // Two is a register
-	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
-	                        // Both are ints so int operation
-	                        instructions.add("divimmi r" + (reg++) + "i " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("divimmf r" + (reg++) + "f " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else {
-	                    // Both are numbers
-	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("divdubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("divdubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                }
-	            }
-//	            if (symbols[i].equals("*")) {
-//	                try {
-//	                    Integer.parseInt(symbols[i - 1]);
-//	                    Integer.parseInt(symbols[i + 1]);
-//	                    instructions.add("multdubimmi r" + (reg++) + "i " + symbols[i - 1] + " " + symbols[i + 1]);
-//	                    symbols[i-1] = "r" + (reg - 1) + "i";
-//	                } catch (Exception e) {
-//	                    instructions.add("multdubimmf r" + (reg++) + "f " + symbols[i - 1] + " " + symbols[i + 1]);
-//	                    symbols[i-1] = "r" + (reg - 1) + "f";
+//	//////////////////////////////////
+//	 public ArrayList<String> evaluateExpression(String expression, int origReg, ArrayList<SymbolTableEntry> MainSymbolTable)  {
+//
+//	        int reg = origReg;
+//	        ArrayList<String> instructions = new ArrayList<>();
+//
+//	        // Get the expression from the ast
+//	        String[] tokens = expression.split(" ");
+//	        System.out.println(java.util.Arrays.toString(tokens));
+//	        String trueExpression = "";
+//	        int i = 0;
+//	        while (i < tokens.length && !tokens[i].contains(";")) {
+//	            if (tokens[i].contains("factor")) {
+//	                // Next token is either "const" or is variable name
+//	                if (tokens[i+1].contains("const")) {
+//	                    // Direct value
+//	                    String theNum = "";
+//	                    for (int j = 0; tokens[i+2].charAt(j) != ')'; j++) {
+//	                        theNum += tokens[i+2].charAt(j);
+//	                    }
+//	                    trueExpression += theNum + " ";
+//	                } else {
+//	                    // Variable name
+//	                    String theVariableName = "";
+//	                    for (int j = 0; j < tokens[i+1].length() && tokens[i+1].charAt(j) != ')'; j++) {
+//	                        theVariableName += tokens[i+1].charAt(j);
+//	                    }
+//	                    /// Get the regno for the variable and type///////////
+//	                    
+//	                    // Either a pure variable or an array variable
+//	                    if (i + 2 < tokens.length && tokens[i+2].equals("[")) {
+//	                        // TODO: Replace array variable with value
+//	                        // It is an array variable
+//	                        // Get the index
+//	                        String indexExpression = "";
+//	                        int currentIndex = i+2;
+//	                        while (!tokens[currentIndex].contains("]")) {
+//	                            indexExpression += tokens[currentIndex++] + " ";
+//	                        }
+//
+//	                        // Add instructions to calculate index
+////	                        System.out.println("Index expression: " + indexExpression);
+//	                        ArrayList<String> indexCalculations = evaluateExpression(indexExpression, reg,MainSymbolTable);
+//	                        instructions.addAll(indexCalculations);
+//	                        reg++; // We just used a register to hold the index
+////	                        System.out.println(indexCalculations);
+//
+//	                        // If array holds ints, put into int register, else float
+//	                        int regOfArrayBase = 0; // TODO: Fill with array's base register /////
+//	                       	   boolean  isInteger_regOfArrayBase = false;                  
+//	                    	for (int mainSymbolTableIndex = 0; mainSymbolTableIndex < MainSymbolTable.size(); mainSymbolTableIndex++) {
+//	                          
+//	                          if (theVariableName.equals(MainSymbolTable.get(mainSymbolTableIndex).name())) {
+//	                        	  regOfArrayBase = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
+//	                        	  isInteger_regOfArrayBase = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
+//	                      	
+//	                          }
+//	                    	}
+//	                        
+//	                        
+//	                        if (isInteger_regOfArrayBase) {
+//	                            instructions.add("loadarri r" + regOfArrayBase + "i " + "r" + (reg - 1) + "i r" + (reg++) + "i");
+//	                        } else {
+//	                            instructions.add("loadarrf r" + regOfArrayBase + "i " + "r" + (reg - 1) + "i r" + (reg++) + "f");
+//	                        }
+//	                    }
+//	                    // TODO: Replace variable name with value
+//	                    String num = "1";
+//	                    trueExpression += num + " ";
 //	                }
-//	                symbols[i] = "";
-//	                symbols[i + 1] = "";
-//	            } else if (symbols[i].equals("/")) {
-//	                try {
-//	                    Integer.parseInt(symbols[i - 1]);
-//	                    Integer.parseInt(symbols[i + 1]);
-//	                    instructions.add("divdubimmi r" + (reg++) + "i " + symbols[i - 1] + " " + symbols[i + 1]);
-//	                    symbols[i-1] = "r" + (reg - 1) + "i";
-//	                } catch (Exception e) {
-//	                    instructions.add("divdubimmf r" + (reg++) + "f " + symbols[i - 1] + " " + symbols[i + 1]);
-//	                    symbols[i-1] = "r" + (reg - 1) + "f";
+//	            } else if (tokens[i].contains("linop") || tokens[i].contains("nonlinop")) {
+//	                // Addition / Subtraction
+//	                String theOp = "";
+//	                for (int j = 0; tokens[i+1].charAt(j) != ')'; j++) {
+//	                    theOp += tokens[i+1].charAt(j);
 //	                }
-//	                symbols[i] = "";
-//	                symbols[i + 1] = "";
+//	                trueExpression += theOp + " ";
 //	            }
-	        }
-
-	        // Just go in order
-	        for (i = 0; i < symbols.length; i++) {
-	            if (symbols[i].equals("+")) {
-	                notJustOne = true;
-	                String termOne = symbols[prevSymbol(symbols, i)];
-	                String termTwo = symbols[nextSymbol(symbols, i)];
-
-	                if (termOne.contains("r") && termTwo.contains("r")) {
-	                    // Both are registers
-	                    if (termOne.contains("i") && termTwo.contains("i")) {
-	                        // Both are int registers so int operation
-	                        instructions.add("addi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float register so result is a float reg.
-	                        instructions.add("addf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termOne.contains("r")) {
-	                    // One is a register
-	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("addimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("addimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termTwo.contains("r")) {
-	                    // Two is a register
-	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
-	                        // Both are ints so int operation
-	                        instructions.add("addimmi r" + (reg++) + "i " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("addimmf r" + (reg++) + "f " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else {
-	                    // Both are numbers
-	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("adddubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("adddubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                }
-	            } else if (symbols[i].equals("-")) {
-	                notJustOne = true;
-	                String termOne = symbols[prevSymbol(symbols, i)];
-	                String termTwo = symbols[nextSymbol(symbols, i)];
-
-	                if (termOne.contains("r") && termTwo.contains("r")) {
-	                    // Both are registers
-	                    if (termOne.contains("i") && termTwo.contains("i")) {
-	                        // Both are int registers so int operation
-	                        instructions.add("subi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float register so result is a float reg.
-	                        instructions.add("subf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termOne.contains("r")) {
-	                    // One is a register
-	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("subimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("subimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else if (termTwo.contains("r")) {
-	                    // Two is a register
-	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
-	                        // Both are ints so int operation
-	                        instructions.add("subimmi r" + (reg++) + "i " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("subimmf r" + (reg++) + "f " + termTwo + " " + termOne);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                } else {
-	                    // Both are numbers
-	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
-	                        // Both are ints so int operation
-	                        instructions.add("subdubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
-	                    } else {
-	                        // One is a float so result is a float register
-	                        instructions.add("subdubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
-	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
-	                    }
-	                    symbols[prevSymbol(symbols, i)] = "";
-	                    symbols[i] = "";
-	                }
-	            }
-	        }
-	        // Free up intermediate registers
-	        if (notJustOne && symbols[symbols.length - 1].contains("i") ) {
-	            instructions.add("movi r" + origReg + "i " + symbols[symbols.length - 1]);
-	        } else if (notJustOne){
-	            instructions.add("movf r" + origReg + "f " + symbols[symbols.length - 1]);
-	        } else {
-	            // Only had one term in expression
-	            if ((Double.parseDouble(symbols[0]) == (int) Double.parseDouble(symbols[0]))) {
-	                // It was an int
-	                instructions.add("movi r" + origReg + "i " + symbols[symbols.length - 1]);
-	            } else {
-	                // It was a double
-	                instructions.add("movf r" + origReg + "f " + symbols[symbols.length - 1]);
-	            }
-	        }
-
-	        reg = origReg + 1;
-//	        System.out.println(trueExpression);
-	        return instructions;
-
-	    }
-
-	    public static int prevSymbol(String[] symbols, int currentIndex) {
-	        currentIndex--;
-	        while (symbols[currentIndex].equals("")) {
-	            currentIndex--;
-	        }
-	        return currentIndex;
-	    }
-
-	    public static int nextSymbol(String[] symbols, int currentIndex) {
-	        currentIndex++;
-	        while (symbols[currentIndex].equals("")) {
-	            currentIndex++;
-	        }
-	        return currentIndex;
-	    }
-	
-	
-	
-	
-	//////////////////////////////
+//	            i++;
+//	        }
+//
+//	        // Evaluate multiplication and division, store results
+//	        String[] symbols = trueExpression.split(" ");
+//
+//	        // Evaluate parenthesized expressions
+//	        // TODO:
+//
+//
+//	        boolean notJustOne = false;
+//	        for (i = 0; i < symbols.length; i++) {
+//	            // Find any mults/divs
+//	            if (symbols[i].equals("*")) {
+//	                notJustOne = true;
+//	                String termOne = symbols[prevSymbol(symbols, i)];
+//	                String termTwo = symbols[nextSymbol(symbols, i)];
+//
+//	                if (termOne.contains("r") && termTwo.contains("r")) {
+//	                    // Both are registers
+//	                    if (termOne.contains("i") && termTwo.contains("i")) {
+//	                        // Both are int registers so int operation
+//	                        instructions.add("multi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float register so result is a float reg.
+//	                        instructions.add("multf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termOne.contains("r")) {
+//	                    // One is a register
+//	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("multimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("multimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termTwo.contains("r")) {
+//	                    // Two is a register
+//	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("multimmi r" + (reg++) + "i " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("multimmf r" + (reg++) + "f " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else {
+//	                    // Both are numbers
+//	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("multdubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("multdubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                }
+//	            } else if (symbols[i].equals("/")) {
+//	                notJustOne = true;
+//	                String termOne = symbols[prevSymbol(symbols, i)];
+//	                String termTwo = symbols[nextSymbol(symbols, i)];
+//
+//	                if (termOne.contains("r") && termTwo.contains("r")) {
+//	                    // Both are registers
+//	                    if (termOne.contains("i") && termTwo.contains("i")) {
+//	                        // Both are int registers so int operation
+//	                        instructions.add("divi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float register so result is a float reg.
+//	                        instructions.add("divf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termOne.contains("r")) {
+//	                    // One is a register
+//	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("divimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("divimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termTwo.contains("r")) {
+//	                    // Two is a register
+//	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("divimmi r" + (reg++) + "i " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("divimmf r" + (reg++) + "f " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else {
+//	                    // Both are numbers
+//	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("divdubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("divdubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                }
+//	            }
+////	            if (symbols[i].equals("*")) {
+////	                try {
+////	                    Integer.parseInt(symbols[i - 1]);
+////	                    Integer.parseInt(symbols[i + 1]);
+////	                    instructions.add("multdubimmi r" + (reg++) + "i " + symbols[i - 1] + " " + symbols[i + 1]);
+////	                    symbols[i-1] = "r" + (reg - 1) + "i";
+////	                } catch (Exception e) {
+////	                    instructions.add("multdubimmf r" + (reg++) + "f " + symbols[i - 1] + " " + symbols[i + 1]);
+////	                    symbols[i-1] = "r" + (reg - 1) + "f";
+////	                }
+////	                symbols[i] = "";
+////	                symbols[i + 1] = "";
+////	            } else if (symbols[i].equals("/")) {
+////	                try {
+////	                    Integer.parseInt(symbols[i - 1]);
+////	                    Integer.parseInt(symbols[i + 1]);
+////	                    instructions.add("divdubimmi r" + (reg++) + "i " + symbols[i - 1] + " " + symbols[i + 1]);
+////	                    symbols[i-1] = "r" + (reg - 1) + "i";
+////	                } catch (Exception e) {
+////	                    instructions.add("divdubimmf r" + (reg++) + "f " + symbols[i - 1] + " " + symbols[i + 1]);
+////	                    symbols[i-1] = "r" + (reg - 1) + "f";
+////	                }
+////	                symbols[i] = "";
+////	                symbols[i + 1] = "";
+////	            }
+//	        }
+//
+//	        // Just go in order
+//	        for (i = 0; i < symbols.length; i++) {
+//	            if (symbols[i].equals("+")) {
+//	                notJustOne = true;
+//	                String termOne = symbols[prevSymbol(symbols, i)];
+//	                String termTwo = symbols[nextSymbol(symbols, i)];
+//
+//	                if (termOne.contains("r") && termTwo.contains("r")) {
+//	                    // Both are registers
+//	                    if (termOne.contains("i") && termTwo.contains("i")) {
+//	                        // Both are int registers so int operation
+//	                        instructions.add("addi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float register so result is a float reg.
+//	                        instructions.add("addf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termOne.contains("r")) {
+//	                    // One is a register
+//	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("addimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("addimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termTwo.contains("r")) {
+//	                    // Two is a register
+//	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("addimmi r" + (reg++) + "i " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("addimmf r" + (reg++) + "f " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else {
+//	                    // Both are numbers
+//	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("adddubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("adddubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                }
+//	            } else if (symbols[i].equals("-")) {
+//	                notJustOne = true;
+//	                String termOne = symbols[prevSymbol(symbols, i)];
+//	                String termTwo = symbols[nextSymbol(symbols, i)];
+//
+//	                if (termOne.contains("r") && termTwo.contains("r")) {
+//	                    // Both are registers
+//	                    if (termOne.contains("i") && termTwo.contains("i")) {
+//	                        // Both are int registers so int operation
+//	                        instructions.add("subi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float register so result is a float reg.
+//	                        instructions.add("subf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termOne.contains("r")) {
+//	                    // One is a register
+//	                    if (termOne.contains("i") && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("subimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("subimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else if (termTwo.contains("r")) {
+//	                    // Two is a register
+//	                    if (termTwo.contains("i") && (Double.parseDouble(termOne) == (int) Double.parseDouble(termOne))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("subimmi r" + (reg++) + "i " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("subimmf r" + (reg++) + "f " + termTwo + " " + termOne);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                } else {
+//	                    // Both are numbers
+//	                    if ((Double.parseDouble(termOne) == (int) Double.parseDouble(termOne)) && (Double.parseDouble(termTwo) == (int) Double.parseDouble(termTwo))) {
+//	                        // Both are ints so int operation
+//	                        instructions.add("subdubimmi r" + (reg++) + "i " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "i";
+//	                    } else {
+//	                        // One is a float so result is a float register
+//	                        instructions.add("subdubimmf r" + (reg++) + "f " + termOne + " " + termTwo);
+//	                        symbols[nextSymbol(symbols, i)] = "r" + (reg - 1) + "f";
+//	                    }
+//	                    symbols[prevSymbol(symbols, i)] = "";
+//	                    symbols[i] = "";
+//	                }
+//	            }
+//	        }
+//	        // Free up intermediate registers
+//	        if (notJustOne && symbols[symbols.length - 1].contains("i") ) {
+//	            instructions.add("movi r" + origReg + "i " + symbols[symbols.length - 1]);
+//	        } else if (notJustOne){
+//	            instructions.add("movf r" + origReg + "f " + symbols[symbols.length - 1]);
+//	        } else {
+//	            // Only had one term in expression
+//	            if ((Double.parseDouble(symbols[0]) == (int) Double.parseDouble(symbols[0]))) {
+//	                // It was an int
+//	                instructions.add("movi r" + origReg + "i " + symbols[symbols.length - 1]);
+//	            } else {
+//	                // It was a double
+//	                instructions.add("movf r" + origReg + "f " + symbols[symbols.length - 1]);
+//	            }
+//	        }
+//
+//	        reg = origReg + 1;
+////	        System.out.println(trueExpression);
+//	        return instructions;
+//
+//	    }
+//
+//	    public static int prevSymbol(String[] symbols, int currentIndex) {
+//	        currentIndex--;
+//	        while (symbols[currentIndex].equals("")) {
+//	            currentIndex--;
+//	        }
+//	        return currentIndex;
+//	    }
+//
+//	    public static int nextSymbol(String[] symbols, int currentIndex) {
+//	        currentIndex++;
+//	        while (symbols[currentIndex].equals("")) {
+//	            currentIndex++;
+//	        }
+//	        return currentIndex;
+//	    }
+//	
+//	
+//	
+//	
+//	//////////////////////////////
 	
 	
 	
@@ -447,30 +447,6 @@ public static String checknonlinop(String[] fullFileText_token, int b, String no
 
 }
 
-	
-public static String checkfactor(String[] fullFileText_token, int b,boolean RHSfound, String RHS_value, int LHS_value, ArrayList<SymbolTableEntry> FuncSymbolTable) {
-		if (fullFileText_token[b + 3].equals("const")) {
-			RHS_value = "#"+ fullFileText_token[b + 4];
-			RHSfound = true;
-			//LHS_value = Integer.toString(-1);
-			return RHS_value;
-		}
-		else {
-			for (int funcSymbolTableIndex = 0; funcSymbolTableIndex < FuncSymbolTable.size(); funcSymbolTableIndex++) {
-		      if (fullFileText_token[b + 1].equals(FuncSymbolTable.get(funcSymbolTableIndex).name())) {
-		      	LHS_value = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
-		      	System.out.println(LHS_value);
-		      	RHSfound = false;
-		      	return (Integer.toString(LHS_value));
-		      	
-		      }
-
-		}
-		}
-		return null;
-		}
-	
-	
 	
 	
 	
@@ -722,16 +698,26 @@ for (int b = l; !semicolonFound; b++) {
          	//System.out.println(RHS_src2);
 
         	//reg_counter++;
-    	  if(linop!= null || nonlinop != null) reg_counter = semicolon_comm_print(reg_counter, null, linop, nonlinop,linopFound, nonlinopFound, isInteger_RHS, imm_value, isInteger_LHS, RHS_value, LHS_value);
-            if(linop!= null || nonlinop != null) LHS_value = reg_counter;
+    	  if(linop!= null || nonlinop != null) reg_counter = semicolon_comm_print(reg_counter, null, linop, nonlinop,linopFound, nonlinopFound, isInteger_RHS, imm_value, isInteger_RHS1, RHS_value, RHS_src1);
+            if(linop!= null || nonlinop != null)  {RHS_value = "r"+reg_counter; RHS_src1 = -1;}
     	  if(!imm_value) {
-             	//System.out.println("Entered Here"); 
-
+             	//System.out.println("Entered Here1");
+//             	System.out.println(func_call_var);
+             	//System.out.println(RHS_value); 
+//             	System.out.println(RHS_src2);
+    		  
             if(func_call_var != -1 && func_call_label!=null && RHS_src1!=-1 && RHS_src2==-1) System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, RHS_src1);
             else if(func_call_var != -1 && func_call_label!=null&& RHS_src1==-1 && RHS_src2!=-1) System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, RHS_src2);
             else if(func_call_var != -1 && func_call_label!=null&& RHS_src1!=-1 && RHS_src2!=-1) System.out.printf("call_ret r%d %s(r%d,r%d)\n",func_call_var,func_call_label, RHS_src1,RHS_src2);
+            else if(func_call_var == -1 && func_call_label!=null && RHS_src1!=-1 && RHS_src2==-1) System.out.printf("call %s(r%d)\n",func_call_label, RHS_src1);
+            else if(func_call_var == -1 && func_call_label!=null&& RHS_src1==-1 && RHS_src2!=-1) System.out.printf("call %s(r%d)\n",func_call_label, RHS_src2);
+            else if(func_call_var == -1 && func_call_label!=null&& RHS_src1!=-1 && RHS_src2!=-1) System.out.printf("call %s(r%d,r%d)\n",func_call_label, RHS_src1,RHS_src2);
+            //else if(func_call_var == -1 && func_call_label!=null && RHS_value!=null) System.out.printf("call r%d %s(%s)\n",func_call_var,func_call_label, RHS_value);
             else  System.out.printf("call %s()\n",func_call_label);
     	  } else {
+           	//System.out.println(RHS_value); 
+           	//System.out.println("Entered Here2");
+           //	System.out.println(RHS_src1);
 
              if(func_call_var != -1 && func_call_label!=null) System.out.printf("call_ret r%d %s(%s)\n",func_call_var,func_call_label, RHS_value);
              else if(RHS_src1 == -1) System.out.printf("call %s(%s)\n",func_call_label, RHS_value);
@@ -1381,7 +1367,7 @@ public static int checkif(String[] fullFileText_token, int m,int label_counter, 
             	
             }
             case "endif": {
-                System.out.println("Enters endif loop");
+                //System.out.println("Enters endif loop");
                 if(endif_label == true) System.out.printf("endif%s%d: \n",f_scope,endif_counter);
                 else System.out.printf("%s%d: ", f_scope,label_counter);
                 //endif_counter++;
@@ -1516,7 +1502,7 @@ public static int checkfor(String[] fullFileText_token, int m,int label_counter,
             }
             
             case "do": {
-            	System.out.println("ENtered do");
+            	//System.out.println("ENtered do");
             	//System.out.println(RHS_value);
             	reg_counter++;
             	if(!imm_value) {
@@ -1777,7 +1763,7 @@ public static int checkwhile(String[] fullFileText_token, int m,int label_counte
 	
 	public static void main(String[] args) {
 		// String fileName = args[0];
-		String fileName = "count.ast";
+		String fileName = "test1.ast";
 		String fullFileText = "";
         String line = null;
 
@@ -1791,7 +1777,7 @@ public static int checkwhile(String[] fullFileText_token, int m,int label_counte
         } catch(FileNotFoundException ex) {
         	System.out.println("Unable to open file '" + fileName + "'");                
         } catch(IOException ex) {
-            System.out.println("Error reading file '" + fileName + "'");                  
+        	System.out.println("Error reading file '" + fileName + "'");                  
             // ex.printStackTrace();
         }   
 	  
