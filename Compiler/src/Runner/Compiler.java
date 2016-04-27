@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.List;
-
+import java.util.ArrayList;
 /**
  * Created by nick on 3/6/16.
  */
@@ -44,8 +44,8 @@ public class Compiler {
 //                TypeChecker.typeCheck(ast);
 
                 // Create Intermediate Code
-                String[] IR = null;
-
+                ArrayList<String> IR = CodeGenerator.generateCode(ast);
+                System.out.println(IR);
                 // If asked to interpret, just run the interpreted code.
                 if (interpret) {
                     Interpreter interpreter = new Interpreter(IR);

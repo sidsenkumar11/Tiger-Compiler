@@ -1,6 +1,8 @@
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
 
 // YOUR INTERPRETER MUST SUPPORT RECURSIVE FUNCTIONS
 // AND MULTI-DIMENSIONAL ARRAYS
@@ -12,14 +14,10 @@ public class Interpreter {
     private boolean done = false;
     private String[] IR;
 
-    public Interpreter(String[] IR) {
-        this.IR = IR;
+    public Interpreter(ArrayList<String> IR) {
+        this.IR = (String[]) IR.toArray();
     }
 
-    public static void main(String[] args) {
-        Interpreter x = new Interpreter(new String[0]);
-        System.out.println(x.getLabel("print:"));
-    }
     private Pattern labelPattern = Pattern.compile("(.*):");
     private String getLabel(String instruction) {
         Matcher m = labelPattern.matcher(instruction);

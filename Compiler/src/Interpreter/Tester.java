@@ -41,7 +41,7 @@ public class Tester {
         }
 
         String[] IR = readLines(args[0]);
-        Interpreter interpreter = new Interpreter(IR);
-        interpreter.run();
+//        Interpreter interpreter = new Interpreter(IR);
+//        interpreter.run();
     }
 }
