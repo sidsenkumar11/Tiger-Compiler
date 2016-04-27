@@ -3,12 +3,14 @@ package edu.cs4240.tiger;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import edu.cs4240.tiger.analyzer.TigerAnalyzer;
 import edu.cs4240.tiger.parser.TigerParseException;
 import edu.cs4240.tiger.parser.TigerParser;
 import edu.cs4240.tiger.parser.TigerScanner;
 import edu.cs4240.tiger.parser.TigerToken;
+import edu.cs4240.tiger.intermediate.*;
 
 /**
  * @author Roi Atalla
@@ -34,6 +36,7 @@ public class Tiger {
 		String source = null;
 		boolean printTokens = false;
 		boolean printAST = false;
+        boolean runIl = false;
 		
 		for(String s : args) {
 			switch(s) {
@@ -43,6 +46,9 @@ public class Tiger {
 				case "--ast":
 					printAST = true;
 					break;
+                case "--runil":
+                    runIl = true;
+                    break;
 				case "-h":
 				case "--help":
 					printUsage();
@@ -94,5 +100,13 @@ public class Tiger {
 		catch(TigerParseException exc) {
 			System.err.println(exc.toString());
 		}
+        
+        if(runIl) {
+            try {
+                ArrayList<String> result = CodeGenerator.generateCode(parser.parse().toString());
+            }catch(TigerParseException exc) {
+                System.err.println(exc.toString());
+            }
+        }
 	}
 }
