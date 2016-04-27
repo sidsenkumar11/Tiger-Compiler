@@ -24,7 +24,7 @@ public class CodeGenerator {
                 return linop;
             }
             default: {
-                System.out.println("Error at linop function\n");
+                
                 return null;
                 //System.exit(0);
             }
@@ -47,7 +47,7 @@ public class CodeGenerator {
                 return nonlinop;
             }
             default: {
-                System.out.println("Error at linop function\n");
+                
                 return null;
             }
         }
@@ -92,7 +92,7 @@ public class CodeGenerator {
                 return boolop;
             }
             default: {
-                System.out.println("Error in boolop function \n ");
+                
                 return null;
             }
         }
@@ -101,7 +101,7 @@ public class CodeGenerator {
 
     public static int semicolon_comm_print(int reg_counter, String boolop,String linop,String nonlinop,	boolean linopFound, boolean nonlinopFound,
                                            boolean isInteger_RHS,boolean imm_value, boolean isInteger_LHS,String RHS_value, int LHS_value) {
-//System.out.println(imm_value);
+
         if(linopFound == true && RHS_value!=null && LHS_value !=-1) {
             reg_counter++;
             if(imm_value == false) {
@@ -142,12 +142,12 @@ public class CodeGenerator {
                 return reg_counter;
             } else {
                 if(isInteger_RHS == false || isInteger_LHS == false) {
-                    System.out.printf("%sf r%d r%d %s \n",nonlinop, reg_counter, LHS_value, RHS_value);
-                    IR.add(nonlinop + "f r" + reg_counter + " r" + LHS_value + " " + RHS_value);
+                    System.out.printf("%simmf r%d r%d %s \n",nonlinop, reg_counter, LHS_value, RHS_value);
+                    IR.add(nonlinop + "immf r" + reg_counter + " r" + LHS_value + " " + RHS_value);
                 }
                 else {
-                    System.out.printf("%si r%d r%d %s \n",nonlinop,reg_counter, LHS_value, RHS_value);
-                    IR.add(nonlinop + "i r" + reg_counter + " r" + LHS_value + " " + RHS_value);
+                    System.out.printf("%simmi r%d r%d %s \n",nonlinop,reg_counter, LHS_value, RHS_value);
+                    IR.add(nonlinop + "immi r" + reg_counter + " r" + LHS_value + " " + RHS_value);
                 }
                 return reg_counter;
             }
@@ -155,12 +155,26 @@ public class CodeGenerator {
 
         else {
             if(imm_value == true) {
-                if(isInteger_RHS == false || isInteger_LHS == false) System.out.printf("movimmf r%d %s \n", LHS_value, RHS_value);
-                else System.out.printf("movimmi r%d %s \n", LHS_value, RHS_value);
+                if(isInteger_RHS == false || isInteger_LHS == false) {
+                System.out.printf("movimmf r%d %s \n", LHS_value, RHS_value);
+                IR.add(movimmf r" + LHS_value + " " + RHS_value);
+                }
+                else {
+                System.out.printf("movimmi r%d %s \n", LHS_value, RHS_value);
+                IR.add(movimmi r" + LHS_value + " " + RHS_value);
+                
+                }
             }
             if(imm_value == false) {
-                if(isInteger_RHS == false || isInteger_LHS == false) System.out.printf("movf r%d %s \n", LHS_value, RHS_value);
-                else System.out.printf("movi r%d %s \n", LHS_value, RHS_value);
+                if(isInteger_RHS == false || isInteger_LHS == false) {
+                System.out.printf("movf r%d %s \n", LHS_value, RHS_value);
+                IR.add(movf r" + LHS_value + " " + RHS_value);
+                
+                }
+                else {
+                System.out.printf("movi r%d %s \n", LHS_value, RHS_value);
+                IR.add(movi r" + LHS_value + " " + RHS_value);
+                }
             }    	return reg_counter;
         }
     }
@@ -169,7 +183,6 @@ public class CodeGenerator {
 
     public static int checkoptstore(String[] fullFileText_token, int l, ArrayList<SymbolTableEntry> MainSymbolTable, ArrayList<SymbolTableEntry> FuncSymbolTable, int reg_counter) {
 
-//System.out.println("Entered optstore");
 // Check if RHS of assignment is valid
         int func_call_var = -1;
         String func_call_label = null;
@@ -198,25 +211,24 @@ public class CodeGenerator {
 
         if(fullFileText_token[l+8].matches(":=")) func_call_label = fullFileText_token[l+10];
         else func_call_label = fullFileText_token[l+1];
-//System.out.println(func_call_label);
+
         int RHS_source = -1;
         boolean semicolonFound = false;
         String linop = null;
         String nonlinop = null;
-//	System.out.println(linop); System.out.println(nonlinop);
+
 
         for (int b = l; !semicolonFound; b++) {
 
             switch (fullFileText_token[b]) {
                 case "lvalue": {
                     variableName = fullFileText_token[b+1];
-                    //System.out.println(fullFileText_token[b+1]);
-                    // String LHSType = null;
+                    
                     for (int symbolIndex = 0; symbolIndex < MainSymbolTable.size(); symbolIndex++) {
                         if (MainSymbolTable.get(symbolIndex).name().equals(variableName)) {
                             LHS_value = MainSymbolTable.get(symbolIndex).reg_no();
                             func_call_var = LHS_value;
-                            //System.out.println(func_call_var);
+                            
                         }
                     }
                     break;
@@ -226,7 +238,7 @@ public class CodeGenerator {
 
                 case "factor": {
                     if (fullFileText_token[b + 3].equals("const")) {
-                        //System.out.println(fullFileText_token[b + 4]);
+                        
                         RHS_value = "#"+ fullFileText_token[b + 4];
                         imm_value = true;
                         isInteger_RHS = !RHS_value.contains(".");
@@ -238,8 +250,7 @@ public class CodeGenerator {
 //              	RHS_source = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
 //              	LHS_value = FuncSymbolTable.get(funcSymbolTableIndex).reg_no();
 //            	isInteger_LHS = (FuncSymbolTable.get(funcSymbolTableIndex).type()).contains("int");
-//              	//System.out.println(LHS_value);
-//              	//System.out.println(LHS_source);
+//              	
 //
 //              }
 //      	}
@@ -249,8 +260,7 @@ public class CodeGenerator {
 //            	RHS_source = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
 //            	LHS_value = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
 //          	isInteger_LHS = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
-//            	//System.out.println(LHS_value);
-//            	//System.out.println(LHS_source);
+
 //            }
 //    	}
 //      }
@@ -260,7 +270,7 @@ public class CodeGenerator {
                     /////////////////
 
                     else {
-                        //System.out.println(f_scope);
+                        
                         for (int funcSymbolTableIndex = 0; funcSymbolTableIndex < FuncSymbolTable.size(); funcSymbolTableIndex++) {
 
                             if (fullFileText_token[b + 1].equals(FuncSymbolTable.get(funcSymbolTableIndex).name()) && src1_written1==false) {
@@ -284,8 +294,7 @@ public class CodeGenerator {
                                 RHS_src1 = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
                                 isInteger_RHS1 = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
                                 src1_written1 = true;
-                                //System.out.println(src1_written1);
-                                //System.out.println(src2_written1);
+                                
                             } else if(fullFileText_token[b + 1].equals(MainSymbolTable.get(mainSymbolTableIndex).name()) && src2_written1 == false && src1_written1 == true){
                                 RHS_src2 = MainSymbolTable.get(mainSymbolTableIndex).reg_no();
                                 isInteger_RHS2 = (MainSymbolTable.get(mainSymbolTableIndex).type()).contains("int");
@@ -307,53 +316,71 @@ public class CodeGenerator {
 
 
                 case "linop":{
-                    //System.out.println(linop); System.out.println(nonlinop);
+                    
                     linop = checklinop(fullFileText_token, b, linop,linopFound);
                     linopFound = true;
                     break;
                 }
 
                 case "nonlinop":{
-                    //System.out.println(nonlinop);
+                    
                     nonlinop = checknonlinop(fullFileText_token, b, nonlinop,nonlinopFound);
                     break;
                 }
 
                 case ";": {
-//       	//System.out.println(imm_value);
-//    	  System.out.println(RHS_value);
-//         	System.out.println(RHS_src1);
-//         	System.out.println(RHS_src2);
-//         	System.out.println(src1_written1);
-//         	System.out.println(src2_written1);
 
-                    //System.out.println(RHS_src2);
 
                     //reg_counter++;
                     if(linop!= null || nonlinop != null) reg_counter = semicolon_comm_print(reg_counter, null, linop, nonlinop,linopFound, nonlinopFound, isInteger_RHS, imm_value, isInteger_RHS1, RHS_value, RHS_src1);
                     if(linop!= null || nonlinop != null)  {RHS_value = "r"+reg_counter; RHS_src1 = -1;}
                     if(!imm_value) {
-                        //System.out.println("Entered Here1");
-//             	System.out.println(func_call_var);
-                        //System.out.println(RHS_value);
-//             	System.out.println(RHS_src2);
 
-                        if(func_call_var != -1 && func_call_label!=null && RHS_src1!=-1 && RHS_src2==-1) System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, RHS_src1);
-                        else if(func_call_var != -1 && func_call_label!=null&& RHS_src1==-1 && RHS_src2!=-1) System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, RHS_src2);
-                        else if(func_call_var != -1 && func_call_label!=null&& RHS_src1!=-1 && RHS_src2!=-1) System.out.printf("call_ret r%d %s(r%d,r%d)\n",func_call_var,func_call_label, RHS_src1,RHS_src2);
-                        else if(func_call_var == -1 && func_call_label!=null && RHS_src1!=-1 && RHS_src2==-1) System.out.printf("call %s(r%d)\n",func_call_label, RHS_src1);
-                        else if(func_call_var == -1 && func_call_label!=null&& RHS_src1==-1 && RHS_src2!=-1) System.out.printf("call %s(r%d)\n",func_call_label, RHS_src2);
-                        else if(func_call_var == -1 && func_call_label!=null&& RHS_src1!=-1 && RHS_src2!=-1) System.out.printf("call %s(r%d,r%d)\n",func_call_label, RHS_src1,RHS_src2);
-                            //else if(func_call_var == -1 && func_call_label!=null && RHS_value!=null) System.out.printf("call r%d %s(%s)\n",func_call_var,func_call_label, RHS_value);
-                        else  System.out.printf("call %s()\n",func_call_label);
+
+                        if(func_call_var != -1 && func_call_label!=null && RHS_src1!=-1 && RHS_src2==-1) {
+                         System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, RHS_src1);
+                         IR.add("call_ret r" + func_call_var + " " + func_call_label +"(r" + RHS_src1 + ")");
+                         }
+                        else if(func_call_var != -1 && func_call_label!=null&& RHS_src1==-1 && RHS_src2!=-1) { 
+                        System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, RHS_src2);
+                        IR.add("call_ret r" + func_call_var + " " + func_call_label +"(r" + RHS_src2 + ")");
+                        }
+                        else if(func_call_var != -1 && func_call_label!=null&& RHS_src1!=-1 && RHS_src2!=-1) { 
+                        System.out.printf("call_ret r%d %s(r%d,r%d)\n",func_call_var,func_call_label, RHS_src1,RHS_src2);
+                        IR.add("call_ret r" + func_call_var + " " + func_call_label +"(r" + RHS_src1 + ",r" + RHS_src2+ ")");
+                        }
+                        else if(func_call_var == -1 && func_call_label!=null && RHS_src1!=-1 && RHS_src2==-1) { 
+                        System.out.printf("call %s(r%d)\n",func_call_label, RHS_src1);
+                        IR.add("call " + func_call_label + "(r" + RHS_src1 + ")");
+                        }
+                        else if(func_call_var == -1 && func_call_label!=null&& RHS_src1==-1 && RHS_src2!=-1) { 
+                        System.out.printf("call %s(r%d)\n",func_call_label, RHS_src2);
+                        IR.add("call " + func_call_label + "(r" + RHS_src2 + ")");
+                        }
+                        else if(func_call_var == -1 && func_call_label!=null&& RHS_src1!=-1 && RHS_src2!=-1) { 
+                        System.out.printf("call %s(r%d,r%d)\n",func_call_label, RHS_src1,RHS_src2);
+                        IR.add("call " + func_call_label + "(r" + RHS_src1 + ",r" + RHS_src2 + ")");
+                        }
+                        else  { 
+                        System.out.printf("call %s()\n",func_call_label);
+                        IR.add("call " + func_call_label + "()");
+                   
                     } else {
-                        //System.out.println(RHS_value);
-                        //System.out.println("Entered Here2");
-                        //	System.out.println(RHS_src1);
 
-                        if(func_call_var != -1 && func_call_label!=null) System.out.printf("call_ret r%d %s(%s)\n",func_call_var,func_call_label, RHS_value);
-                        else if(RHS_src1 == -1) System.out.printf("call %s(%s)\n",func_call_label, RHS_value);
-                        else System.out.printf("call %s(%s,r%d)\n",func_call_label, RHS_value, RHS_src1);
+                        if(func_call_var != -1 && func_call_label!=null) {
+                        System.out.printf("call_ret r%d %s(%s)\n",func_call_var,func_call_label, RHS_value);
+                        IR.add("call_ret r" + func_call_var + func_call_label+ "(" + RHS_value + ")");
+                        
+                        }
+                        else if(RHS_src1 == -1) {
+                        System.out.printf("call %s(%s)\n",func_call_label, RHS_value);
+                        IR.add("call" + func_call_label + "(" + RHS_value + ")");
+                        }
+                        else {
+                        System.out.printf("call %s(%s,r%d)\n",func_call_label, RHS_value, RHS_src1);
+                        IR.add("call " + func_call_label +  "(" + RHS_value + ",r"+RHS_src1+")");
+                        }
+                        
 
                     }
                     RHS_src1 =-1;
@@ -407,7 +434,7 @@ public class CodeGenerator {
 
         for (int b = l; !semicolonFound; b++) {
 
-            //System.out.printf(b + " "+fullFileText_token[b]);
+
             switch (fullFileText_token[b]) {
 
                 case "factor": {
@@ -427,7 +454,7 @@ public class CodeGenerator {
 
                         }
                     }
-                    //System.out.printf("Entered numexpr loop \n");
+                    
                     break;
                 }
                 case "linop":{
@@ -446,13 +473,14 @@ public class CodeGenerator {
                             LHS_value = MainSymbolTable.get(MainSymbolTableIndex).reg_no();
                         }
                     }
-                    //System.out.println("Enters 1");
+                    
                     reg_counter = semicolon_comm_print(reg_counter, null, linop, nonlinop,linopFound, nonlinopFound, isInteger_RHS, imm_value, isInteger_LHS, RHS_value, LHS_value);
-                    //System.out.printf("call_ret r%d %s(r%d)\n",func_call_var,func_call_label, reg_counter);
                     func_call_label = null;
                     func_call_var = -1;
                     semicolonFound = true;
                     System.out.printf("B end%s \n",f_scope);
+                    IR.add("B end " + f_scope);
+                    
                     //label_counter++;
                     isInteger_RHS = true;
                     isInteger_LHS = true;
@@ -485,7 +513,7 @@ public class CodeGenerator {
         }
 
         String lvalueAST = fullFileText.substring(0, fullFileText.indexOf(";") + 1);
-//        System.out.println("LVALUE AST\n" + lvalueAST);
+
         ArrayList<String> instructions = EvaluateExpression.evaluateExpression(lvalueAST, reg_counter, MainSymbolTable);
         reg_counter++;
         System.out.println("------------------------------------------------");
@@ -505,7 +533,7 @@ public class CodeGenerator {
 
     public static int checkif(String[] fullFileText_token, int m,int label_counter, String f_scope, ArrayList<SymbolTableEntry> MainSymbolTable, ArrayList<SymbolTableEntry> FuncSymbolTable, int reg_counter) {
 
-        //System.out.printf("Entered if loop \n");
+        
         String RHS_value = null;
         boolean semicolonFound;
         int LHS_value= -1;
@@ -526,11 +554,11 @@ public class CodeGenerator {
         int LHS_value2 = -1;
         for (int l = m; !endifFound; l++) {
 
-            //System.out.println(l+ " " + fullFileText_token[l]);
+            
             switch (fullFileText_token[l]) {
                 case "factor": {
                     if (fullFileText_token[l + 3].equals("const")) {
-                        //System.out.println(imm_value);
+                        
 
                         if(imm_value==true) {
                             LHS_value = Integer.valueOf(fullFileText_token[l + 4]);
@@ -563,7 +591,7 @@ public class CodeGenerator {
                             }
                         }
                     }
-                    //System.out.printf("Entered numexpr loop \n");
+                    
                     break;
                 }
                 case "boolop":{
@@ -586,17 +614,25 @@ public class CodeGenerator {
                 }
 
                 case "then":{
-                    //System.out.println("Entered then");
-//            	System.out.println(LHS_value);
-//            	System.out.println(LHS_value2);
-//            	System.out.println(RHS_value);
+
                     if(both_imm == false) {
-                        if(RHS_value!=null) System.out.printf("%s r%d %s %s%d \n",boolop, LHS_value, RHS_value,f_scope, label_counter);
-                        else System.out.printf("%s r%d r%d %s%d \n",boolop, LHS_value, LHS_value2,f_scope, label_counter);
+                        if(RHS_value!=null) {
+                        System.out.printf("%s r%d %s %s%d \n",boolop, LHS_value, RHS_value,f_scope, label_counter);
+                        IR.add(boolop + " r" + LHS_value + " " + RHS_value + " " + f_scope + label_counter);
+                        }
+                        else {
+                        System.out.printf("%s r%d r%d %s%d \n",boolop, LHS_value, LHS_value2,f_scope, label_counter);
+                        IR.add(boolop + " r" + LHS_value + " r" + LHS_value2 + " " + f_scope + label_counter);
+                        
+                        }
+                    
                     }
-                    else System.out.printf("%s %s #%d %s%d \n",boolop, RHS_value, LHS_value, f_scope,label_counter);
-                    if(linopFound == true) System.out.printf(linop);
-                    if(nonlinopFound == true) System.out.printf(nonlinop);
+                    else {
+                    System.out.printf("%s %s #%d %s%d \n",boolop, RHS_value, LHS_value, f_scope,label_counter);
+                    IR.add(boolop + " " + RHS_value + " #" + LHS_value + " " + f_scope + label_counter);
+                    }
+                    //if(linopFound == true) System.out.printf(linop);
+                    //if(nonlinopFound == true) System.out.printf(nonlinop);
                     RHS_value = null;
                     LHS_value = -1;
                     both_imm = false;
@@ -608,13 +644,13 @@ public class CodeGenerator {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
                 case "optstore": {
-                    //System.out.println("Entered optstore1");
+                    
                     l = checkoptstore(fullFileText_token, l, MainSymbolTable, FuncSymbolTable, reg_counter);
                     break;
                 }
 
                 case "lvalue": {
-                    //System.out.printf("Entered lvalue loop \n");
+                    
                     String var_name = fullFileText_token[l+1];
                     semicolonFound = false;
                     l=checklvalue(fullFileText_token, l, semicolonFound, f_scope, var_name, MainSymbolTable, FuncSymbolTable, reg_counter);
@@ -624,7 +660,7 @@ public class CodeGenerator {
 
                 case "return": {
                     // Make sure return type matches function type
-                    //System.out.printf("Entered return loop \n");
+                    
                     semicolonFound = false;
                     boolean functionFinished = false;
                     l=checkreturn(fullFileText_token, l, semicolonFound, f_scope, MainSymbolTable, FuncSymbolTable,reg_counter);
@@ -633,21 +669,26 @@ public class CodeGenerator {
 
                 case "else": {
                     System.out.printf("B endif%s%d \n",f_scope,endif_counter);
+                    IR.add("B endif" + f_scope +  endif_counter);                    
 
                     endif_label =true;
                     System.out.printf("%s%d: ",f_scope, label_counter);
+                    IR.add(f_scope + label_counter + ":");                    
+                    
                     label_counter++;
-                    //System.out.println("Entered else loop");
-                    //System.out.println(fullFileText_token[l+10]);
                     label_counter++;
                     break;
 
                 }
                 case "endif": {
-                    //System.out.println("Enters endif loop");
-                    if(endif_label == true) System.out.printf("endif%s%d: \n",f_scope,endif_counter);
-                    else System.out.printf("%s%d: ", f_scope,label_counter);
-                    //endif_counter++;
+
+                    if(endif_label == true) {
+                    System.out.printf("endif%s%d: \n",f_scope,endif_counter);
+                    IR.add("endif" + f_scope +  endif_counter+ ":");                                        
+                    } else {
+                    System.out.printf("%s%d: ", f_scope,label_counter);
+                    IR.add(f_scope +  label_counter + ":");                    
+                    }
                     endifFound = true;
                     endif_label = false;
                     label_counter++;
@@ -665,7 +706,6 @@ public class CodeGenerator {
 
     public static int checkfor(String[] fullFileText_token, int m,int label_counter, String f_scope, ArrayList<SymbolTableEntry> MainSymbolTable, ArrayList<SymbolTableEntry> FuncSymbolTable, int reg_counter) {
 
-        //System.out.printf("Entered if loop \n");
         String RHS_value = null;
         boolean semicolonFound;
         int LHS_value= -1;
@@ -695,7 +735,7 @@ public class CodeGenerator {
                 //isInteger_LHS = (MainSymbolTable.get(MainSymbolTableIndex).type()).contains("int");
             }
         }
-        //System.out.println(reg_counter);
+
         if(forvar_regno==-1) {
             reg_counter++;
             MainSymbolTable.add(new SymbolTableEntry(scope, forvar, "int", "id",reg_counter));
@@ -704,11 +744,10 @@ public class CodeGenerator {
 
         for (int l = m; !enddoFound; l++) {
 
-            //System.out.println(l+ " " + fullFileText_token[l]);
             switch (fullFileText_token[l]) {
                 case "factor": {
                     if (fullFileText_token[l + 3].equals("const")) {
-                        //System.out.println(imm_value);
+                       
 
                         if(imm_value==true) {
                             LHS_value = Integer.valueOf(fullFileText_token[l + 4]);
@@ -739,7 +778,7 @@ public class CodeGenerator {
                             }
                         }
                     }
-                    //System.out.printf("Entered numexpr loop \n");
+                   
                     break;
                 }
                 case "boolop":{
@@ -759,16 +798,11 @@ public class CodeGenerator {
                 }
 
                 case "to":{
-                    //System.out.println("Entered then");
-//            	System.out.println(LHS_value);
-//            	System.out.println(RHS_value);
-                    System.out.printf("movi r%d %s \n", forvar_regno, RHS_value);
-                    //System.out.printf("movi r%d %s \n", forvar_regno, RHS_value);
 
-//            	if(both_imm == false) System.out.printf("%s r%d %s %s%d \n",boolop, LHS_value, RHS_value,f_scope, label_counter);
-//            	else System.out.printf("%s %s #%d %s%d \n",boolop, RHS_value, LHS_value, f_scope,label_counter);
-//            	if(linopFound == true) System.out.printf(linop);
-//            	if(nonlinopFound == true) System.out.printf(nonlinop);
+                    System.out.printf("movi r%d %s \n", forvar_regno, RHS_value);
+                    IR.add("movi r" + forvar_regno + " " + RHS_value);                    
+                    
+
                     RHS_value = null;
                     LHS_value = -1;
                     both_imm = false;
@@ -779,23 +813,44 @@ public class CodeGenerator {
                 }
 
                 case "do": {
-                    //System.out.println("ENtered do");
-                    //System.out.println(RHS_value);
+
                     reg_counter++;
                     if(!imm_value) {
 
-                        if(LHS_value!= -1 && (linop!= null && nonlinop==null)) System.out.printf("%si r%d r%d %s\n", linop, reg_counter, LHS_value,RHS_value);
-                        else if(LHS_value!= -1 && (linop== null && nonlinop!=null)) System.out.printf("%si r%d r%d %s\n", nonlinop, reg_counter, LHS_value,RHS_value);
-                        else System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
+                        if(LHS_value!= -1 && (linop!= null && nonlinop==null)) {
+                        System.out.printf("%si r%d r%d %s\n", linop, reg_counter, LHS_value,RHS_value);
+                        IR.add(linop + "i r"+ reg_counter + " r" + LHS_value + " " + RHS_value);                    
+                        }
+                        else if(LHS_value!= -1 && (linop== null && nonlinop!=null)) {
+                        System.out.printf("%si r%d r%d %s\n", nonlinop, reg_counter, LHS_value,RHS_value);
+                         IR.add(nonlinop + "i r"+ reg_counter + " r" + LHS_value + " " + RHS_value);  
+                         }                  
+                        
+                        else {
+                        System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
+                        IR.add("movi r" + reg_counter + " " + RHS_value); 
+                        }                   
+                        
                     } else {
-                        if(LHS_value!= -1 && (linop!= null && nonlinop==null)) System.out.printf("%simmi r%d r%d %s\n", linop, reg_counter, LHS_value,RHS_value);
-                        else if(LHS_value!= -1 && (linop== null && nonlinop!=null)) System.out.printf("%simmi r%d r%d %s\n", nonlinop, reg_counter, LHS_value,RHS_value);
-                        else System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
+                        if(LHS_value!= -1 && (linop!= null && nonlinop==null)) {
+                        System.out.printf("%simmi r%d r%d %s\n", linop, reg_counter, LHS_value,RHS_value);
+                        IR.add(linop + "immi r"+ reg_counter + " r" + LHS_value + " " + RHS_value);  
+                        }
+                        else if(LHS_value!= -1 && (linop== null && nonlinop!=null)) {
+                        System.out.printf("%simmi r%d r%d %s\n", nonlinop, reg_counter, LHS_value,RHS_value);
+                        IR.add(nonlinop + "immi r"+ reg_counter + " r" + LHS_value + " " + RHS_value);  
+                        }
+                        else {
+                        System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
+                        IR.add("movi r"+ reg_counter + " " + RHS_value);  
+                        }
                     }
-                    //else System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
                     System.out.printf("for%s%d:", f_scope, label_counter);
-                    System.out.printf("brgt r%d r%d endfor%s%d \n", forvar_regno, reg_counter,f_scope, label_counter);
-                    //System.out.printf("B endif%s%d \n",f_scope,endif_counter);
+                    IR.add("for"+ f_scope + label_counter + ":");  
+                    
+                    System.out.printf(%s r%d r%d endfor%s%d \n",boolop, forvar_regno, reg_counter,f_scope, label_counter);
+                     IR.add(boolop+ " r"+ forvar_regno + " r" + reg_counter + "endfor" +f_scope+ label_counter);  
+                   
                     RHS_value = null;
                     LHS_value = -1;
                     both_imm = false;
@@ -803,11 +858,7 @@ public class CodeGenerator {
                     isInteger_LHS = true;
                     imm_value = false;
                     endif_label =true;
-                    // System.out.printf("%s%d: ",f_scope, label_counter);
-                    //label_counter++;
-                    //System.out.println("Entered else loop");
-                    //System.out.println(fullFileText_token[l+10]);
-                    // label_counter++;
+
                     break;
 
                 }
@@ -829,8 +880,7 @@ public class CodeGenerator {
 //////////    ////////////////////////////////////////////////////////////////////////
 
                 case "return": {
-                    // Make sure return type matches function type
-                    //System.out.printf("Entered return loop \n");
+                   
                     semicolonFound = false;
                     boolean functionFinished = false;
                     l=checkreturn(fullFileText_token, l, semicolonFound, f_scope, MainSymbolTable, FuncSymbolTable,reg_counter);
@@ -840,10 +890,16 @@ public class CodeGenerator {
 
                 case "enddo": {
                     System.out.printf("inc r%d \n",forvar_regno);
+                    IR.add("inc r"+ forvar_regno);  
+                    
                     System.out.printf("b for%s%d \n",f_scope,label_counter);
-                    if(endif_label == true) System.out.printf("endfor%s%d: ",f_scope,endif_counter);
-                    //else System.out.printf("%s%d: ", f_scope,label_counter);
-                    //endif_counter++;
+                    IR.add("b for"+ f_scope + label_counter);  
+                    
+                    if(endif_label == true) {
+                    System.out.printf("endfor%s%d: ",f_scope,endif_counter);
+                    IR.add("endfor"+ f_scope + endif_counter + ":");  
+                    }
+
                     enddoFound = true;
                     endif_label = false;
                     label_counter++;
@@ -884,6 +940,8 @@ public class CodeGenerator {
         String scope = null;
         if(f_scope.equals("main")) scope = "program";
         System.out.printf("whilemain%d: \n",label_counter);
+		IR.add("whilemain"+ label_counter +   ":" +  endif_counter);  
+        
         //isInteger_LHS
         for (int MainSymbolTableIndex = 0; MainSymbolTableIndex < MainSymbolTable.size(); MainSymbolTableIndex++) {
             // Need to check if type of this factor matches that of function.
@@ -960,11 +1018,17 @@ public class CodeGenerator {
                     //System.out.println(LHS_value);
                     //System.out.println(RHS_value);
                     reg_counter++;
-                    if(LHS_value!= -1 && (linop!= null || nonlinop!=null)) System.out.printf("%s r%d r%d %s\n", linop, reg_counter, LHS_value,RHS_value);
-                    else System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
-                    //System.out.printf("for%s%d:", f_scope, label_counter);
-                    System.out.printf("brgt r%d r%d endwhile%s%d \n", LHS_value, reg_counter,f_scope, label_counter);
-                    //System.out.printf("B endif%s%d \n",f_scope,endif_counter);
+                    if(LHS_value!= -1 && (linop!= null || nonlinop!=null)) {
+                    System.out.printf("%s r%d r%d %s\n", linop, reg_counter, LHS_value,RHS_value);
+                    IR.add(linop + " r"+ reg_counter +   " r" +  LHS_value + " " +  RHS_value);  
+                    }
+                    else {
+                    System.out.printf("movi r%d %s\n", reg_counter,RHS_value);
+                    IR.add("movi r"+ reg_counter + " " +  RHS_value);  
+                    }
+                    System.out.printf("%s r%d r%d endwhile%s%d \n", boolop, LHS_value, reg_counter,f_scope, label_counter);
+                    IR.add(boolop + " r"+ LHS_value +   " r" +  reg_counter + " endwhile" +  f_scope+ label_counter);  
+                    
                     RHS_value = null;
                     LHS_value = -1;
                     both_imm = false;
@@ -972,11 +1036,6 @@ public class CodeGenerator {
                     isInteger_LHS = true;
                     imm_value = false;
                     endif_label =true;
-                    // System.out.printf("%s%d: ",f_scope, label_counter);
-                    //label_counter++;
-                    //System.out.println("Entered else loop");
-                    //System.out.println(fullFileText_token[l+10]);
-                    // label_counter++;
                     break;
 
                 }
@@ -1008,11 +1067,14 @@ public class CodeGenerator {
 
 
                 case "enddo": {
-                    // System.out.printf("inc r%d \n",forvar_regno);
                     System.out.printf("b while%s%d \n",f_scope,label_counter);
-                    if(endif_label == true) System.out.printf("endwhile%s%d: ",f_scope,endif_counter);
-                    //else System.out.printf("%s%d: ", f_scope,label_counter);
-                    //endif_counter++;
+                    IR.add("b while" +  f_scope+ label_counter);  
+                    
+                    if(endif_label == true) {
+                    System.out.printf("endwhile%s%d: ",f_scope,endif_counter);
+                    IR.add("endwhile" +  f_scope+ endif_counter);  
+ 					}                   
+                   
                     enddoFound = true;
                     endif_label = false;
                     label_counter++;
@@ -1092,7 +1154,6 @@ public class CodeGenerator {
         for (int i = 0; i < fullFileText_token.length; i++) {
 
 
-            // System.out.println(fullFileText_token[i]);
             switch (fullFileText_token[i]) {
 
                 // Checking for type declaration
@@ -1123,7 +1184,6 @@ public class CodeGenerator {
 
 
 
-                    // System.out.println(typevar_no);
                     // Assigning new type to the object
                     if (Type_match) {
                         TypeSymbolTable.add(new TypeTableEntry(scope, fullFileText_token[i + 2], T_type, "type", T_index));
@@ -1190,21 +1250,35 @@ public class CodeGenerator {
                                         if(var_type.matches("int"))
                                         {
                                             if(fullFileText_token[j + 7].matches(":="))	{
-                                                if(fullFileText_token[j + 11].contains(".")) System.out.printf("movimmf r%d #%s\n", reg_counter, fullFileText_token[j + 11]);
-                                                else System.out.printf("movimmi r%d #%s\n", reg_counter, fullFileText_token[j + 11]);
+                                                if(fullFileText_token[j + 11].contains(".")) {
+                                                System.out.printf("movimmf r%d #%s\n", reg_counter, fullFileText_token[j + 11]);
+                                                IR.add("movimmf r" +  reg_counter+ " " + fullFileText_token[j + 11]);  
+                                                }
+                                                else {
+                                                System.out.printf("movimmi r%d #%s\n", reg_counter, fullFileText_token[j + 11]);
+                                                IR.add("movimmi r" +  reg_counter+ " " + fullFileText_token[j + 11]);  
+                                                }
                                             } else {
                                                 System.out.printf("loadi r%d %s \n",MainSymbolTable.get(p).reg_no(),MainSymbolTable.get(p).name());
+                                                IR.add("loadi r" +  MainSymbolTable.get(p).reg_no() + " " + MainSymbolTable.get(p).name());  
+                                                
                                             }
                                         }
                                         if(var_type.matches("float"))
                                         {
-                                            if(fullFileText_token[j + 7].matches(":="))	System.out.printf("moveimmf r%d #%s\n", reg_counter, fullFileText_token[j + 11]);
-                                            else System.out.printf("loadf r%d %s \n",MainSymbolTable.get(p).reg_no(),MainSymbolTable.get(p).name());
+                                            if(fullFileText_token[j + 7].matches(":="))	{
+                                            System.out.printf("moveimmf r%d #%s\n", reg_counter, fullFileText_token[j + 11]);
+                                            IR.add("movimmf r" +  reg_counter+ " #" + fullFileText_token[j + 11]);  
+                                            }
+                                            else {
+                                            System.out.printf("loadf r%d %s \n",MainSymbolTable.get(p).reg_no(),MainSymbolTable.get(p).name());
+                                           IR.add("loadf r" +  MainSymbolTable.get(p).reg_no() + " " + MainSymbolTable.get(p).name()); 
+                                           } 
+                                            
 
                                         }
                                         if(var_type.matches("int array"))
                                         {
-                                            //System.out.printf("loadarri r%d %s \n",MainSymbolTable.get(p).reg_no(),MainSymbolTable.get(p).name());
                                             for(int a=0;a<typevar_no;a++) {
                                                 if(fullFileText_token[j + 7].matches(":=") && MainSymbolTable.get(p).type().matches(TypeSymbolTable.get(a).type()))	{
                                                     array_size = TypeSymbolTable.get(a).index(); init_present = true;
@@ -1213,8 +1287,14 @@ public class CodeGenerator {
                                                 }
 
                                             }
-                                            if(init_present == true) System.out.printf("movarrimmi r%d %d #%s\n", reg_counter,array_size, fullFileText_token[j + 11]);
-                                            if(init_present == false) System.out.printf("movarri r%d %d\n", reg_counter,array_size);
+                                            if(init_present == true) {
+                                            System.out.printf("movarrimmi r%d %d #%s\n", reg_counter,array_size, fullFileText_token[j + 11]);
+                                            IR.add("movarrimmi r" +  reg_counter+ " " + array_size+ " #" + fullFileText_token[j + 11]);  
+                                            }
+                                            if(init_present == false) {
+                                            System.out.printf("movarri r%d %d\n", reg_counter,array_size);
+                                            IR.add("movimmi r" +  reg_counter + fullFileText_token[j + 11]);  
+                                            }
                                             init_present = false;
                                             //reg_counter = reg_counter + array_size;
                                         }
@@ -1229,8 +1309,14 @@ public class CodeGenerator {
                                                     array_size = TypeSymbolTable.get(a).index(); init_present = false;
                                                 }
                                             }
-                                            if(init_present == true) System.out.printf("movarrimmf r%d %d #%s\n", reg_counter,array_size, fullFileText_token[j + 11]);
-                                            if(init_present == false) System.out.printf("movarrf r%d %d\n", reg_counter,array_size);
+                                            if(init_present == true) {
+                                            System.out.printf("movarrimmf r%d %d #%s\n", reg_counter,array_size, fullFileText_token[j + 11]);
+                                            IR.add("movarrimmf r" +  reg_counter+ " #" + fullFileText_token[j + 11]);  
+                                            }
+                                            if(init_present == false) {
+                                            System.out.printf("movarrf r%d %d\n", reg_counter,array_size);
+                                            IR.add("movarrf r" +  reg_counter+ " " + fullFileText_token[j + 11]);  
+                                            }
                                             //reg_counter = reg_counter + array_size;
                                         }
 
@@ -1271,6 +1357,8 @@ public class CodeGenerator {
 
                                 m_var_name[k] = fullFileText_token[j + 1];
                                 System.out.printf("label %s: ", m_var_name[k]);
+                                IR.add("label " +  m_var_name[k]);  
+                                
                                 f_scope = fullFileText_token[j + 1];
                                 i = j;
                                 break;
@@ -1299,8 +1387,14 @@ public class CodeGenerator {
                                     reg_no.add(new reg_no(reg_counter, 0));
                                     FuncSymbolTable.add(new SymbolTableEntry(f_scope, fullFileText_token[j + 1],
                                             fullFileText_token[j + 7], "id",reg_no.get(reg_counter).reg_index()));
-                                    if(fullFileText_token[j + 1].contains(".")) System.out.printf("movf r%d %s \n", reg_no.get(reg_counter).reg_index(),fullFileText_token[j + 1]);
-                                    else System.out.printf("movi r%d %s \n", reg_no.get(reg_counter).reg_index(),fullFileText_token[j + 1]);
+                                    if(fullFileText_token[j + 1].contains(".")) {
+                                    System.out.printf("movf r%d %s \n", reg_no.get(reg_counter).reg_index(),fullFileText_token[j + 1]);
+                                    IR.add("movf r" +  reg_no.get(reg_counter).reg_index() + " " + fullFileText_token[j + 1]);  
+                                    }
+                                    else {
+                                    System.out.printf("movi r%d %s \n", reg_no.get(reg_counter).reg_index(),fullFileText_token[j + 1]);
+                                    IR.add("movi r" +  reg_no.get(reg_counter).reg_index() + " " + fullFileText_token[j + 1]);  
+                                    }
 
                                     funcvar_no++;
                                     j = j + 7;
@@ -1418,6 +1512,8 @@ public class CodeGenerator {
 
                                         case "end": {
                                             System.out.printf("end%s: pop\n", f_scope);
+                                            IR.add("end" + f_scope);  
+                                            
                                             functionFinished = true;
                                             break;
                                         }
@@ -1437,18 +1533,13 @@ public class CodeGenerator {
                     break;
                 }
                 case "in": {
-//                	System.out.println(i);
-//                	System.out.println(fullFileText_token[i+1]);
-//                	System.out.println(fullFileText_token[i+2]);
-//                	System.out.println(fullFileText_token[i+3]);
-//                	System.out.println(fullFileText_token[i+4]);
-//                	System.out.println(fullFileText_token[i+12]);
-                    //System.out.println("Enters Begin");
-                    //f_loop_stop = true;
+
                     boolopFound = false;
                     linopFound = false;
                     nonlinopFound = false;
                     System.out.println("main:");
+                    IR.add("main:");  
+                    
                     int endif_counter = 0;
                     boolean functionFinished = false;
                     label_counter =0;
@@ -1458,7 +1549,7 @@ public class CodeGenerator {
 
                         switch (fullFileText_token[m]) {
                             case "if": {
-                                System.out.printf("Entered if loop \n");
+                                //System.out.printf("Entered if loop \n");
                                 m=checkif(fullFileText_token, m,label_counter, f_scope, MainSymbolTable, FuncSymbolTable, reg_counter);
                                 label_counter++;
                                 break;
@@ -1489,7 +1580,7 @@ public class CodeGenerator {
 
 
                             case "return": {
-                                System.out.printf("Entered return loop \n");
+                                //System.out.printf("Entered return loop \n");
                                 boolean semicolonFound = false;
                                 String var_name = f_scope;
                                 m=checklvalue(fullFileText_token, m, semicolonFound, f_scope, var_name, MainSymbolTable, FuncSymbolTable, reg_counter);
@@ -1506,6 +1597,8 @@ public class CodeGenerator {
 
                             case "end": {
                                 System.out.printf("end%s\n", f_scope);
+                               IR.add("end" + f_scope);  
+                                
                                 functionFinished = true;
                                 break;
                             }
