@@ -1997,6 +1997,7 @@ public class Runner {
 		String fileName = "regalloc.ast";
 		String fullFileText = "";
 		String line = null;
+		IR.add(String.format("data:"));
 
 		try {
 			FileReader fileReader = new FileReader(fileName);
@@ -2518,7 +2519,7 @@ public class Runner {
 					}
 
 					case "end": {
-						IR.add(String.format("ret%s", f_scope));
+						IR.add(String.format("ret"));
 						functionFinished = true;
 						break;
 					}
