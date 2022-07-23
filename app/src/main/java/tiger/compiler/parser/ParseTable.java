@@ -1,0 +1,259 @@
+package tiger.compiler.parser;
+
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.LinkedList;
+
+public class ParseTable {
+
+    private Hashtable<Integer, LinkedList<LinkedList<Symbol>>> parseTable;
+    private HashMap<String, Symbol> symbolList;
+
+    public ParseTable() {
+        this.parseTable = new Hashtable<Integer, LinkedList<LinkedList<Symbol>>>();
+        this.symbolList = new HashMap<String, Symbol>();
+        this.generateSymbolList();
+        this.generateParseTable();
+    }
+
+    private void generateSymbolList() {
+        // Create all terminal symbols
+        Symbol let = new Symbol(true, "let");
+        Symbol in = new Symbol(true, "in");
+        Symbol end = new Symbol(true, "end");
+        Symbol id = new Symbol(true, "id");
+        Symbol colonEquals = new Symbol(true, ":=");
+        Symbol semicolon = new Symbol(true, ";");
+        Symbol integer = new Symbol(true, "int");
+        Symbol floating = new Symbol(true, "float");
+        Symbol array = new Symbol(true, "array");
+        Symbol leftBracket = new Symbol(true, "[");
+        Symbol intlit = new Symbol(true, "intlit");
+        Symbol rightBracket = new Symbol(true, "]");
+        Symbol of = new Symbol(true, "of");
+        Symbol var = new Symbol(true, "var");
+        Symbol colon = new Symbol(true, ":");
+        Symbol comma = new Symbol(true, "?");
+        Symbol func = new Symbol(true, "func");
+        Symbol leftParen = new Symbol(true, "(");
+        Symbol rightParen = new Symbol(true, ")");
+        Symbol begin = new Symbol(true, "begin");
+        Symbol ifs = new Symbol(true, "if");
+        Symbol then = new Symbol(true, "then");
+        Symbol endif = new Symbol(true, "endif");
+        Symbol elses = new Symbol(true, "else");
+        Symbol whiles = new Symbol(true, "while");
+        Symbol dos = new Symbol(true, "do");
+        Symbol enddo = new Symbol(true, "enddo");
+        Symbol fors = new Symbol(true, "for");
+        Symbol to = new Symbol(true, "to");
+        Symbol breaks = new Symbol(true, "break");
+        Symbol returns = new Symbol(true, "return");
+        Symbol pipe = new Symbol(true, "|");
+        Symbol ampersand = new Symbol(true, "&");
+        Symbol equals = new Symbol(true, "=");
+        Symbol lessGreater = new Symbol(true, "<>");
+        Symbol lessEqual = new Symbol(true, "<=");
+        Symbol greaterEqual = new Symbol(true, ">=");
+        Symbol less = new Symbol(true, "<");
+        Symbol greater = new Symbol(true, ">");
+        Symbol plus = new Symbol(true, "+");
+        Symbol minus = new Symbol(true, "-");
+        Symbol star = new Symbol(true, "*");
+        Symbol divide = new Symbol(true, "/");
+        Symbol floatlit = new Symbol(true, "floatlit");
+        Symbol dollar = new Symbol(true, "$");
+        Symbol epsilon = new Symbol(true, "''");
+        Symbol nullSymbol = new Symbol(true, "NULL");
+        Symbol type = new Symbol(true, "type");
+
+        // Create all non-termnal symbols
+        Symbol program = new Symbol(false, "program");
+        Symbol declseg = new Symbol(false, "declseg");
+        Symbol typedecls = new Symbol(false, "typedecls");
+        Symbol typedecl = new Symbol(false, "typedecl");
+        Symbol typeT = new Symbol(false, "typeT");
+        Symbol vardecls = new Symbol(false, "vardecls");
+        Symbol vardecl = new Symbol(false, "vardecl");
+        Symbol ids = new Symbol(false, "ids");
+        Symbol idsPrime = new Symbol(false, "ids'");
+        Symbol optinit = new Symbol(false, "optinit");
+        Symbol funcdecls = new Symbol(false, "funcdecls");
+        Symbol funcdecl = new Symbol(false, "funcdecl");
+        Symbol params = new Symbol(false, "params");
+        Symbol neparams = new Symbol(false, "neparams");
+        Symbol neparamsPrime = new Symbol(false, "neparams'");
+        Symbol param = new Symbol(false, "param");
+        Symbol optrettype = new Symbol(false, "optrettype");
+        Symbol stmts = new Symbol(false, "stmts");
+        Symbol fullstmt = new Symbol(false, "fullstmt");
+        Symbol stmt = new Symbol(false, "stmt");
+        Symbol stmtPrime = new Symbol(false, "stmt'");
+        Symbol lvalue = new Symbol(false, "lvalue");
+        Symbol optoffset = new Symbol(false, "optoffset");
+        Symbol optstore = new Symbol(false, "optstore");
+        Symbol numexprs = new Symbol(false, "numexprs");
+        Symbol neexprs = new Symbol(false, "neexprs");
+        Symbol neexprsPrime = new Symbol(false, "neexprs'");
+        Symbol boolexpr = new Symbol(false, "boolexpr");
+        Symbol boolexprPrime = new Symbol(false, "boolexpr'");
+        Symbol clause = new Symbol(false, "clause");
+        Symbol clausePrime = new Symbol(false, "clause'");
+        Symbol pred = new Symbol(false, "pred");
+        Symbol boolop = new Symbol(false, "boolop");
+        Symbol numexpr = new Symbol(false, "numexpr");
+        Symbol numexprPrime = new Symbol(false, "numexpr'");
+        Symbol linop = new Symbol(false, "linop");
+        Symbol term = new Symbol(false, "term");
+        Symbol termPrime = new Symbol(false, "term'");
+        Symbol nonlinop = new Symbol(false, "nonlinop");
+        Symbol factor = new Symbol(false, "factor");
+        Symbol factorPrime = new Symbol(false, "factor'");
+        Symbol consts = new Symbol(false, "const");
+
+        // Add them all to symbol list
+
+        symbolList.put("NULL", nullSymbol);
+        symbolList.put("let", let);
+        symbolList.put("in", in);
+        symbolList.put("end", end);
+        symbolList.put("id", id);
+        symbolList.put(":=", colonEquals);
+        symbolList.put(";", semicolon);
+        symbolList.put("int", integer);
+        symbolList.put("float", floating);
+        symbolList.put("array", array);
+        symbolList.put("[", leftBracket);
+        symbolList.put("intlit", intlit);
+        symbolList.put("]", rightBracket);
+        symbolList.put("of", of);
+        symbolList.put("var", var);
+        symbolList.put(":", colon);
+        symbolList.put("?", comma);
+        symbolList.put("func", func);
+        symbolList.put("(", leftParen);
+        symbolList.put(")", rightParen);
+        symbolList.put("begin", begin);
+        symbolList.put("if", ifs);
+        symbolList.put("then", then);
+        symbolList.put("endif", endif);
+        symbolList.put("else", elses);
+        symbolList.put("while", whiles);
+        symbolList.put("do", dos);
+        symbolList.put("enddo", enddo);
+        symbolList.put("for", fors);
+        symbolList.put("to", to);
+        symbolList.put("break", breaks);
+        symbolList.put("return", returns);
+        symbolList.put("|", pipe);
+        symbolList.put("&", ampersand);
+        symbolList.put("=", equals);
+        symbolList.put("<>", lessGreater);
+        symbolList.put("<=", lessEqual);
+        symbolList.put(">=", greaterEqual);
+        symbolList.put("<", less);
+        symbolList.put(">", greater);
+        symbolList.put("+", plus);
+        symbolList.put("-", minus);
+        symbolList.put("*", star);
+        symbolList.put("/", divide);
+        symbolList.put("floatlit", floatlit);
+        symbolList.put("$", dollar);
+        symbolList.put("''", epsilon);
+        symbolList.put("program", program);
+        symbolList.put("declseg", declseg);
+        symbolList.put("typedecls", typedecls);
+        symbolList.put("typedecl", typedecl);
+        symbolList.put("type", type);
+        symbolList.put("typeT", typeT);
+        symbolList.put("vardecls", vardecls);
+        symbolList.put("vardecl", vardecl);
+        symbolList.put("ids", ids);
+        symbolList.put("ids'", idsPrime);
+        symbolList.put("optinit", optinit);
+        symbolList.put("funcdecls", funcdecls);
+        symbolList.put("funcdecl", funcdecl);
+        symbolList.put("params", params);
+        symbolList.put("neparams", neparams);
+        symbolList.put("neparams'", neparamsPrime);
+        symbolList.put("param", param);
+        symbolList.put("optrettype", optrettype);
+        symbolList.put("stmts", stmts);
+        symbolList.put("fullstmt", fullstmt);
+        symbolList.put("stmt", stmt);
+        symbolList.put("stmt'", stmtPrime);
+        symbolList.put("lvalue", lvalue);
+        symbolList.put("optoffset", optoffset);
+        symbolList.put("optstore", optstore);
+        symbolList.put("numexprs", numexprs);
+        symbolList.put("neexprs", neexprs);
+        symbolList.put("neexprs'", neexprsPrime);
+        symbolList.put("boolexpr", boolexpr);
+        symbolList.put("boolexpr'", boolexprPrime);
+        symbolList.put("clause", clause);
+        symbolList.put("clause'", clausePrime);
+        symbolList.put("pred", pred);
+        symbolList.put("boolop", boolop);
+        symbolList.put("numexpr", numexpr);
+        symbolList.put("numexpr'", numexprPrime);
+        symbolList.put("linop", linop);
+        symbolList.put("term", term);
+        symbolList.put("term'", termPrime);
+        symbolList.put("nonlinop", nonlinop);
+        symbolList.put("factor", factor);
+        symbolList.put("factor'", factorPrime);
+        symbolList.put("const", consts);
+    }
+
+    public void generateParseTable() {
+
+    }
+
+    public Symbol getRootSymbol() {
+
+    }
+
+    private LinkedList<Symbol> createEntry(String[] entry) {
+        LinkedList<Symbol> list = new LinkedList<Symbol>();
+        for (int i = 0; i < entry.length; i++) {
+            list.add(getSymbol(entry[i]));
+        }
+        return list;
+    }
+
+    private Symbol getSymbol(String symbolText) {
+        return symbolList.get(symbolText);
+    }
+
+    private void set(Symbol row, Symbol col, LinkedList<LinkedList<Symbol>> entry) {
+        SymbolArray key = new SymbolArray(row, col);
+        parseTable.put(key.hashCode(), entry);
+    }
+
+    /**
+     * Gets the expanded symbol list for this stack value on this input token.
+     * 
+     * @param stackSymbol The current stack symbol.
+     * @param nextTokenSymbol The next input token.
+     * @return The expanded symbol list for this input token on this stack value.
+     */
+    public LinkedList<LinkedList<Symbol>> get(Symbol stackSymbol, Symbol nextTokenSymbol) {
+        SymbolArray key = new SymbolArray(stackSymbol, nextTokenSymbol);
+        return parseTable.get(key.hashCode());
+    }
+
+    /**
+     * Tells whether there is a definition for this stack value on this input token.
+     * 
+     * @param stackSymbol The current stack symbol.
+     * @param nextTokenSymbol The next input token.
+     * @return If there is a definition for this stack value on this input token.
+     */
+    public boolean isEmpty(Symbol stackSymbol, Symbol nextTokenSymbol) {
+        return get(stackSymbol, nextTokenSymbol) == null;
+    }
+
+    public String toString() {
+        return parseTable.toString();
+    }
+}

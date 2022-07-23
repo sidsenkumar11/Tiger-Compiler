@@ -1,0 +1,43 @@
+'boolexpr': {'intlit', 'floatlit', 'id', '('}
+"boolexpr'": {"''", '|'}
+'boolop': {'>', '<>', '<', '=', '>=', '<='}
+'clause': {'intlit', 'floatlit', 'id', '('}
+"clause'": {"''", '&'}
+'const': {'intlit', 'floatlit'}
+'declseg': {"''", 'type'}
+'factor': {'id', 'intlit', '(', 'floatlit'}
+"factor'": {"''", '['}
+'fullstmt': {"''", 'for', 'if', 'break', 'id', 'while', 'return'}
+'funcdecl': {'func'}
+'funcdecls': {"''", 'func'}
+'ids': {'id'}
+"ids'": {',', "''"}
+'linop': {'+', '-'}
+'lvalue': {'id'}
+'neexprs': {'intlit', 'floatlit', 'id', '('}
+"neexprs'": {',', "''"}
+'neparams': {'id'}
+"neparams'": {',', "''"}
+'nonlinop': {'*', '/'}
+'numexpr': {'intlit', 'floatlit', 'id', '('}
+"numexpr'": {'+', '-', "''"}
+'numexprs': {"''", 'intlit', 'floatlit', 'id', '('}
+'optinit': {':=', "''"}
+'optoffset': {"''", '['}
+'optrettype': {"''", ':'}
+'optstore': {'id', "''"}
+'param': {'id'}
+'params': {'id', "''"}
+'pred': {'intlit', 'floatlit', 'id', '('}
+'program': {'let'}
+'stmt': {"''", 'for', 'if', 'break', 'id', 'while', 'return'}
+"stmt'": {'endif', 'else'}
+'stmts': {"''", 'for', 'if', 'break', 'id', 'while', 'return'}
+"stmts'": {"''", 'for', 'if', 'break', 'id', 'while', 'return'}
+'term': {'intlit', 'floatlit', 'id', '('}
+"term'": {"''", '*', '/'}
+'typeT': {'int', 'id', 'float', 'array'}
+'typedecl': {'type'}
+'typedecls': {"''", 'type'}
+'vardecl': {'var'}
+'vardecls': {'var', "''"}
