@@ -7,6 +7,7 @@ typeT -> int
 typeT -> float
 typeT -> id
 typeT -> array [ intlit ] of typeT
+
 vardecls -> ''
 vardecls -> vardecl vardecls
 vardecl -> var ids : typeT optinit ;
@@ -15,6 +16,7 @@ ids' -> , id ids'
 ids' -> ''
 optinit -> ''
 optinit -> := const
+
 funcdecls -> ''
 funcdecls -> funcdecl funcdecls
 funcdecl -> func id ( params ) optrettype begin stmts end ;
@@ -24,30 +26,36 @@ neparams -> param neparams'
 neparams' -> , param neparams'
 neparams' -> ''
 param -> id : typeT
+
 optrettype -> ''
 optrettype -> : typeT
-stmts -> fullstmt stmts
-stmts -> ''
+
+stmts -> fullstmt stmts'
+stmts' -> stmts
+stmts' -> ''
 fullstmt -> stmt ;
 stmt -> lvalue := numexpr
-stmt -> if boolexpr then stmts stmt'
-stmt' -> endif
-stmt' -> else stmts endif
 stmt -> while boolexpr do stmts enddo
 stmt -> for id := numexpr to numexpr do stmts enddo
 stmt -> optstore id ( numexprs )
 stmt -> break
 stmt -> return numexpr
+stmt -> if boolexpr then stmts stmt'
+stmt' -> endif
+stmt' -> else stmts endif
+
 lvalue -> id optoffset
 optoffset -> ''
 optoffset -> [ numexpr ]
 optstore -> ''
 optstore -> lvalue :=
+
 numexprs -> ''
 numexprs -> neexprs
 neexprs -> numexpr neexprs'
 neexprs' -> , numexpr neexprs'
 neexprs' -> ''
+
 boolexpr -> clause boolexpr'
 boolexpr' -> | clause boolexpr'
 boolexpr' -> ''
