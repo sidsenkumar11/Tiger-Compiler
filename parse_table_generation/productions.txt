@@ -1,0 +1,90 @@
+program → let declseg in stmts end
+declseg → typedecls vardecls funcdecls
+typedecls → ''
+typedecls → typedecl typedecls
+typedecl → type id := typeNT ;
+typeNT → int
+typeNT → float
+typeNT → id
+typeNT → array [ intlit ] of typeNT
+vardecls → ''
+vardecls → vardecl vardecls
+vardecl → var ids : typeNT optinit ;
+ids → id ids'
+ids' → , id ids'
+ids' → ''
+optinit → ''
+optinit → := const
+funcdecls → ''
+funcdecls → funcdecl funcdecls
+funcdecl → func id ( params ) optrettype begin stmts end ;
+params → ''
+params → neparams
+neparams → param neparams'
+neparams' → , param neparams'
+neparams' → ''
+param → id : typeNT
+optrettype → ''
+optrettype → : typeNT
+stmts → fullstmt stmts'
+stmts' → fullstmt stmts'
+stmts' → ''
+fullstmt → stmt ;
+stmt → if boolexpr then stmts condstmtend
+condstmtend → endif
+condstmtend → else stmts endif
+stmt → while boolexpr do stmts enddo
+stmt → for id := numexpr to numexpr do stmts enddo
+stmt → break
+stmt → return numexpr
+
+# original:
+# stmt → lvalue := numexpr
+# stmt → optstore id ( numexprs )
+# lvalue → id optoffset
+# optstore → ϵ
+# optstore → lvalue :=
+stmt → id stmt'
+stmt' → ( numexprs )
+stmt' → optoffset := stmt''
+stmt'' → numexpr
+stmt' → id ( numexprs )
+
+optoffset → ''
+optoffset → [ numexpr ]
+numexprs → ''
+numexprs → neexprs
+neexprs → numexpr neexprs'
+neexprs' → , numexpr neexprs'
+neexprs' → ''
+boolexpr → clause boolexpr'
+boolexpr' → | clause boolexpr'
+boolexpr' → ''
+clause → pred clause'
+clause' → & pred clause'
+clause' → ''
+pred → numexpr boolop numexpr
+# pred → ( boolexpr ) - this rule makes the grammar non-LL(1) so removed
+boolop → =
+boolop → <>
+boolop → <=
+boolop → >=
+boolop → <
+boolop → >
+numexpr → term numexpr'
+numexpr' → linop term numexpr'
+numexpr' → ''
+linop → +
+linop → -
+term → factor term'
+term' → nonlinop factor term'
+term' → ''
+nonlinop → *
+nonlinop → /
+factor → const
+factor → id factor'
+factor' → [ numexpr ]
+factor' → ''
+factor → ( numexpr )
+const → intlit
+const → floatlit

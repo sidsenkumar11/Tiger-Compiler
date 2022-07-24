@@ -24,11 +24,11 @@ public class ASTNode {
 
     /**
      * Deep copy constructor
-     * 
-     * @param symbol The symbol
-     * @param derivation The derivation
+     *
+     * @param symbol       The symbol
+     * @param derivation   The derivation
      * @param currentDeriv The currentDerivation number
-     * @param thisNodeNum That node's number
+     * @param thisNodeNum  That node's number
      */
     public ASTNode(Symbol symbol, LinkedList<ASTNode> derivation, int currentDeriv,
             int thisNodeNum) {
@@ -37,7 +37,6 @@ public class ASTNode {
         this.currentDeriv = currentDeriv;
         this.thisNodeNum = thisNodeNum;
     }
-
 
     public ASTNode getCurrent() {
         return derivation.get(currentDeriv);

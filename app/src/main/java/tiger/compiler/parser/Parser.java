@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import tiger.compiler.lexer.Token;
+
 public class Parser {
 
     private List<Token> tokenList;
@@ -16,25 +18,25 @@ public class Parser {
 
     public Parser(List<Token> tokenList) {
         this.tokenList = tokenList;
-        this.root = new ASTNode(new Symbol(false, "program"), null, null);
+        this.root = new ASTNode(new Symbol(SymbolType.PROGRAM), null, null);
         root.setRoot(root);
         currentNode = root;
         this.parseTable = new ParseTable();
 
-        // Sets up stack by pushing EOF marker and the initial program symbol.
-        this.stack = new LinkedList<>();
-        stack.push(Token.EOFToken);
-        stack.push(new Symbol(false, "program"));
+        // Initialize stack with $ and start symbol ("program")
+        this.stack = new LinkedList<Symbol>();
+        this.stack.push(new Symbol(SymbolType.EOF));
+        this.stack.push(new Symbol(SymbolType.PROGRAM));
     }
 
     /**
-     * Parses the token array using an LL(1) parse table.
-     * 
+     * Parses the list of tokens into an AST using an LL(1) parse table.
+     *
      * @throws ParseException If the input program does not parse successfully.
      */
     public void parse() throws ParseException {
 
-        // If no tokens or only token is EOF, there's nothing to parse.
+        // Check if empty file (only EOF token)
         if (this.tokenList.size() <= 1) {
             throw new ParseException("Cannot parse empty file");
         }
@@ -90,13 +92,11 @@ public class Parser {
                     }
                 }
 
-
             } else if (!parseTable.isEmpty(stackSymbol, nextToken)) {
                 // Non-Terminal found on stack.
 
                 // First create potential backup copies.
-                LinkedList<LinkedList<Symbol>> nextStackSymbols =
-                        parseTable.get(stackSymbol, nextToken);
+                LinkedList<LinkedList<Symbol>> nextStackSymbols = parseTable.get(stackSymbol, nextToken);
                 if (nextStackSymbols.size() > 1) {
                     for (int i = 1; i < nextStackSymbols.size(); i++) {
                         // Make copy of root. Note that this does not copy parent and root nodes
@@ -127,7 +127,8 @@ public class Parser {
                     }
                 }
 
-                // Actually add the symbols to the stack now, in reverse order of the derivation.
+                // Actually add the symbols to the stack now, in reverse order of the
+                // derivation.
                 for (int i = nextStackSymbols.get(0).size() - 1; i >= 0; i--) {
                     Symbol current = nextStackSymbols.get(0).get(i);
                     stack.push(current);
@@ -152,7 +153,8 @@ public class Parser {
         // System.out.println("Hooray! Successfully parsed input.");
 
         // Convert parse tree into an AST
-        // An AST abstracts away the intermediate non-terminals that were useful for parsing but are
+        // An AST abstracts away the intermediate non-terminals that were useful for
+        // parsing but are
         // not useful for the remaining compilation phases
         // fixTree();
     }
@@ -184,7 +186,8 @@ public class Parser {
         String fullTree = traversal.toString();
         // printAST();
 
-        // Get rid of parenthesized variables (evaluated to null) as well as stmts which evaluate to
+        // Get rid of parenthesized variables (evaluated to null) as well as stmts which
+        // evaluate to
         // null
         String[] tokens = fullTree.split(" ");
         for (int i = 0; i < tokens.length; i++) {
@@ -235,7 +238,7 @@ public class Parser {
 
         if (!node.getSymbol().isSpecial()) {
             // Only print if included in original grammar
-            if (node.getSymbol().isNonterminal()) {
+            if (!node.getSymbol().isTerminal()) {
                 traversal.append("(").append(node.getSymbolValue()).append(" ");
                 for (int i = 0; i < node.getDerivation().size(); i++) {
                     preOrder(node.getDerivation().get(i), traversal);
@@ -260,7 +263,7 @@ public class Parser {
 
     private void fixTree(ASTNode node) {
         if (!node.getSymbol().isSpecial()) {
-            if (node.getSymbol().isNonterminal()) {
+            if (!node.getSymbol().isTerminal()) {
                 for (int i = 0; i < node.getDerivation().size(); i++) {
                     fixTree(node.getDerivation().get(i));
                 }
@@ -323,7 +326,7 @@ public class Parser {
                     // curNode is numexpr
                     /*
                      * The tree looks like: numexpr term linop term linop term
-                     * 
+                     *
                      * numexpr numexpr numexpr term linop term linop term Need to change to: numexpr
                      * numexpr numexpr term linop term linop term
                      */
@@ -402,7 +405,7 @@ public class Parser {
                     // curNode is numexpr
                     /*
                      * The tree looks like: numexpr term linop term linop term
-                     * 
+                     *
                      * numexpr numexpr numexpr term linop term linop term Need to change to: numexpr
                      * numexpr numexpr term linop term linop term
                      */

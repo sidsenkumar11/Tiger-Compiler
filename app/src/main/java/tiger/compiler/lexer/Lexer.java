@@ -2,7 +2,6 @@ package tiger.compiler.lexer;
 
 import java.util.ArrayList;
 import java.util.List;
-import tiger.compiler.parser.Token;
 
 public class Lexer {
 
@@ -39,9 +38,9 @@ public class Lexer {
         this.floatRecognizer.rollback();
     }
 
-    private StringBuilder addToken(String lexeme, List<Token> tokens, String type) {
+    private StringBuilder addToken(List<Token> tokens, String lexeme, TokenType type) {
         this.reset();
-        tokens.add(new Token(type, lexeme));
+        tokens.add(new Token(lexeme, type));
         return new StringBuilder();
     }
 
@@ -81,13 +80,13 @@ public class Lexer {
             }
 
             if (this.keywordRecognizer.isAccepted()) {
-                lexeme = this.addToken(lexeme.toString(), tokens, "Keyword");
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.KEYWORD);
             } else if (this.idRecognizer.isAccepted()) {
-                lexeme = this.addToken(lexeme.toString(), tokens, "Id");
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.ID);
             } else if (this.intRecognizer.isAccepted()) {
-                lexeme = this.addToken(lexeme.toString(), tokens, "Intlit");
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.INTLIT);
             } else if (this.floatRecognizer.isAccepted()) {
-                lexeme = this.addToken(lexeme.toString(), tokens, "Floatlit");
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.FLOATLIT);
             } else {
                 // Reached end of word with no accepting states
                 // Need to backtrack until one of the DFAs indicates an accepting state
@@ -107,16 +106,16 @@ public class Lexer {
 
                     // Check if any DFAs accepted the token
                     if (this.keywordRecognizer.isAccepted()) {
-                        lexeme = this.addToken(lexeme.toString(), tokens, "Keyword");
+                        lexeme = this.addToken(tokens, lexeme.toString(), TokenType.KEYWORD);
                         accepted = true;
                     } else if (this.idRecognizer.isAccepted()) {
-                        lexeme = this.addToken(lexeme.toString(), tokens, "Id");
+                        lexeme = this.addToken(tokens, lexeme.toString(), TokenType.ID);
                         accepted = true;
                     } else if (this.intRecognizer.isAccepted()) {
-                        lexeme = this.addToken(lexeme.toString(), tokens, "Intlit");
+                        lexeme = this.addToken(tokens, lexeme.toString(), TokenType.INTLIT);
                         accepted = true;
                     } else if (this.floatRecognizer.isAccepted()) {
-                        lexeme = this.addToken(lexeme.toString(), tokens, "Floatlit");
+                        lexeme = this.addToken(tokens, lexeme.toString(), TokenType.FLOATLIT);
                         accepted = true;
                     }
                 }
@@ -126,7 +125,7 @@ public class Lexer {
                     System.err.println(
                             "Error at line " + lineNumber + ". Couldn't recognize '" + oldLexeme
                                     + "'");
-                    tokens.add(new Token("error", "error"));
+                    tokens.add(Token.ErrorToken);
                     return tokens;
                 }
             }
@@ -141,10 +140,13 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches keywords in Tiger. This includes: array, begin, break, do,
-     * else, end, enddo, endif, float, for, func, if, in, int, let, of, return, then, to, type, var,
-     * while, ,, :, ;, (, ), [, ], {, }, ., +, -, *, /, =, <>, <, >, <=, >=, &, |, and :=.
-     * 
+     * Constructs a DFA that matches keywords in Tiger. This includes: array, begin,
+     * break, do,
+     * else, end, enddo, endif, float, for, func, if, in, int, let, of, return,
+     * then, to, type, var,
+     * while, ,, :, ;, (, ), [, ], {, }, ., +, -, *, /, =, <>, <, >, <=, >=, &, |,
+     * and :=.
+     *
      * @return A DFA that matches keywords.
      */
     private static DFA CreateKeywordDFA() {
@@ -153,10 +155,10 @@ public class Lexer {
         var initial = new State(true);
         states.add(initial);
 
-        String[] keywords = {"array", "begin", "break", "do", "else", "end", "enddo", "endif",
+        String[] keywords = { "array", "begin", "break", "do", "else", "end", "enddo", "endif",
                 "float", "for", "func", "if", "in", "int", "let", "of", "return", "then", "to",
                 "type", "var", "while", ",", ":", ";", "(", ")", "[", "]", "{", "}", ".", "+", "-",
-                "*", "/", "=", "<>", "<", ">", "<=", ">=", "&", "|", ":="};
+                "*", "/", "=", "<>", "<", ">", "<=", ">=", "&", "|", ":=" };
 
         for (var keyword : keywords) {
 
@@ -193,10 +195,13 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches program identifiers in Tiger. A program identifier is a
-     * sequence of letters, numbers, and the underscore character. An identifier must begin with
-     * either a letter or underscore, and must contain at least one letter or number.
-     * 
+     * Constructs a DFA that matches program identifiers in Tiger. A program
+     * identifier is a
+     * sequence of letters, numbers, and the underscore character. An identifier
+     * must begin with
+     * either a letter or underscore, and must contain at least one letter or
+     * number.
+     *
      * @return A DFA that matches program identifiers.
      */
     private static DFA CreateIdDFA() {
@@ -250,9 +255,10 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches integer literals in Tiger. An integer literal is a non-empty
+     * Constructs a DFA that matches integer literals in Tiger. An integer literal
+     * is a non-empty
      * sequence of digits.
-     * 
+     *
      * @return A DFA that matches integer literals.
      */
     private static DFA CreateIntDFA() {
@@ -281,12 +287,16 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches floating-point literals in Tiger. A floating-point literal must
-     * consist of a non-empty sequence of digits, a radix ('.'), and a (possibly empty) sequence of
-     * digits. The literal cannot contain any leading zeroes not required to ensure that the
-     * sequence of digits before the radix is non-empty. e.g., 0.123 is a float literal, but 00.123
+     * Constructs a DFA that matches floating-point literals in Tiger. A
+     * floating-point literal must
+     * consist of a non-empty sequence of digits, a radix ('.'), and a (possibly
+     * empty) sequence of
+     * digits. The literal cannot contain any leading zeroes not required to ensure
+     * that the
+     * sequence of digits before the radix is non-empty. e.g., 0.123 is a float
+     * literal, but 00.123
      * is not.
-     * 
+     *
      * @return A DFA that matches floating-point literals.
      */
     private static DFA CreateFloatDFA() {

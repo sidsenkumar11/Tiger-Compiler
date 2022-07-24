@@ -6,11 +6,13 @@ import java.nio.file.Path;
 import java.util.List;
 import tiger.compiler.parser.ParseException;
 import tiger.compiler.parser.Parser;
-import tiger.compiler.parser.Token;
 import tiger.compiler.intermediatecode.CodeGenerator;
 import tiger.compiler.interpreter.Interpreter;
 import tiger.compiler.lexer.LexException;
 import tiger.compiler.lexer.Lexer;
+import tiger.compiler.lexer.Token;
+import tiger.compiler.lexer.TokenType;
+
 import java.util.ArrayList;
 
 public class App {
@@ -26,19 +28,13 @@ public class App {
 
         if (tokensFlag) {
             for (Token t : tokens) {
-                // Int and float literals get printed like this: "1:intlit"
-                if (t.getType().equalsIgnoreCase("Intlit")
-                        || t.getType().equalsIgnoreCase("Floatlit")) {
-                    System.out.print(t.getContent() + ":" + t.getType().toLowerCase() + " ");
-                } else {
-                    System.out.print(t + " ");
-                }
+                System.out.print(t + " ");
             }
             System.out.println();
         }
 
         // Continue if there was no scanning error
-        if (tokens.size() > 0 && tokens.get(tokens.size() - 1).getType().equals("error")) {
+        if (tokens.size() > 0 && tokens.get(tokens.size() - 1).getType() == TokenType.ERROR) {
             throw new LexException("Scanning tokens failed");
         }
 
