@@ -2,6 +2,7 @@ package tiger.compiler.parser;
 
 import java.util.LinkedList;
 import java.util.List;
+import tiger.compiler.lexer.TokenType;
 
 public class ASTNode {
     private List<ASTNode> derivation;
@@ -63,5 +64,53 @@ public class ASTNode {
 
     public String toString() {
         return (this.value.equals("")) ? this.symbol.toString() : this.value;
+    }
+
+    public String getAST() {
+        return this.inOrder(this).toString();
+    }
+
+    private StringBuilder inOrder(ASTNode current) {
+        var currSymbol = current.getSymbol();
+        if (currSymbol.isTerminal()) {
+            if (currSymbol == Symbol.EPSILON) {
+                return new StringBuilder();
+            } else if (currSymbol.getTerminalType() == TokenType.KEYWORD) {
+                return new StringBuilder(current.getSymbol().toString());
+            } else {
+                return new StringBuilder(current.getValue());
+            }
+        }
+
+        var children = current.getDerivation();
+        StringBuilder x = new StringBuilder();
+
+        var onlyChildIsEpsilon =
+                children.size() == 1 && children.get(0).getSymbol() == Symbol.EPSILON;
+
+        if (onlyChildIsEpsilon) {
+            x.append(current.toString());
+        } else {
+            x.append("(");
+            x.append(current.toString());
+            x.append(" ");
+        }
+
+        for (var i = 0; i < children.size() - 1; i++) {
+            if (children.get(i).getSymbol() != Symbol.EPSILON) {
+                x.append(this.inOrder(children.get(i)));
+                x.append(" ");
+            }
+        }
+
+        var lastChild = children.get(children.size() - 1);
+        if (lastChild.getSymbol() != Symbol.EPSILON) {
+            x.append(this.inOrder(children.get(children.size() - 1)));
+        }
+
+        if (!onlyChildIsEpsilon) {
+            x.append(")");
+        }
+        return x;
     }
 }

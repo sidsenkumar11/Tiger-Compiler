@@ -73,7 +73,7 @@ nonlinop → *
 nonlinop → /
 factor → const
 factor → id
-factor → id[ numexpr]
+factor → id [ numexpr ]
 factor → ( numexpr )
 const → intlit
 const → floatlit

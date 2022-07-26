@@ -1,0 +1,5 @@
+let
+    var count : int := 10;
+in
+    count := count + 1;
+end

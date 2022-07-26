@@ -50,6 +50,7 @@ public class Lexer {
         var lexeme = new StringBuilder();
         var lineNumber = 1;
         var index = 0;
+        fileData = fileData.replaceAll("/\\*[^*]*\\*+(?:[^/*][^*]*\\*+)*/", "");
 
         // Reset DFA states
         this.reset();
@@ -125,6 +126,25 @@ public class Lexer {
                     tokens.add(Token.ErrorToken);
                     return tokens;
                 }
+            }
+        }
+
+        // In case file doesn't end in newline, check if any DFAs accepted current token
+        if (lexeme.length() > 0) {
+            if (this.keywordRecognizer.isAccepted()) {
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.KEYWORD);
+            } else if (this.idRecognizer.isAccepted()) {
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.ID);
+            } else if (this.intRecognizer.isAccepted()) {
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.INTLIT);
+            } else if (this.floatRecognizer.isAccepted()) {
+                lexeme = this.addToken(tokens, lexeme.toString(), TokenType.FLOATLIT);
+            } else {
+                System.err.println(
+                        "Error at line " + lineNumber + ". Couldn't recognize '" + lexeme
+                                + "'");
+                tokens.add(Token.ErrorToken);
+                return tokens;
             }
         }
 
