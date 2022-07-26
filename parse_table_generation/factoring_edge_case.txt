@@ -1,0 +1,97 @@
+------------------------Original Grammar-------------------------
+# Following will get removed
+stmt → lvalue := numexpr
+stmt → optstore id ( numexprs )
+lvalue → id optoffset
+optstore → ϵ
+optstore → lvalue :=
+
+# Following will stay but will guide the factoring
+numexpr → term numexpr'
+numexpr' → linop term numexpr'
+numexpr' → ''
+term → factor term'
+term' → nonlinop factor term'
+term' → ''
+factor → const
+factor → id factor'
+factor → ( numexpr )
+------------------------Intermediate Grammar-------------------------
+# Merged lvalue into 1 and 4
+stmt → id optoffset := numexpr
+stmt → optstore id ( numexprs )
+optstore → ϵ
+optstore → id optoffset :=
+------------------------Intermediate Grammar-------------------------
+# Factored id prefix
+stmt -> id stmt'
+stmt' -> optoffset := numexpr
+stmt' -> optoffset := id ( numexprs )
+stmt' -> ( numexprs )
+------------------------Intermediate Grammar-------------------------
+# Factored optoffset := prefix
+stmt -> id stmt'
+stmt' -> optoffset := stmt''
+stmt' -> ( numexprs )
+stmt'' -> numexpr
+stmt'' -> id ( numexprs )
+-----------------------------Final Grammar-----------------------------
+# Factoring shared values between numexpr and id
+stmt → id stmt'
+stmt' → ( numexprs )
+stmt' → optoffset := stmt''
+
+# these collapse a numexpr
+stmt'' → const term' numexpr'
+stmt'' → ( numexpr ) term' numexpr'
+
+# collapses to numexpr if stmt''' = factor' term' numexpr'
+# else, collapses to id ( numexprs )
+stmt'' → id stmt'''
+
+stmt''' → factor' term' numexpr'
+stmt''' → ( numexprs )
+-----------------------------AST Simplification-----------------------------
+# Merging stmt'''
+stmt → id stmt'
+stmt' → ( numexprs )
+stmt' → optoffset := stmt''
+
+# these collapse a numexpr
+stmt'' → const term' numexpr'
+stmt'' → ( numexpr ) term' numexpr'
+
+# 1 collapses to numexpr
+# 2 collapses to id ( numexprs )
+stmt'' → id factor' term' numexpr'
+stmt'' → id ( numexprs )
+-----------------------------AST Simplification-----------------------------
+# Merging stmt''
+stmt → id stmt'
+stmt' → ( numexprs )
+stmt' → optoffset := id ( numexprs )
+stmt' → optoffset := numexpr
+
+numexpr -> term numexpr'
+term -> factor term'
+factor -> const
+factor -> ( numexpr )
+factor -> id factor'
+-----------------------------AST Simplification-----------------------------
+# Merge stmt'
+stmt -> id ( numexprs )
+stmt -> id optoffset := id ( numexprs )
+stmt -> id optoffset := numexpr
+-----------------------------AST Simplification-----------------------------
+# Pull out lvalue
+stmt -> id ( numexprs )
+stmt -> lvalue := id ( numexprs )
+stmt -> lvalue := numexpr
+lvalue -> id optoffset
+-----------------------------AST Simplification-----------------------------
+# Pull out optstore
+stmt -> optstore id ( numexprs )
+stmt -> lvalue := numexpr
+optstore → ϵ
+optstore → lvalue :=
+lvalue -> id optoffset

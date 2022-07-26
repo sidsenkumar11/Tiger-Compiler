@@ -66,8 +66,7 @@ public class Symbol {
     public static final Symbol LEFT_BRACKET = new Symbol("[", TokenType.KEYWORD);
     public static final Symbol RIGHT_BRACKET = new Symbol("]", TokenType.KEYWORD);
     public static final Symbol LEFT_CURLY_BRACE = new Symbol("{", TokenType.KEYWORD);
-    public static final Symbol RIGHT_CURLY_BRACE =
-            new Symbol("}", TokenType.KEYWORD);
+    public static final Symbol RIGHT_CURLY_BRACE = new Symbol("}", TokenType.KEYWORD);
     public static final Symbol PERIOD = new Symbol(".", TokenType.KEYWORD);
     public static final Symbol PLUS = new Symbol("+", TokenType.KEYWORD);
     public static final Symbol MINUS = new Symbol("-", TokenType.KEYWORD);
@@ -137,6 +136,10 @@ public class Symbol {
     public static final Symbol typedecls = new Symbol("typedecls");
     public static final Symbol vardecl = new Symbol("vardecl");
     public static final Symbol vardecls = new Symbol("vardecls");
+
+    // Non-Terminal Symbols added during AST simplification
+    public static final Symbol lvalue = new Symbol("lvalue");
+    public static final Symbol optstore = new Symbol("optstore");
 
     public static final Map<String, Symbol> TerminalSymbols;
     static {

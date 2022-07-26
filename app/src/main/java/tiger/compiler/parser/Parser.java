@@ -22,7 +22,6 @@ public class Parser {
         this.root = new ASTNode(Symbol.program);
     }
 
-
     /**
      * Parses the list of tokens into an AST using an LL(1) parse table.
      *
@@ -96,8 +95,7 @@ public class Parser {
         var children = current.getDerivation();
         StringBuilder x = new StringBuilder();
 
-        var onlyChildIsEpsilon =
-                children.size() == 1 && children.get(0).getSymbol() == Symbol.EPSILON;
+        var onlyChildIsEpsilon = children.size() == 1 && children.get(0).getSymbol() == Symbol.EPSILON;
 
         if (onlyChildIsEpsilon) {
             x.append(current.toString());
@@ -126,6 +124,11 @@ public class Parser {
     }
 
     private void convertToAST() {
+        this.removeStmtPrimePrimePrime(this.root);
+        this.removeStmtPrimePrime(this.root);
+        this.removeStmtPrime(this.root);
+        this.createLvalue(this.root);
+        this.createOptstore(this.root);
         this.removeIdsPrime(this.root);
         this.removeNeparamsPrime(this.root);
         this.removeStmtsPrime(this.root);
@@ -431,6 +434,116 @@ public class Parser {
                 current.mergeLastNodeChildren();
             }
         }
+    }
 
+    private void removeStmtPrimePrimePrime(ASTNode current) {
+        for (var node : current.getDerivation()) {
+            this.removeStmtPrimePrimePrime(node);
+        }
+
+        if (current.getSymbol() == Symbol.stmtPrimePrime) {
+            var derivation = current.getDerivation();
+            if (derivation.size() == 2 && derivation.get(1).getSymbol() == Symbol.stmtPrimePrimePrime) {
+                current.mergeLastNodeChildren();
+            }
+        }
+    }
+
+    private void removeStmtPrimePrime(ASTNode current) {
+        for (var node : current.getDerivation()) {
+            this.removeStmtPrimePrime(node);
+        }
+
+        if (current.getSymbol() == Symbol.stmtPrime) {
+            if (current.getDerivation().size() == 3 && current.getLast().getSymbol() == Symbol.stmtPrimePrime) {
+                var childNode = current.getLast();
+                var childDerivation = childNode.getDerivation();
+                if (childDerivation.size() == 4 && childNode.getLast().getSymbol() == Symbol.RIGHT_PAREN) {
+                    childNode.mergeLastNodeChildren();
+                } else {
+                    // expanded numexpr to be merged
+                    var factorNode = new ASTNode(Symbol.factor);
+                    var termNode = new ASTNode(Symbol.term);
+                    var numexprNode = new ASTNode(Symbol.numexpr);
+
+                    if (childDerivation.get(0).getSymbol() == Symbol.constNt) {
+                        factorNode.addChild(childDerivation.get(0));
+                        termNode.addChild(factorNode);
+                        termNode.addChild(childDerivation.get(1));
+                        numexprNode.addChild(termNode);
+                        numexprNode.addChild(childDerivation.get(2));
+                    } else if (childDerivation.get(0).getSymbol() == Symbol.LEFT_PAREN) {
+                        factorNode.addChild(childDerivation.get(0));
+                        factorNode.addChild(childDerivation.get(1));
+                        factorNode.addChild(childDerivation.get(2));
+                        termNode.addChild(factorNode);
+                        termNode.addChild(childDerivation.get(3));
+                        numexprNode.addChild(termNode);
+                        numexprNode.addChild(childDerivation.get(4));
+                    } else if (childDerivation.get(0).getSymbol() == Symbol.ID) {
+                        factorNode.addChild(childDerivation.get(0));
+                        factorNode.addChild(childDerivation.get(1));
+                        termNode.addChild(factorNode);
+                        termNode.addChild(childDerivation.get(2));
+                        numexprNode.addChild(termNode);
+                        numexprNode.addChild(childDerivation.get(3));
+                    }
+                }
+            }
+        }
+    }
+
+    private void removeStmtPrime(ASTNode current) {
+        for (var node : current.getDerivation()) {
+            this.removeStmtPrime(node);
+        }
+
+        if (current.getSymbol() == Symbol.stmt) {
+            var derivation = current.getDerivation();
+            if (derivation.size() == 2 && derivation.get(1).getSymbol() == Symbol.stmtPrime) {
+                current.mergeLastNodeChildren();
+            }
+        }
+    }
+
+    private void createLvalue(ASTNode current) {
+        for (var node : current.getDerivation()) {
+            this.createLvalue(node);
+        }
+
+        if (current.getSymbol() == Symbol.stmt) {
+            var derivation = current.getDerivation();
+            if (derivation.size() > 2 && derivation.get(0).getSymbol() == Symbol.ID
+                    && derivation.get(1).getSymbol() == Symbol.optoffset) {
+                var lvalueNode = new ASTNode(Symbol.lvalue);
+                lvalueNode.addChild(derivation.remove(0));
+                lvalueNode.addChild(derivation.remove(0));
+                derivation.add(0, lvalueNode);
+            }
+        }
+    }
+
+    private void createOptstore(ASTNode current) {
+        for (var node : current.getDerivation()) {
+            this.createOptstore(node);
+        }
+
+        if (current.getSymbol() == Symbol.stmt) {
+            var derivation = current.getDerivation();
+            if (derivation.get(0).getSymbol() == Symbol.ID) {
+                var optstoreNode = new ASTNode(Symbol.optstore);
+                optstoreNode.addChild(Symbol.EPSILON);
+                derivation.add(0, optstoreNode);
+            } else if (derivation.size() == 6 && derivation.get(0).getSymbol() == Symbol.lvalue
+                    && derivation.get(1).getSymbol() == Symbol.COLON_EQUALS
+                    && derivation.get(2).getSymbol() == Symbol.ID && derivation.get(3).getSymbol() == Symbol.LEFT_PAREN
+                    && derivation.get(4).getSymbol() == Symbol.numexprs
+                    && derivation.get(5).getSymbol() == Symbol.RIGHT_PAREN) {
+                var optstoreNode = new ASTNode(Symbol.optstore);
+                optstoreNode.addChild(derivation.remove(0));
+                optstoreNode.addChild(derivation.remove(0));
+                derivation.add(0, optstoreNode);
+            }
+        }
     }
 }
