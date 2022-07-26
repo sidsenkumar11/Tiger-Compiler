@@ -26,6 +26,15 @@ public class ASTNode {
         return this.value;
     }
 
+    public void mergeLastNodeChildren() {
+        var lastNode = this.removeLast();
+        for (var childNode : lastNode.getDerivation()) {
+            if (childNode.getSymbol() != Symbol.EPSILON) {
+                this.derivation.add(childNode);
+            }
+        }
+    }
+
     public void setValue(String value) {
         this.value = value;
     }
@@ -34,6 +43,22 @@ public class ASTNode {
         var childNode = new ASTNode(symbol);
         this.derivation.add(childNode);
         return childNode;
+    }
+
+    public void addChild(ASTNode childNode) {
+        this.derivation.add(childNode);
+    }
+
+    public ASTNode getLast() {
+        return this.derivation.get(this.derivation.size() - 1);
+    }
+
+    public ASTNode removeLast() {
+        return this.derivation.remove(this.derivation.size() - 1);
+    }
+
+    public int childCount() {
+        return this.derivation.size();
     }
 
     public String toString() {
