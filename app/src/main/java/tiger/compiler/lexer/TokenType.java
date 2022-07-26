@@ -1,10 +1,5 @@
 package tiger.compiler.lexer;
 
 public enum TokenType {
-    KEYWORD,
-    INTLIT,
-    FLOATLIT,
-    ID,
-    EOF,
-    ERROR,
+    KEYWORD, INTLIT, FLOATLIT, ID, EOF, ERROR, EPSILON,
 }

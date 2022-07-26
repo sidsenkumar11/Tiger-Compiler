@@ -44,11 +44,15 @@ stmt → return numexpr
 # lvalue → id optoffset
 # optstore → ϵ
 # optstore → lvalue :=
+# factor → id factor'
 stmt → id stmt'
 stmt' → ( numexprs )
 stmt' → optoffset := stmt''
-stmt'' → numexpr
-stmt' → id ( numexprs )
+stmt'' → const term' numexpr'
+stmt'' → ( numexpr ) term' numexpr'
+stmt'' → id stmt'''
+stmt''' → factor' term' numexpr'
+stmt''' → ( numexprs )
 
 optoffset → ''
 optoffset → [ numexpr ]

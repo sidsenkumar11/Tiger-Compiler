@@ -32,6 +32,9 @@ def read_productions_from_file(fname: str) -> List[Production]:
 
 
 def add_to_dict(data_set: Dict[str, Set[str]], nonterminal: str, terminal: str, production: str):
+    if terminal == "optoffset":
+        import pdb
+        pdb.set_trace()
     if nonterminal not in data_set:
         data_set[nonterminal] = {}
 

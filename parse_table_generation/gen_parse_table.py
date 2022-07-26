@@ -1,24 +1,28 @@
 from typing import Dict, List, Set
 from helpers import Production, terminals, add_to_set, update_set, read_productions_from_file, fixpoint, add_to_dict
+import pprint
+import sys
 
-def generate_firsts(prod: Production, productions: List[Production], firsts: Dict[str, Set[str]]):
-    rhs_first = prod.rhs[0]
+def generate_firsts_one_pass(productions: List[Production], firsts: Dict[str, Set[str]]):
+    for prod in productions:
+        for rhs_first in prod.rhs:
 
-    if rhs_first in terminals:
-        if rhs_first != "''":
-            add_to_set(firsts, prod.lhs, rhs_first)
-    else:
-        filtered_prods = [_ for _ in productions if _[0] == rhs_first]
-        for fp in filtered_prods:
-            generate_firsts(fp, productions, firsts)
-        update_set(firsts, prod.lhs, firsts[rhs_first])
+            # rhs_first is terminal
+            if rhs_first in terminals:
+                add_to_set(firsts, prod.lhs, rhs_first)
+                break
+
+            # rhs_first is non-terminal
+            next_symbols_firsts = firsts.get(rhs_first, set())
+            update_set(firsts, prod.lhs, next_symbols_firsts)
+            if "''" not in next_symbols_firsts:
+                break
 
 
 def generate_first_sets(productions: List[Production]):
     firsts = {}
     def compute_firsts_sets(firsts):
-        for prod in productions:
-            generate_firsts(prod, productions, firsts)
+        generate_firsts_one_pass(productions, firsts)
 
     fixpoint(firsts, compute_firsts_sets)
     return firsts
@@ -32,8 +36,8 @@ def generate_follows(curr: str, next: str, firsts: Dict[str, Set[str]], follows:
 
     # non-terminal followed by non-terminal -> follow(curr).extend(firsts(next))
     if next not in terminals:
-        update_set(follows, curr, firsts[next])
-        return False
+        update_set(follows, curr, firsts[next] - set(["''"]))
+        return "''" in firsts[next]
 
     # non-terminal followed by terminal -> follow(curr).add(next)
     elif next != '':
@@ -45,7 +49,7 @@ def generate_follows(curr: str, next: str, firsts: Dict[str, Set[str]], follows:
         return True
 
 
-def generate_follows_pass(productions: List[Production], firsts: Dict[str, Set[str]], follows: Dict[str, Set[str]]):
+def generate_follows_one_pass(productions: List[Production], firsts: Dict[str, Set[str]], follows: Dict[str, Set[str]]):
     for prod in productions:
         for i in range(len(prod.rhs)-1):
             curr = prod.rhs[i]
@@ -70,7 +74,7 @@ def generate_follows_pass(productions: List[Production], firsts: Dict[str, Set[s
 def generate_follow_sets(start_symbol: str, productions: List[Production], firsts: Dict[str, Set[str]]):
     follows = {start_symbol: {"$"}}
     def compute_follows_sets(follows):
-        generate_follows_pass(productions, firsts, follows)
+        generate_follows_one_pass(productions, firsts, follows)
 
     fixpoint(follows, compute_follows_sets)
     return follows
@@ -79,20 +83,41 @@ def generate_follow_sets(start_symbol: str, productions: List[Production], first
 def generate_parse_table(productions: List[Production], firsts: Dict[str, Set[str]], follows: Dict[str, Set[str]]) -> Dict[str, Dict[str, str]]:
     table = {}
     for prod in productions:
-        rhs_firsts = {prod.rhs[0]} if prod.rhs[0] in terminals else firsts[prod.rhs[0]]
-        for first in rhs_firsts:
-            if first != "''":
-                add_to_dict(table, prod.lhs, first, prod)
+        for rhs_first in prod.rhs:
 
-        if "''" in rhs_firsts:
+            # if rhs_first is epsilon, go to next symbol in production
+            if rhs_first == "''":
+                continue
+
+            # rhs_first is terminal
+            if rhs_first in terminals:
+                add_to_dict(table, prod.lhs, rhs_first, prod)
+                break
+
+            # rhs_first is non-terminal
+            entries = firsts.get(rhs_first)
+            for first in entries:
+                if first != "''":
+                    add_to_dict(table, prod.lhs, first, prod)
+
+            if "''" not in entries:
+                break
+        else:
+            # whole production is nullable; add follows
             for follow in follows[prod.lhs]:
                 add_to_dict(table, prod.lhs, follow, prod)
     return table
+
 
 if __name__ == '__main__':
     productions = read_productions_from_file('productions.txt')
     firsts = generate_first_sets(productions)
     follows = generate_follow_sets("program", productions, firsts)
-    table = generate_parse_table(productions, firsts, follows)
-    import pprint
-    pprint.pprint(table)
+
+    if len(sys.argv) > 1 and sys.argv[1] == "--firsts":
+        pprint.pprint(firsts)
+    elif len(sys.argv) > 1 and sys.argv[1] == "--follows":
+        pprint.pprint(follows)
+    else:
+        table = generate_parse_table(productions, firsts, follows)
+        pprint.pprint(table)

@@ -1,259 +1,389 @@
 package tiger.compiler.parser;
 
 import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.LinkedList;
+import java.util.Map;
+import tiger.compiler.lexer.Token;
+import java.util.List;
+import java.util.Collections;
+import static java.util.Map.entry;
+import java.util.Arrays;
 
 public class ParseTable {
 
-    private Hashtable<Integer, LinkedList<LinkedList<Symbol>>> parseTable;
-    private HashMap<String, Symbol> symbolList;
+    private static Map<Symbol, Map<Symbol, List<Symbol>>> parseTable;
+    static {
+        var boolexprMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN, Arrays.asList(Symbol.clause, Symbol.boolexprPrime)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.clause, Symbol.boolexprPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.clause, Symbol.boolexprPrime)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.clause, Symbol.boolexprPrime))));
 
-    public ParseTable() {
-        this.parseTable = new Hashtable<Integer, LinkedList<LinkedList<Symbol>>>();
-        this.symbolList = new HashMap<String, Symbol>();
-        this.generateSymbolList();
-        this.generateParseTable();
+        var boolexprPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.DO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.THEN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.OR, Arrays.asList(Symbol.OR, Symbol.clause, Symbol.boolexprPrime))));
+
+        var boolopMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LESS_THAN, Arrays.asList(Symbol.LESS_THAN)),
+                entry(Symbol.LESS_OR_EQ, Arrays.asList(Symbol.LESS_OR_EQ)),
+                entry(Symbol.NOT_EQUALS, Arrays.asList(Symbol.NOT_EQUALS)),
+                entry(Symbol.EQUALS, Arrays.asList(Symbol.EQUALS)),
+                entry(Symbol.GREATER_THAN, Arrays.asList(Symbol.GREATER_THAN)),
+                entry(Symbol.GREATER_OR_EQ, Arrays.asList(Symbol.GREATER_OR_EQ))));
+
+        var clauseMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN, Arrays.asList(Symbol.pred, Symbol.clausePrime)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.pred, Symbol.clausePrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.pred, Symbol.clausePrime)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.pred, Symbol.clausePrime))));
+
+        var clausePrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.AND, Arrays.asList(Symbol.AND, Symbol.pred, Symbol.clausePrime)),
+                entry(Symbol.DO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.THEN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.OR, Arrays.asList(Symbol.EPSILON))));
+
+        var condstmtendMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.ELSE, Arrays.asList(Symbol.ELSE, Symbol.stmts, Symbol.ENDIF)),
+                entry(Symbol.ENDIF, Arrays.asList(Symbol.ENDIF))));
+
+        var constMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.FLOATLIT)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.INTLIT))));
+
+        var declsegMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.FUNC,
+                        Arrays.asList(Symbol.typedecls, Symbol.vardecls, Symbol.funcdecls)),
+                entry(Symbol.IN,
+                        Arrays.asList(Symbol.typedecls, Symbol.vardecls, Symbol.funcdecls)),
+                entry(Symbol.TYPE,
+                        Arrays.asList(Symbol.typedecls, Symbol.vardecls, Symbol.funcdecls)),
+                entry(Symbol.VAR,
+                        Arrays.asList(Symbol.typedecls, Symbol.vardecls, Symbol.funcdecls))));
+
+        var factorMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN,
+                        Arrays.asList(Symbol.LEFT_PAREN, Symbol.numexpr, Symbol.RIGHT_PAREN)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.constNt)),
+                entry(Symbol.ID, Arrays.asList(Symbol.ID, Symbol.factorPrime)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.constNt))));
+
+        var factorPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.AND, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.STAR, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.PLUS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.COMMA, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.MINUS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.SLASH, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.SEMICOLON, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LESS_THAN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LESS_OR_EQ, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.NOT_EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.GREATER_THAN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.GREATER_OR_EQ, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LEFT_BRACKET,
+                        Arrays.asList(Symbol.LEFT_BRACKET, Symbol.numexpr, Symbol.RIGHT_BRACKET)),
+                entry(Symbol.RIGHT_BRACKET, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.DO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.THEN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.TO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.OR, Arrays.asList(Symbol.EPSILON))));
+
+        var fullstmtMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.BREAK, Arrays.asList(Symbol.stmt, Symbol.SEMICOLON)),
+                entry(Symbol.FOR, Arrays.asList(Symbol.stmt, Symbol.SEMICOLON)),
+                entry(Symbol.ID, Arrays.asList(Symbol.stmt, Symbol.SEMICOLON)),
+                entry(Symbol.IF, Arrays.asList(Symbol.stmt, Symbol.SEMICOLON)),
+                entry(Symbol.RETURN, Arrays.asList(Symbol.stmt, Symbol.SEMICOLON)),
+                entry(Symbol.WHILE, Arrays.asList(Symbol.stmt, Symbol.SEMICOLON))));
+
+        var funcdeclMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.FUNC,
+                        Arrays.asList(Symbol.FUNC, Symbol.ID, Symbol.LEFT_PAREN, Symbol.params,
+                                Symbol.RIGHT_PAREN, Symbol.optrettype, Symbol.BEGIN, Symbol.stmts,
+                                Symbol.END, Symbol.SEMICOLON))));
+
+        var funcdeclsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.FUNC, Arrays.asList(Symbol.funcdecl, Symbol.funcdecls)),
+                entry(Symbol.IN, Arrays.asList(Symbol.EPSILON))));
+
+        var idsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.ID, Arrays.asList(Symbol.ID, Symbol.idsPrime))));
+
+        var idsPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.COMMA, Arrays.asList(Symbol.COMMA, Symbol.ID, Symbol.idsPrime)),
+                entry(Symbol.COLON, Arrays.asList(Symbol.EPSILON))));
+
+        var linopMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.PLUS, Arrays.asList(Symbol.PLUS)),
+                entry(Symbol.MINUS, Arrays.asList(Symbol.MINUS))));
+
+        var neexprsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN, Arrays.asList(Symbol.numexpr, Symbol.neexprsPrime)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.numexpr, Symbol.neexprsPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.numexpr, Symbol.neexprsPrime)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.numexpr, Symbol.neexprsPrime))));
+
+        var neexprsPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.COMMA,
+                        Arrays.asList(Symbol.COMMA, Symbol.numexpr, Symbol.neexprsPrime))));
+
+        var neparamsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.ID, Arrays.asList(Symbol.param, Symbol.neparamsPrime))));
+
+        var neparamsPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.COMMA,
+                        Arrays.asList(Symbol.COMMA, Symbol.param, Symbol.neparamsPrime))));
+
+        var nonlinopMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.STAR, Arrays.asList(Symbol.STAR)),
+                entry(Symbol.SLASH, Arrays.asList(Symbol.SLASH))));
+
+        var numexprMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN, Arrays.asList(Symbol.term, Symbol.numexprPrime)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.term, Symbol.numexprPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.term, Symbol.numexprPrime)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.term, Symbol.numexprPrime))));
+
+        var numexprPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.AND, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.PLUS, Arrays.asList(Symbol.linop, Symbol.term, Symbol.numexprPrime)),
+                entry(Symbol.COMMA, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.MINUS, Arrays.asList(Symbol.linop, Symbol.term, Symbol.numexprPrime)),
+                entry(Symbol.SEMICOLON, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LESS_THAN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LESS_OR_EQ, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.NOT_EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.GREATER_THAN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.GREATER_OR_EQ, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.RIGHT_BRACKET, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.DO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.THEN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.TO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.OR, Arrays.asList(Symbol.EPSILON))));
+
+        var numexprsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN, Arrays.asList(Symbol.neexprs)),
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.neexprs)),
+                entry(Symbol.ID, Arrays.asList(Symbol.neexprs)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.neexprs))));
+
+        var optinitMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.COLON_EQUALS, Arrays.asList(Symbol.COLON_EQUALS, Symbol.constNt)),
+                entry(Symbol.SEMICOLON, Arrays.asList(Symbol.EPSILON))));
+
+        var optoffsetMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.COLON_EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LEFT_BRACKET,
+                        Arrays.asList(Symbol.LEFT_BRACKET, Symbol.numexpr, Symbol.RIGHT_BRACKET))));
+
+        var optrettypeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.COLON, Arrays.asList(Symbol.COLON, Symbol.typeNT)),
+                entry(Symbol.BEGIN, Arrays.asList(Symbol.EPSILON))));
+
+        var paramMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.ID, Arrays.asList(Symbol.ID, Symbol.COLON, Symbol.typeNT))));
+
+        var paramsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.ID, Arrays.asList(Symbol.neparams))));
+
+        var predMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN,
+                        Arrays.asList(Symbol.numexpr, Symbol.boolop, Symbol.numexpr)),
+                entry(Symbol.FLOATLIT,
+                        Arrays.asList(Symbol.numexpr, Symbol.boolop, Symbol.numexpr)),
+                entry(Symbol.ID, Arrays.asList(Symbol.numexpr, Symbol.boolop, Symbol.numexpr)),
+                entry(Symbol.INTLIT,
+                        Arrays.asList(Symbol.numexpr, Symbol.boolop, Symbol.numexpr))));
+
+        var programMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LET, Arrays.asList(Symbol.LET, Symbol.declseg, Symbol.IN, Symbol.stmts,
+                        Symbol.END, Symbol.EOF))));
+
+        var stmtMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.BREAK, Arrays.asList(Symbol.BREAK)),
+                entry(Symbol.FOR,
+                        Arrays.asList(Symbol.FOR, Symbol.ID, Symbol.COLON_EQUALS, Symbol.numexpr,
+                                Symbol.TO, Symbol.numexpr, Symbol.DO, Symbol.stmts, Symbol.ENDDO)),
+                entry(Symbol.ID, Arrays.asList(Symbol.ID, Symbol.stmtPrime)),
+                entry(Symbol.IF, Arrays.asList(Symbol.IF, Symbol.boolexpr, Symbol.THEN,
+                        Symbol.stmts, Symbol.condstmtend)),
+                entry(Symbol.RETURN, Arrays.asList(Symbol.RETURN, Symbol.numexpr)),
+                entry(Symbol.WHILE, Arrays.asList(Symbol.WHILE, Symbol.boolexpr, Symbol.DO,
+                        Symbol.stmts, Symbol.ENDDO))));
+
+        var stmtPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN,
+                        Arrays.asList(Symbol.LEFT_PAREN, Symbol.numexprs, Symbol.RIGHT_PAREN)),
+                entry(Symbol.COLON_EQUALS,
+                        Arrays.asList(Symbol.optoffset, Symbol.COLON_EQUALS,
+                                Symbol.stmtPrimePrime)),
+                entry(Symbol.LEFT_BRACKET,
+                        Arrays.asList(Symbol.optoffset, Symbol.COLON_EQUALS,
+                                Symbol.stmtPrimePrime))));
+
+        var stmtPrimePrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN,
+                        Arrays.asList(Symbol.LEFT_PAREN, Symbol.numexpr, Symbol.RIGHT_PAREN,
+                                Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.FLOATLIT,
+                        Arrays.asList(Symbol.constNt, Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.ID, Symbol.stmtPrimePrimePrime)),
+                entry(Symbol.INTLIT,
+                        Arrays.asList(Symbol.constNt, Symbol.termPrime, Symbol.numexprPrime))));
+
+        var stmtPrimePrimePrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN,
+                        Arrays.asList(Symbol.LEFT_PAREN, Symbol.numexprs, Symbol.RIGHT_PAREN)),
+                entry(Symbol.STAR,
+                        Arrays.asList(Symbol.factorPrime, Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.PLUS,
+                        Arrays.asList(Symbol.factorPrime, Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.MINUS,
+                        Arrays.asList(Symbol.factorPrime, Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.SLASH,
+                        Arrays.asList(Symbol.factorPrime, Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.SEMICOLON,
+                        Arrays.asList(Symbol.factorPrime, Symbol.termPrime, Symbol.numexprPrime)),
+                entry(Symbol.LEFT_BRACKET,
+                        Arrays.asList(Symbol.factorPrime, Symbol.termPrime, Symbol.numexprPrime))));
+
+        var stmtsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.BREAK, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.FOR, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.IF, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.RETURN, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.WHILE, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime))));
+
+        var stmtsPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.BREAK, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.ELSE, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.END, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.ENDDO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.ENDIF, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.FOR, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.IF, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.RETURN, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime)),
+                entry(Symbol.WHILE, Arrays.asList(Symbol.fullstmt, Symbol.stmtsPrime))));
+
+        var termMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.LEFT_PAREN, Arrays.asList(Symbol.factor, Symbol.termPrime)),
+                entry(Symbol.FLOATLIT, Arrays.asList(Symbol.factor, Symbol.termPrime)),
+                entry(Symbol.ID, Arrays.asList(Symbol.factor, Symbol.termPrime)),
+                entry(Symbol.INTLIT, Arrays.asList(Symbol.factor, Symbol.termPrime))));
+
+        var termPrimeMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.AND, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.RIGHT_PAREN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.STAR, Arrays.asList(Symbol.nonlinop, Symbol.factor, Symbol.termPrime)),
+                entry(Symbol.PLUS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.COMMA, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.MINUS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.SLASH,
+                        Arrays.asList(Symbol.nonlinop, Symbol.factor, Symbol.termPrime)),
+                entry(Symbol.SEMICOLON, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LESS_THAN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.LESS_OR_EQ, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.NOT_EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.EQUALS, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.GREATER_THAN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.GREATER_OR_EQ, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.RIGHT_BRACKET, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.DO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.THEN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.TO, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.OR, Arrays.asList(Symbol.EPSILON))));
+
+        var typeNTMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.ARRAY,
+                        Arrays.asList(Symbol.ARRAY, Symbol.LEFT_BRACKET, Symbol.INTLIT,
+                                Symbol.RIGHT_BRACKET, Symbol.OF, Symbol.typeNT)),
+                entry(Symbol.FLOAT, Arrays.asList(Symbol.FLOAT)),
+                entry(Symbol.ID, Arrays.asList(Symbol.ID)),
+                entry(Symbol.INT, Arrays.asList(Symbol.INT))));
+
+        var typedeclMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.TYPE, Arrays.asList(Symbol.TYPE, Symbol.ID, Symbol.COLON_EQUALS,
+                        Symbol.typeNT, Symbol.SEMICOLON))));
+
+        var typedeclsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.FUNC, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.IN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.TYPE, Arrays.asList(Symbol.typedecl, Symbol.typedecls)),
+                entry(Symbol.VAR, Arrays.asList(Symbol.EPSILON))));
+
+        var vardeclMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.VAR, Arrays.asList(Symbol.VAR, Symbol.ids, Symbol.COLON,
+                        Symbol.typeNT, Symbol.optinit, Symbol.SEMICOLON))));
+
+        var vardeclsMap = new HashMap<Symbol, List<Symbol>>(Map.ofEntries(
+                entry(Symbol.FUNC, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.IN, Arrays.asList(Symbol.EPSILON)),
+                entry(Symbol.VAR, Arrays.asList(Symbol.vardecl, Symbol.vardecls))));
+
+        var table = new HashMap<Symbol, HashMap<Symbol, List<Symbol>>>();
+        table.put(Symbol.boolexpr, boolexprMap);
+        table.put(Symbol.boolexprPrime, boolexprPrimeMap);
+        table.put(Symbol.boolop, boolopMap);
+        table.put(Symbol.clause, clauseMap);
+        table.put(Symbol.clausePrime, clausePrimeMap);
+        table.put(Symbol.condstmtend, condstmtendMap);
+        table.put(Symbol.constNt, constMap);
+        table.put(Symbol.declseg, declsegMap);
+        table.put(Symbol.factor, factorMap);
+        table.put(Symbol.factorPrime, factorPrimeMap);
+        table.put(Symbol.fullstmt, fullstmtMap);
+        table.put(Symbol.funcdecl, funcdeclMap);
+        table.put(Symbol.funcdecls, funcdeclsMap);
+        table.put(Symbol.ids, idsMap);
+        table.put(Symbol.idsPrime, idsPrimeMap);
+        table.put(Symbol.linop, linopMap);
+        table.put(Symbol.neexprs, neexprsMap);
+        table.put(Symbol.neexprsPrime, neexprsPrimeMap);
+        table.put(Symbol.neparams, neparamsMap);
+        table.put(Symbol.neparamsPrime, neparamsPrimeMap);
+        table.put(Symbol.nonlinop, nonlinopMap);
+        table.put(Symbol.numexpr, numexprMap);
+        table.put(Symbol.numexprPrime, numexprPrimeMap);
+        table.put(Symbol.numexprs, numexprsMap);
+        table.put(Symbol.optinit, optinitMap);
+        table.put(Symbol.optoffset, optoffsetMap);
+        table.put(Symbol.optrettype, optrettypeMap);
+        table.put(Symbol.param, paramMap);
+        table.put(Symbol.params, paramsMap);
+        table.put(Symbol.pred, predMap);
+        table.put(Symbol.program, programMap);
+        table.put(Symbol.stmt, stmtMap);
+        table.put(Symbol.stmtPrime, stmtPrimeMap);
+        table.put(Symbol.stmtPrimePrime, stmtPrimePrimeMap);
+        table.put(Symbol.stmtPrimePrimePrime, stmtPrimePrimePrimeMap);
+        table.put(Symbol.stmts, stmtsMap);
+        table.put(Symbol.stmtsPrime, stmtsPrimeMap);
+        table.put(Symbol.term, termMap);
+        table.put(Symbol.termPrime, termPrimeMap);
+        table.put(Symbol.typeNT, typeNTMap);
+        table.put(Symbol.typedecl, typedeclMap);
+        table.put(Symbol.typedecls, typedeclsMap);
+        table.put(Symbol.vardecl, vardeclMap);
+        table.put(Symbol.typeNT, typeNTMap);
+        table.put(Symbol.vardecls, vardeclsMap);
+        parseTable = Collections.unmodifiableMap(table);
     }
 
-    private void generateSymbolList() {
-        // Create all terminal symbols
-        Symbol let = new Symbol(true, "let");
-        Symbol in = new Symbol(true, "in");
-        Symbol end = new Symbol(true, "end");
-        Symbol id = new Symbol(true, "id");
-        Symbol colonEquals = new Symbol(true, ":=");
-        Symbol semicolon = new Symbol(true, ";");
-        Symbol integer = new Symbol(true, "int");
-        Symbol floating = new Symbol(true, "float");
-        Symbol array = new Symbol(true, "array");
-        Symbol leftBracket = new Symbol(true, "[");
-        Symbol intlit = new Symbol(true, "intlit");
-        Symbol rightBracket = new Symbol(true, "]");
-        Symbol of = new Symbol(true, "of");
-        Symbol var = new Symbol(true, "var");
-        Symbol colon = new Symbol(true, ":");
-        Symbol comma = new Symbol(true, "?");
-        Symbol func = new Symbol(true, "func");
-        Symbol leftParen = new Symbol(true, "(");
-        Symbol rightParen = new Symbol(true, ")");
-        Symbol begin = new Symbol(true, "begin");
-        Symbol ifs = new Symbol(true, "if");
-        Symbol then = new Symbol(true, "then");
-        Symbol endif = new Symbol(true, "endif");
-        Symbol elses = new Symbol(true, "else");
-        Symbol whiles = new Symbol(true, "while");
-        Symbol dos = new Symbol(true, "do");
-        Symbol enddo = new Symbol(true, "enddo");
-        Symbol fors = new Symbol(true, "for");
-        Symbol to = new Symbol(true, "to");
-        Symbol breaks = new Symbol(true, "break");
-        Symbol returns = new Symbol(true, "return");
-        Symbol pipe = new Symbol(true, "|");
-        Symbol ampersand = new Symbol(true, "&");
-        Symbol equals = new Symbol(true, "=");
-        Symbol lessGreater = new Symbol(true, "<>");
-        Symbol lessEqual = new Symbol(true, "<=");
-        Symbol greaterEqual = new Symbol(true, ">=");
-        Symbol less = new Symbol(true, "<");
-        Symbol greater = new Symbol(true, ">");
-        Symbol plus = new Symbol(true, "+");
-        Symbol minus = new Symbol(true, "-");
-        Symbol star = new Symbol(true, "*");
-        Symbol divide = new Symbol(true, "/");
-        Symbol floatlit = new Symbol(true, "floatlit");
-        Symbol dollar = new Symbol(true, "$");
-        Symbol epsilon = new Symbol(true, "''");
-        Symbol nullSymbol = new Symbol(true, "NULL");
-        Symbol type = new Symbol(true, "type");
-
-        // Create all non-termnal symbols
-        Symbol program = new Symbol(false, "program");
-        Symbol declseg = new Symbol(false, "declseg");
-        Symbol typedecls = new Symbol(false, "typedecls");
-        Symbol typedecl = new Symbol(false, "typedecl");
-        Symbol typeT = new Symbol(false, "typeT");
-        Symbol vardecls = new Symbol(false, "vardecls");
-        Symbol vardecl = new Symbol(false, "vardecl");
-        Symbol ids = new Symbol(false, "ids");
-        Symbol idsPrime = new Symbol(false, "ids'");
-        Symbol optinit = new Symbol(false, "optinit");
-        Symbol funcdecls = new Symbol(false, "funcdecls");
-        Symbol funcdecl = new Symbol(false, "funcdecl");
-        Symbol params = new Symbol(false, "params");
-        Symbol neparams = new Symbol(false, "neparams");
-        Symbol neparamsPrime = new Symbol(false, "neparams'");
-        Symbol param = new Symbol(false, "param");
-        Symbol optrettype = new Symbol(false, "optrettype");
-        Symbol stmts = new Symbol(false, "stmts");
-        Symbol fullstmt = new Symbol(false, "fullstmt");
-        Symbol stmt = new Symbol(false, "stmt");
-        Symbol stmtPrime = new Symbol(false, "stmt'");
-        Symbol lvalue = new Symbol(false, "lvalue");
-        Symbol optoffset = new Symbol(false, "optoffset");
-        Symbol optstore = new Symbol(false, "optstore");
-        Symbol numexprs = new Symbol(false, "numexprs");
-        Symbol neexprs = new Symbol(false, "neexprs");
-        Symbol neexprsPrime = new Symbol(false, "neexprs'");
-        Symbol boolexpr = new Symbol(false, "boolexpr");
-        Symbol boolexprPrime = new Symbol(false, "boolexpr'");
-        Symbol clause = new Symbol(false, "clause");
-        Symbol clausePrime = new Symbol(false, "clause'");
-        Symbol pred = new Symbol(false, "pred");
-        Symbol boolop = new Symbol(false, "boolop");
-        Symbol numexpr = new Symbol(false, "numexpr");
-        Symbol numexprPrime = new Symbol(false, "numexpr'");
-        Symbol linop = new Symbol(false, "linop");
-        Symbol term = new Symbol(false, "term");
-        Symbol termPrime = new Symbol(false, "term'");
-        Symbol nonlinop = new Symbol(false, "nonlinop");
-        Symbol factor = new Symbol(false, "factor");
-        Symbol factorPrime = new Symbol(false, "factor'");
-        Symbol consts = new Symbol(false, "const");
-
-        // Add them all to symbol list
-
-        symbolList.put("NULL", nullSymbol);
-        symbolList.put("let", let);
-        symbolList.put("in", in);
-        symbolList.put("end", end);
-        symbolList.put("id", id);
-        symbolList.put(":=", colonEquals);
-        symbolList.put(";", semicolon);
-        symbolList.put("int", integer);
-        symbolList.put("float", floating);
-        symbolList.put("array", array);
-        symbolList.put("[", leftBracket);
-        symbolList.put("intlit", intlit);
-        symbolList.put("]", rightBracket);
-        symbolList.put("of", of);
-        symbolList.put("var", var);
-        symbolList.put(":", colon);
-        symbolList.put("?", comma);
-        symbolList.put("func", func);
-        symbolList.put("(", leftParen);
-        symbolList.put(")", rightParen);
-        symbolList.put("begin", begin);
-        symbolList.put("if", ifs);
-        symbolList.put("then", then);
-        symbolList.put("endif", endif);
-        symbolList.put("else", elses);
-        symbolList.put("while", whiles);
-        symbolList.put("do", dos);
-        symbolList.put("enddo", enddo);
-        symbolList.put("for", fors);
-        symbolList.put("to", to);
-        symbolList.put("break", breaks);
-        symbolList.put("return", returns);
-        symbolList.put("|", pipe);
-        symbolList.put("&", ampersand);
-        symbolList.put("=", equals);
-        symbolList.put("<>", lessGreater);
-        symbolList.put("<=", lessEqual);
-        symbolList.put(">=", greaterEqual);
-        symbolList.put("<", less);
-        symbolList.put(">", greater);
-        symbolList.put("+", plus);
-        symbolList.put("-", minus);
-        symbolList.put("*", star);
-        symbolList.put("/", divide);
-        symbolList.put("floatlit", floatlit);
-        symbolList.put("$", dollar);
-        symbolList.put("''", epsilon);
-        symbolList.put("program", program);
-        symbolList.put("declseg", declseg);
-        symbolList.put("typedecls", typedecls);
-        symbolList.put("typedecl", typedecl);
-        symbolList.put("type", type);
-        symbolList.put("typeT", typeT);
-        symbolList.put("vardecls", vardecls);
-        symbolList.put("vardecl", vardecl);
-        symbolList.put("ids", ids);
-        symbolList.put("ids'", idsPrime);
-        symbolList.put("optinit", optinit);
-        symbolList.put("funcdecls", funcdecls);
-        symbolList.put("funcdecl", funcdecl);
-        symbolList.put("params", params);
-        symbolList.put("neparams", neparams);
-        symbolList.put("neparams'", neparamsPrime);
-        symbolList.put("param", param);
-        symbolList.put("optrettype", optrettype);
-        symbolList.put("stmts", stmts);
-        symbolList.put("fullstmt", fullstmt);
-        symbolList.put("stmt", stmt);
-        symbolList.put("stmt'", stmtPrime);
-        symbolList.put("lvalue", lvalue);
-        symbolList.put("optoffset", optoffset);
-        symbolList.put("optstore", optstore);
-        symbolList.put("numexprs", numexprs);
-        symbolList.put("neexprs", neexprs);
-        symbolList.put("neexprs'", neexprsPrime);
-        symbolList.put("boolexpr", boolexpr);
-        symbolList.put("boolexpr'", boolexprPrime);
-        symbolList.put("clause", clause);
-        symbolList.put("clause'", clausePrime);
-        symbolList.put("pred", pred);
-        symbolList.put("boolop", boolop);
-        symbolList.put("numexpr", numexpr);
-        symbolList.put("numexpr'", numexprPrime);
-        symbolList.put("linop", linop);
-        symbolList.put("term", term);
-        symbolList.put("term'", termPrime);
-        symbolList.put("nonlinop", nonlinop);
-        symbolList.put("factor", factor);
-        symbolList.put("factor'", factorPrime);
-        symbolList.put("const", consts);
-    }
-
-    public void generateParseTable() {
-
-    }
-
-    public Symbol getRootSymbol() {
-
-    }
-
-    private LinkedList<Symbol> createEntry(String[] entry) {
-        LinkedList<Symbol> list = new LinkedList<Symbol>();
-        for (int i = 0; i < entry.length; i++) {
-            list.add(getSymbol(entry[i]));
+    public static List<Symbol> get(Symbol stackSymbol, Token currToken) {
+        if (!parseTable.containsKey(stackSymbol)) {
+            return null;
         }
-        return list;
-    }
-
-    private Symbol getSymbol(String symbolText) {
-        return symbolList.get(symbolText);
-    }
-
-    private void set(Symbol row, Symbol col, LinkedList<LinkedList<Symbol>> entry) {
-        SymbolArray key = new SymbolArray(row, col);
-        parseTable.put(key.hashCode(), entry);
-    }
-
-    /**
-     * Gets the expanded symbol list for this stack value on this input token.
-     * 
-     * @param stackSymbol The current stack symbol.
-     * @param nextTokenSymbol The next input token.
-     * @return The expanded symbol list for this input token on this stack value.
-     */
-    public LinkedList<LinkedList<Symbol>> get(Symbol stackSymbol, Symbol nextTokenSymbol) {
-        SymbolArray key = new SymbolArray(stackSymbol, nextTokenSymbol);
-        return parseTable.get(key.hashCode());
-    }
-
-    /**
-     * Tells whether there is a definition for this stack value on this input token.
-     * 
-     * @param stackSymbol The current stack symbol.
-     * @param nextTokenSymbol The next input token.
-     * @return If there is a definition for this stack value on this input token.
-     */
-    public boolean isEmpty(Symbol stackSymbol, Symbol nextTokenSymbol) {
-        return get(stackSymbol, nextTokenSymbol) == null;
-    }
-
-    public String toString() {
-        return parseTable.toString();
+        return parseTable.get(stackSymbol).get(currToken.getTerminalSymbol());
     }
 }

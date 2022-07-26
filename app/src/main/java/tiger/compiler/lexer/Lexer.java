@@ -54,16 +54,13 @@ public class Lexer {
         // Reset DFA states
         this.reset();
 
-        // Add EOF character
-        fileData += "$";
-
         // Run through each DFA to find matches in the stream
         while (index < fileData.length()) {
 
             var curChar = fileData.charAt(index++);
 
             // Append to current lexeme if non-whitespace character
-            if (curChar != ' ' && curChar != '\t' && curChar != '\n' && curChar != '$') {
+            if (curChar != ' ' && curChar != '\t' && curChar != '\n') {
                 this.transition(curChar);
                 lexeme.append(curChar);
                 continue;
@@ -129,23 +126,16 @@ public class Lexer {
                     return tokens;
                 }
             }
-
-            if (curChar == '$') {
-                tokens.add(Token.EOFToken);
-                break;
-            }
         }
 
+        tokens.add(Token.EOFToken);
         return tokens;
     }
 
     /**
-     * Constructs a DFA that matches keywords in Tiger. This includes: array, begin,
-     * break, do,
-     * else, end, enddo, endif, float, for, func, if, in, int, let, of, return,
-     * then, to, type, var,
-     * while, ,, :, ;, (, ), [, ], {, }, ., +, -, *, /, =, <>, <, >, <=, >=, &, |,
-     * and :=.
+     * Constructs a DFA that matches keywords in Tiger. This includes: array, begin, break, do,
+     * else, end, enddo, endif, float, for, func, if, in, int, let, of, return, then, to, type, var,
+     * while, ,, :, ;, (, ), [, ], {, }, ., +, -, *, /, =, <>, <, >, <=, >=, &, |, and :=.
      *
      * @return A DFA that matches keywords.
      */
@@ -155,10 +145,10 @@ public class Lexer {
         var initial = new State(true);
         states.add(initial);
 
-        String[] keywords = { "array", "begin", "break", "do", "else", "end", "enddo", "endif",
+        String[] keywords = {"array", "begin", "break", "do", "else", "end", "enddo", "endif",
                 "float", "for", "func", "if", "in", "int", "let", "of", "return", "then", "to",
                 "type", "var", "while", ",", ":", ";", "(", ")", "[", "]", "{", "}", ".", "+", "-",
-                "*", "/", "=", "<>", "<", ">", "<=", ">=", "&", "|", ":=" };
+                "*", "/", "=", "<>", "<", ">", "<=", ">=", "&", "|", ":="};
 
         for (var keyword : keywords) {
 
@@ -195,12 +185,9 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches program identifiers in Tiger. A program
-     * identifier is a
-     * sequence of letters, numbers, and the underscore character. An identifier
-     * must begin with
-     * either a letter or underscore, and must contain at least one letter or
-     * number.
+     * Constructs a DFA that matches program identifiers in Tiger. A program identifier is a
+     * sequence of letters, numbers, and the underscore character. An identifier must begin with
+     * either a letter or underscore, and must contain at least one letter or number.
      *
      * @return A DFA that matches program identifiers.
      */
@@ -255,8 +242,7 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches integer literals in Tiger. An integer literal
-     * is a non-empty
+     * Constructs a DFA that matches integer literals in Tiger. An integer literal is a non-empty
      * sequence of digits.
      *
      * @return A DFA that matches integer literals.
@@ -287,14 +273,10 @@ public class Lexer {
     }
 
     /**
-     * Constructs a DFA that matches floating-point literals in Tiger. A
-     * floating-point literal must
-     * consist of a non-empty sequence of digits, a radix ('.'), and a (possibly
-     * empty) sequence of
-     * digits. The literal cannot contain any leading zeroes not required to ensure
-     * that the
-     * sequence of digits before the radix is non-empty. e.g., 0.123 is a float
-     * literal, but 00.123
+     * Constructs a DFA that matches floating-point literals in Tiger. A floating-point literal must
+     * consist of a non-empty sequence of digits, a radix ('.'), and a (possibly empty) sequence of
+     * digits. The literal cannot contain any leading zeroes not required to ensure that the
+     * sequence of digits before the radix is non-empty. e.g., 0.123 is a float literal, but 00.123
      * is not.
      *
      * @return A DFA that matches floating-point literals.

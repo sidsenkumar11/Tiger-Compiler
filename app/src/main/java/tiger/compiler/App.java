@@ -41,9 +41,9 @@ public class App {
         // Parse tokens into AST
         Parser parser = new Parser(tokens);
         parser.parse();
-        String ast = parser.getParseAST();
+
         if (astFlag) {
-            System.out.println("\n" + ast);
+            System.out.println(parser.getAST());
         }
 
         // // Type Check the AST
