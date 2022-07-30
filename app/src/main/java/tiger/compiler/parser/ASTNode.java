@@ -50,6 +50,10 @@ public class ASTNode {
         this.derivation.add(childNode);
     }
 
+    public ASTNode getFirst() {
+        return this.derivation.get(0);
+    }
+
     public ASTNode getLast() {
         return this.derivation.get(this.derivation.size() - 1);
     }

@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import tiger.compiler.intermediatecode.SymbolTableEntry;
 import tiger.compiler.intermediatecode.TypeTableEntry;
-import tiger.compiler.intermediatecode.reg_no;
+import tiger.compiler.intermediatecode.Register;
 
 public class Code_generator {
 
@@ -2157,7 +2157,7 @@ public class Code_generator {
 		ArrayList<SymbolTableEntry> MainSymbolTable = new ArrayList<>();
 		ArrayList<TypeTableEntry> TypeSymbolTable = new ArrayList<>();
 		ArrayList<SymbolTableEntry> FuncSymbolTable = new ArrayList<>();
-		ArrayList<reg_no> reg_no = new ArrayList<>();
+		ArrayList<Register> reg_no = new ArrayList<>();
 		String[] m_var_name = new String[100];
 		String[] type_name = {"int", "float", "int array", "float array"};
 
@@ -2172,32 +2172,32 @@ public class Code_generator {
 
 		// Assigning int, float, int array and float array type to the object
 
-		reg_no.add(new reg_no(reg_counter, 0));
+		reg_no.add(new Register(reg_counter, 0));
 		MainSymbolTable.add(new SymbolTableEntry(scope, "readi", "int", "func",
-				reg_no.get(reg_counter).reg_index()));
+				reg_no.get(reg_counter).getNumber()));
 		reg_counter++;
-		reg_no.add(new reg_no(reg_counter, 0));
+		reg_no.add(new Register(reg_counter, 0));
 		MainSymbolTable.add(new SymbolTableEntry(scope, "readf", "float", "func",
-				reg_no.get(reg_counter).reg_index()));
+				reg_no.get(reg_counter).getNumber()));
 		reg_counter++;
-		reg_no.add(new reg_no(reg_counter, 0));
+		reg_no.add(new Register(reg_counter, 0));
 		MainSymbolTable.add(new SymbolTableEntry(scope, "printi", "void", "func",
-				reg_no.get(reg_counter).reg_index()));
+				reg_no.get(reg_counter).getNumber()));
 		reg_counter++;
-		reg_no.add(new reg_no(reg_counter, 0));
+		reg_no.add(new Register(reg_counter, 0));
 		MainSymbolTable.add(new SymbolTableEntry(scope, "printf", "void", "func",
-				reg_no.get(reg_counter).reg_index()));
+				reg_no.get(reg_counter).getNumber()));
 		reg_counter++;
-		reg_no.add(new reg_no(reg_counter, 0));
+		reg_no.add(new Register(reg_counter, 0));
 		FuncSymbolTable.add(new SymbolTableEntry("printi", "input", "int", "id",
-				reg_no.get(reg_counter).reg_index()));
+				reg_no.get(reg_counter).getNumber()));
 
 		funcvar_no++;
 		reg_counter++;
-		reg_no.add(new reg_no(reg_counter, 0));
+		reg_no.add(new Register(reg_counter, 0));
 		FuncSymbolTable
 				.add(new SymbolTableEntry("printf", "input", "float", "id",
-						reg_no.get(reg_counter).reg_index()));
+						reg_no.get(reg_counter).getNumber()));
 
 		funcvar_no++;
 
@@ -2301,10 +2301,10 @@ public class Code_generator {
 											}
 										}
 										reg_counter++;
-										reg_no.add(new reg_no(reg_counter, 0));
+										reg_no.add(new Register(reg_counter, 0));
 										MainSymbolTable.add(new SymbolTableEntry(scope,
 												m_var_name[p], var_type, "id",
-												reg_no.get(reg_counter).reg_index()));
+												reg_no.get(reg_counter).getNumber()));
 										if (var_type.matches("int")) {
 											if (fullFileText_token[j + 7].matches(":=")) {
 												if (fullFileText_token[j + 11].contains("."))
@@ -2452,18 +2452,18 @@ public class Code_generator {
 
 								if (funcvar_type_match) {
 									reg_counter++;
-									reg_no.add(new reg_no(reg_counter, 0));
+									reg_no.add(new Register(reg_counter, 0));
 									FuncSymbolTable.add(
 											new SymbolTableEntry(f_scope, fullFileText_token[j + 1],
 													fullFileText_token[j + 7], "id",
-													reg_no.get(reg_counter).reg_index()));
+													reg_no.get(reg_counter).getNumber()));
 									if (fullFileText_token[j + 1].contains("."))
 										IR.add(String.format("movf r%d %s ",
-												reg_no.get(reg_counter).reg_index(),
+												reg_no.get(reg_counter).getNumber(),
 												fullFileText_token[j + 1]));
 									else
 										IR.add(String.format("movi r%d %s ",
-												reg_no.get(reg_counter).reg_index(),
+												reg_no.get(reg_counter).getNumber(),
 												fullFileText_token[j + 1]));
 
 									funcvar_no++;
@@ -2481,10 +2481,10 @@ public class Code_generator {
 							case "optrettype": {
 								// System.out.println("Enters optrettype");
 								reg_counter++;
-								reg_no.add(new reg_no(reg_counter, 0));
+								reg_no.add(new Register(reg_counter, 0));
 								MainSymbolTable.add(
 										new SymbolTableEntry(scope, f_scope, "", "func",
-												reg_no.get(reg_counter).reg_index()));
+												reg_no.get(reg_counter).getNumber()));
 								if (fullFileText_token[j + 5].matches("type")) {
 
 									MainSymbolTable.get(k).setType(fullFileText_token[j + 6]);

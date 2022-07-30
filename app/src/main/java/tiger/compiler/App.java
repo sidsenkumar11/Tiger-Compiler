@@ -7,7 +7,9 @@ import java.util.List;
 import tiger.compiler.parser.ASTNode;
 import tiger.compiler.parser.ParseException;
 import tiger.compiler.parser.Parser;
-import tiger.compiler.intermediatecode.CodeGenerator;
+import tiger.compiler.typechecker.TypeCheckException;
+import tiger.compiler.typechecker.TypeChecker;
+import tiger.compiler.intermediatecode.ILGenerator;
 import tiger.compiler.interpreter.Interpreter;
 import tiger.compiler.lexer.LexException;
 import tiger.compiler.lexer.Lexer;
@@ -47,12 +49,11 @@ public class App {
 
     private static void Compile(
             String fileName, boolean tokensFlag, boolean astFlag, boolean interpretFlag)
-            throws IOException, LexException, ParseException {
+            throws IOException, LexException, ParseException, TypeCheckException {
 
         // Scan source into tokens
         if (tokensFlag) {
             System.out.print(App.TokensString(fileName));
-            return;
         }
 
         var tokens = App.Scan(fileName);
@@ -64,14 +65,13 @@ public class App {
         var astRoot = App.Parse(tokens);
         if (astFlag) {
             System.out.println(astRoot.getAST());
-            return;
         }
 
-        // // Type Check the AST
-        // // TypeChecker.typeCheck(ast);
+        // Type Check the AST
+        TypeChecker.TypeCheck(astRoot);
 
-        // // Generate Intermediate Code
-        // ArrayList<String> IR = CodeGenerator.generateCode(ast);
+        // Generate Intermediate Code
+        // ArrayList<String> IR = ILGenerator.generateCode(astRoot);
         // System.out.println(IR);
 
         // // Run interpreter on IR or generate machine code
@@ -113,6 +113,8 @@ public class App {
             System.err.println(e.getMessage());
         } catch (ParseException e) {
             System.err.println("Parse Failed: " + e.getMessage());
+        } catch (TypeCheckException e) {
+            System.err.println("Typechecking Failed: " + e.getMessage());
         }
     }
 }

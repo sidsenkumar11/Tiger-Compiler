@@ -1,10 +1,11 @@
 package tiger.compiler.typechecker;
+
 public class TypeTableEntry {
 
-    private String scope, name, type, attr;
+    private String name, type, attr;
     private int index;
 
-    public TypeTableEntry(String scope, String name, String type, String attr, int index) {
+    public TypeTableEntry(String name, String type, String attr, int index) {
         this.scope = scope;
         this.name = name;
         this.type = type;
@@ -28,9 +29,11 @@ public class TypeTableEntry {
         return attr;
     }
 
-        
-    
-    public int index() { return index; }
+
+
+    public int index() {
+        return index;
+    }
 
     public void setScope(String scope) {
         this.scope = scope;
