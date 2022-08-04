@@ -32,8 +32,14 @@ public class App {
         return x.toString();
     }
 
-    public static String ParseString(String fileName) throws IOException, ParseException {
+    public static String ParseString(String fileName)
+            throws IOException, ParseException, TypeCheckException {
         return App.Parse(App.Scan(fileName)).getAST();
+    }
+
+    public static void ParseAndTypeCheck(String fileName)
+            throws IOException, ParseException, TypeCheckException {
+        App.TypeCheck(App.Parse(App.Scan(fileName)));
     }
 
     private static List<Token> Scan(String fileName) throws IOException {
@@ -42,9 +48,15 @@ public class App {
         return scanner.scan(fileText);
     }
 
-    private static ASTNode Parse(List<Token> tokens) throws ParseException {
-        Parser parser = new Parser(tokens);
-        return parser.parse();
+    private static ASTNode Parse(List<Token> tokens) throws IOException, ParseException {
+        var parser = new Parser(tokens);
+        var astRoot = parser.parse();
+        return astRoot;
+    }
+
+    private static void TypeCheck(ASTNode astRoot) throws TypeCheckException {
+        var typeChecker = new TypeChecker(astRoot);
+        typeChecker.checkProgram();
     }
 
     private static void Compile(
@@ -68,7 +80,7 @@ public class App {
         }
 
         // Type Check the AST
-        TypeChecker.TypeCheck(astRoot);
+        App.TypeCheck(astRoot);
 
         // Generate Intermediate Code
         // ArrayList<String> IR = ILGenerator.generateCode(astRoot);

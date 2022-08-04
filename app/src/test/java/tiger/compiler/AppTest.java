@@ -5,6 +5,7 @@ package tiger.compiler;
 
 import org.junit.jupiter.api.Test;
 import tiger.compiler.parser.ParseException;
+import tiger.compiler.typechecker.TypeCheckException;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +39,7 @@ class AppTest {
             var sourceFilePath = listOfFiles[i].getAbsolutePath();
             var astFilePath = sourceFilePath.replace(".tgr", ".ast");
             try {
-                System.err.println(sourceFile);
+                System.out.println(sourceFile);
                 var astString = App.ParseString(sourceFilePath).strip();
                 var solnString = Files.readString(Path.of(astFilePath)).strip();
                 // System.err.println(astString);
@@ -53,6 +54,10 @@ class AppTest {
                 System.err.println(
                         "--> FAIL - Unable to parse");
                 success = false;
+            } catch (TypeCheckException e) {
+                System.err.println(
+                        "--> FAIL - Unexpected typechecking failure");
+                success = false;
             }
         }
 
@@ -65,7 +70,8 @@ class AppTest {
         File folder = filePath.toFile();
         File[] listOfFiles = folder.listFiles();
 
-        var success = true;
+        var failCount = 0;
+        var testCount = 0;
         for (int i = 0; i < listOfFiles.length; i++) {
             if (!listOfFiles[i].isFile()) {
                 continue;
@@ -76,32 +82,33 @@ class AppTest {
                 continue;
             }
 
-            // if (!sourceFile.endsWith("func_ret.tgr")) {
+            // if (!sourceFile.endsWith("var_type_bef_use_bad.tgr")) {
             // continue;
             // }
 
+            testCount++;
             var sourceFilePath = listOfFiles[i].getAbsolutePath();
             var shouldFail = sourceFile.endsWith("_bad.tgr");
             try {
-                System.err.println(sourceFile);
-                var astString = App.ParseString(sourceFilePath).strip();
+                System.out.println(sourceFile);
+                App.ParseAndTypeCheck(sourceFilePath);
                 if (shouldFail) {
                     System.err.println("--> FAIL - Should have failed type checking");
-                    success = false;
+                    failCount++;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                success = false;
-            } catch (ParseException e) {
+                failCount++;
+            } catch (ParseException | TypeCheckException e) {
                 if (!shouldFail) {
                     System.err.println(
-                            "--> FAIL - Unable to parse");
-                    success = false;
+                            "--> FAIL - Should NOT have failed parsing / type checking");
+                    failCount++;
                 }
             }
         }
 
-        assertTrue(success);
+        assertTrue(failCount == 0);
     }
 
     @Test

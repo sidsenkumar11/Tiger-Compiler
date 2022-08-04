@@ -17,7 +17,7 @@
             "mainClass": "tiger.compiler.App",
             "projectName": "app",
             "args": [
-                "C:\\Users\\pikah\\Desktop\\Tiger-Compiler\\app\\src\\test\\resources\\p2tests\\assign_types_play_2_ok.tgr"
+                "C:\\Users\\pikah\\Desktop\\Tiger-Compiler\\app\\src\\test\\resources\\p2tests\\call_arg_count_mismatch_bad.tgr"
             ],
         },
         {

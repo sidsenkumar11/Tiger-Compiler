@@ -62,6 +62,10 @@ public class ASTNode {
         return this.derivation.remove(this.derivation.size() - 1);
     }
 
+    public ASTNode get(int i) {
+        return this.derivation.get(i);
+    }
+
     public int childCount() {
         return this.derivation.size();
     }

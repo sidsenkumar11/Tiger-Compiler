@@ -421,7 +421,7 @@ public class Parser {
 
     private void removeStmtPrimePrime(ASTNode current) {
         for (var i = 0; i < current.getDerivation().size(); i++) {
-            var node = current.getDerivation().get(i);
+            var node = current.get(i);
             this.removeStmtPrimePrime(node);
         }
 
