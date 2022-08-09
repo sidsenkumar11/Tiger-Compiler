@@ -1,6 +1,8 @@
 package tiger.compiler;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -9,14 +11,13 @@ import tiger.compiler.parser.ParseException;
 import tiger.compiler.parser.Parser;
 import tiger.compiler.typechecker.TypeCheckException;
 import tiger.compiler.typechecker.TypeChecker;
-import tiger.compiler.intermediatecode.ILGenerator;
+import tiger.compiler.interpreter.IRGenException;
+import tiger.compiler.interpreter.IRGenerator;
 import tiger.compiler.interpreter.Interpreter;
 import tiger.compiler.lexer.LexException;
 import tiger.compiler.lexer.Lexer;
 import tiger.compiler.lexer.Token;
 import tiger.compiler.lexer.TokenType;
-
-import java.util.ArrayList;
 
 public class App {
 
@@ -39,7 +40,20 @@ public class App {
 
     public static void ParseAndTypeCheck(String fileName)
             throws IOException, ParseException, TypeCheckException {
-        App.TypeCheck(App.Parse(App.Scan(fileName)));
+        var astRoot = App.Parse(App.Scan(fileName));
+        var typeChecker = new TypeChecker(astRoot);
+        typeChecker.checkProgram();
+    }
+
+    public static void Interpret(String fileName, InputStream in, PrintWriter out)
+            throws IOException, ParseException, TypeCheckException, IRGenException {
+        var astRoot = App.Parse(App.Scan(fileName));
+        var typeChecker = new TypeChecker(astRoot);
+        typeChecker.checkProgram();
+
+        var codeGen = new IRGenerator(astRoot, typeChecker.getVarMap(), typeChecker.getFuncMap());
+        var IR = codeGen.generateProgram();
+        Interpreter.Run(IR, codeGen.getIntRegCount(), codeGen.getFloatRegCount(), in, out, false);
     }
 
     private static List<Token> Scan(String fileName) throws IOException {
@@ -54,14 +68,10 @@ public class App {
         return astRoot;
     }
 
-    private static void TypeCheck(ASTNode astRoot) throws TypeCheckException {
-        var typeChecker = new TypeChecker(astRoot);
-        typeChecker.checkProgram();
-    }
-
     private static void Compile(
-            String fileName, boolean tokensFlag, boolean astFlag, boolean interpretFlag)
-            throws IOException, LexException, ParseException, TypeCheckException {
+            String fileName, boolean tokensFlag, boolean astFlag, boolean interpretFlag,
+            boolean debugFlag)
+            throws IOException, LexException, ParseException, TypeCheckException, IRGenException {
 
         // Scan source into tokens
         if (tokensFlag) {
@@ -80,17 +90,22 @@ public class App {
         }
 
         // Type Check the AST
-        App.TypeCheck(astRoot);
+        var typeChecker = new TypeChecker(astRoot);
+        typeChecker.checkProgram();
 
         // Generate Intermediate Code
-        // ArrayList<String> IR = ILGenerator.generateCode(astRoot);
-        // System.out.println(IR);
+        var codeGen = new IRGenerator(astRoot, typeChecker.getVarMap(), typeChecker.getFuncMap());
+        var IR = codeGen.generateProgram();
 
-        // // Run interpreter on IR or generate machine code
-        // if (interpretFlag) {
-        // Interpreter interpreter = new Interpreter(IR);
-        // interpreter.run();
-        // }
+        // Run interpreter on IR or generate machine code
+        if (interpretFlag) {
+            try (PrintWriter printWriter = new PrintWriter(System.out)) {
+                Interpreter.Run(IR, codeGen.getIntRegCount(), codeGen.getFloatRegCount(), System.in,
+                        printWriter, debugFlag);
+            }
+        } else {
+
+        }
     }
 
     public static void main(String[] args) {
@@ -101,7 +116,7 @@ public class App {
         }
 
         String filename = args[0];
-        boolean printTokens = false, printAst = false, interpret = false;
+        boolean printTokens = false, printAst = false, interpret = false, debug = false;
 
         for (String s : args) {
             if (s.equals("--tokens")) {
@@ -115,10 +130,14 @@ public class App {
             if (s.equals("--runil")) {
                 interpret = true;
             }
+
+            if (s.equals("--debug")) {
+                debug = true;
+            }
         }
 
         try {
-            App.Compile(filename, printTokens, printAst, interpret);
+            App.Compile(filename, printTokens, printAst, interpret, debug);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         } catch (LexException e) {
@@ -127,6 +146,8 @@ public class App {
             System.err.println("Parse Failed: " + e.getMessage());
         } catch (TypeCheckException e) {
             System.err.println("Typechecking Failed: " + e.getMessage());
+        } catch (IRGenException e) {
+            System.err.println("IRGeneration Failed: " + e.getMessage());
         }
     }
 }

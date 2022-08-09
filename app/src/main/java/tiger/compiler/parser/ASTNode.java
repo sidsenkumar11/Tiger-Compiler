@@ -3,11 +3,13 @@ package tiger.compiler.parser;
 import java.util.LinkedList;
 import java.util.List;
 import tiger.compiler.lexer.TokenType;
+import tiger.compiler.typechecker.types.Type;
 
 public class ASTNode {
     private List<ASTNode> derivation;
     private Symbol symbol;
     private String value;
+    private Type type;
 
     public ASTNode(Symbol symbol) {
         this.derivation = new LinkedList<ASTNode>();
@@ -38,6 +40,15 @@ public class ASTNode {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public Type getType() {
+        return this.type;
+    }
+
+    public Type setType(Type type) {
+        this.type = type;
+        return type;
     }
 
     public ASTNode addChild(Symbol symbol) {

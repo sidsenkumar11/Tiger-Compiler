@@ -35,7 +35,7 @@ stmt → if boolexpr then stmts endif
 stmt → if boolexpr then stmts else stmts endif
 stmt → while boolexpr do stmts enddo
 stmt → for id := numexpr to numexpr do stmts enddo
-stmt → optstore id (numexprs)
+stmt → optstore id ( numexprs )
 stmt → break
 stmt → return numexpr
 lvalue → id optoffset

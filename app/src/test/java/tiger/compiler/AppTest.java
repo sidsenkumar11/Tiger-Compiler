@@ -4,24 +4,31 @@
 package tiger.compiler;
 
 import org.junit.jupiter.api.Test;
+import tiger.compiler.interpreter.IRGenException;
 import tiger.compiler.parser.ParseException;
 import tiger.compiler.typechecker.TypeCheckException;
 import static org.junit.jupiter.api.Assertions.*;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 class AppTest {
 
-    void compareAstsFromFolder(String folderName) {
+    private void compareAstsFromFolder(String folderName) {
         Path currentPath = Paths.get(System.getProperty("user.dir"));
         Path filePath = Paths.get(currentPath.toString(), "bin", "test", folderName);
         File folder = filePath.toFile();
         File[] listOfFiles = folder.listFiles();
 
-        var success = true;
+        var failCount = 0;
+        var testCount = 0;
         for (int i = 0; i < listOfFiles.length; i++) {
             if (!listOfFiles[i].isFile()) {
                 continue;
@@ -36,6 +43,7 @@ class AppTest {
             // continue;
             // }
 
+            testCount++;
             var sourceFilePath = listOfFiles[i].getAbsolutePath();
             var astFilePath = sourceFilePath.replace(".tgr", ".ast");
             try {
@@ -45,26 +53,27 @@ class AppTest {
                 // System.err.println(astString);
                 if (!astString.equals(solnString)) {
                     System.err.println("--> FAIL - Did not match");
-                    success = false;
+                    failCount++;
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                success = false;
+                failCount++;
             } catch (ParseException e) {
                 System.err.println(
                         "--> FAIL - Unable to parse");
-                success = false;
+                failCount++;
             } catch (TypeCheckException e) {
                 System.err.println(
                         "--> FAIL - Unexpected typechecking failure");
-                success = false;
+                failCount++;
             }
         }
 
-        assertTrue(success);
+        System.out.println("Failed " + failCount + "/" + testCount + " tests!");
+        assertTrue(failCount == 0);
     }
 
-    void typeCheckTests(String folderName) {
+    private void typeCheckTests(String folderName) {
         Path currentPath = Paths.get(System.getProperty("user.dir"));
         Path filePath = Paths.get(currentPath.toString(), "bin", "test", folderName);
         File folder = filePath.toFile();
@@ -103,31 +112,106 @@ class AppTest {
                 if (!shouldFail) {
                     System.err.println(
                             "--> FAIL - Should NOT have failed parsing / type checking");
+                    System.err.println("--> " + e.getMessage());
                     failCount++;
                 }
             }
         }
 
+        System.out.println("Failed " + failCount + "/" + testCount + " tests!");
         assertTrue(failCount == 0);
+    }
+
+    private void interpreterTests(String folderName) {
+        Path currentPath = Paths.get(System.getProperty("user.dir"));
+        Path filePath = Paths.get(currentPath.toString(), "bin", "test", folderName);
+        File folder = filePath.toFile();
+        File[] listOfFiles = folder.listFiles();
+
+        var failCount = 0;
+        var testCount = 0;
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (!listOfFiles[i].isFile()) {
+                continue;
+            }
+
+            var sourceFile = listOfFiles[i].getName();
+            if (!sourceFile.endsWith(".tgr")) {
+                continue;
+            }
+
+            // if (sourceFile.endsWith("while.tgr")) {
+            // continue;
+            // }
+
+            testCount++;
+            var sourceFilePath = listOfFiles[i].getAbsolutePath();
+            var inputFilePath = sourceFilePath.replace(".tgr", "_in");
+            var outputFilePath = sourceFilePath.replace(".tgr", "_out");
+            try {
+                System.out.println(sourceFile);
+
+                // Read file into InputStream
+                var testInput = Files.readString(Path.of(inputFilePath));
+                byte[] bytes = testInput.getBytes(StandardCharsets.UTF_8);
+                InputStream inputStream = new ByteArrayInputStream(bytes);
+
+                // Initialize PrintWriter and run test
+                StringWriter stringWriter = new StringWriter();
+                try (PrintWriter printWriter = new PrintWriter(stringWriter)) {
+                    App.Interpret(sourceFilePath, inputStream, printWriter);
+                }
+
+                // Compare outputs
+                var output = stringWriter.toString().strip().replace("\r", "");
+                var expectedOutput =
+                        Files.readString(Path.of(outputFilePath)).strip().replace("\r", "");
+                if (!output.equals(expectedOutput)) {
+                    System.err.println(
+                            "--> FAIL - Output does not match");
+                    failCount++;
+                    System.out.println("------------------");
+                    System.out.println(output);
+                    System.out.println("------------------");
+                    System.out.println(expectedOutput);
+                    System.out.println("------------------");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                failCount++;
+            } catch (ParseException | TypeCheckException | IRGenException e) {
+                System.err.println(
+                        "--> FAIL - Should NOT have failed parsing / type checking / IR code generation");
+                System.err.println("--> " + e.getMessage());
+                failCount++;
+            } catch (Exception e) {
+                System.err.println(
+                        "--> FAIL - Unexpected error");
+                failCount++;
+            }
+        }
+
+        System.out.println("Failed " + failCount + "/" + testCount + " tests!");
+        // assertTrue(failCount == 0);
     }
 
     @Test
     void p1tests() {
-        compareAstsFromFolder("p1tests");
+        this.compareAstsFromFolder("p1tests");
     }
 
     @Test
     void p1gradedtests() {
-        compareAstsFromFolder("p1gradedtests");
+        this.compareAstsFromFolder("p1gradedtests");
     }
 
     @Test
     void p2tests() {
-        typeCheckTests("p2tests");
+        this.typeCheckTests("p2tests");
     }
 
     @Test
     void p3tests() {
-        // runTestsFromFolder("p3tests");
+        this.interpreterTests("p3tests");
     }
 }

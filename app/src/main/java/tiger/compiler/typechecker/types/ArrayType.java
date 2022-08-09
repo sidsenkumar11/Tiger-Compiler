@@ -2,13 +2,19 @@ package tiger.compiler.typechecker.types;
 
 public class ArrayType extends Type {
     private Type subType;
+    private int size;
 
-    public ArrayType(Type subType) {
+    public ArrayType(Type subType, int size) {
         this.subType = subType;
+        this.size = size;
     }
 
     public Type getSubType() {
         return this.subType;
+    }
+
+    public int getSize() {
+        return this.size;
     }
 
     @Override

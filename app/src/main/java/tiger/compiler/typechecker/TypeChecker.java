@@ -15,13 +15,13 @@ public class TypeChecker {
 
     private ASTNode rootNode;
     private Map<String, Type> typeMap;
-    private Map<String, Type> varMap;
+    private Map<String, VariableTableEntry> varMap;
     private Map<String, FunctionTableEntry> funcMap;
 
     public TypeChecker(ASTNode rootNode) throws TypeCheckException {
         this.rootNode = rootNode;
         this.typeMap = new HashMap<String, Type>();
-        this.varMap = new HashMap<String, Type>();
+        this.varMap = new HashMap<String, VariableTableEntry>();
         this.funcMap = new HashMap<String, FunctionTableEntry>();
 
         this.createTypeMap();
@@ -29,14 +29,23 @@ public class TypeChecker {
         this.createFuncMap();
     }
 
+    public Map<String, VariableTableEntry> getVarMap() {
+        return this.varMap;
+    }
+
+    public Map<String, FunctionTableEntry> getFuncMap() {
+        return this.funcMap;
+    }
+
     private ArrayType createArrayType(ASTNode typeNT) throws TypeCheckException {
         var childTypeNT = typeNT.getLast();
         var childTypeNTSymbol = childTypeNT.getFirst().getSymbol();
+        var arraySize = Integer.parseInt(typeNT.get(2).getValue());
 
         if (childTypeNTSymbol == Symbol.INT) {
-            return new ArrayType(new IntType());
+            return new ArrayType(new IntType(), arraySize);
         } else if (childTypeNTSymbol == Symbol.FLOAT) {
-            return new ArrayType(new FloatType());
+            return new ArrayType(new FloatType(), arraySize);
         } else if (childTypeNTSymbol == Symbol.ID) {
             var idValue = childTypeNT.getFirst().getValue();
             var idTypeObj = this.typeMap.get(idValue);
@@ -44,9 +53,9 @@ public class TypeChecker {
                 throw new TypeCheckException(
                         "Alias for type '" + idValue + "' was not found!");
             }
-            return new ArrayType(idTypeObj);
+            return new ArrayType(idTypeObj, arraySize);
         } else if (childTypeNTSymbol == Symbol.ARRAY) {
-            return new ArrayType(this.createArrayType(childTypeNT));
+            return new ArrayType(this.createArrayType(childTypeNT), arraySize);
         } else {
             throw new TypeCheckException("Unexpected error");
         }
@@ -129,7 +138,8 @@ public class TypeChecker {
             var idsNode = vardeclNode.get(1);
             while (idsNode.childCount() > 1) {
                 var identifier = idsNode.getFirst().getValue();
-                if (this.varMap.put(identifier, varType) != null) {
+                var entry = new VariableTableEntry(varType);
+                if (this.varMap.put(identifier, entry) != null) {
                     throw new TypeCheckException(
                             "Variable has been declared multiple times: " + identifier);
                 }
@@ -137,7 +147,8 @@ public class TypeChecker {
             }
 
             var identifier = idsNode.getFirst().getValue();
-            if (this.varMap.put(identifier, varType) != null) {
+            var entry = new VariableTableEntry(varType);
+            if (this.varMap.put(identifier, entry) != null) {
                 throw new TypeCheckException(
                         "Variable has been declared multiple times: " + identifier);
             }
@@ -227,7 +238,7 @@ public class TypeChecker {
         if (paramsMap.containsKey(identifier)) {
             return paramsMap.get(identifier);
         } else if (this.varMap.containsKey(identifier)) {
-            return this.varMap.get(identifier);
+            return this.varMap.get(identifier).getType();
         } else {
             throw new TypeCheckException("Identifier not found: " + identifier);
         }
@@ -236,9 +247,9 @@ public class TypeChecker {
     private Type getConstType(ASTNode constNode) throws TypeCheckException {
         var childSymbol = constNode.getFirst().getSymbol();
         if (childSymbol == Symbol.INTLIT) {
-            return new IntType();
+            return constNode.setType(new IntType());
         } else if (childSymbol == Symbol.FLOATLIT) {
-            return new FloatType();
+            return constNode.setType(new FloatType());
         } else {
             throw new TypeCheckException("Unexpected error");
         }
@@ -248,11 +259,11 @@ public class TypeChecker {
             throws TypeCheckException {
         var childSymbol = factorNode.getFirst().getSymbol();
         if (childSymbol == Symbol.constNt) {
-            return this.getConstType(factorNode.getFirst());
+            return factorNode.setType(this.getConstType(factorNode.getFirst()));
         } else if (childSymbol == Symbol.ID) {
             if (factorNode.childCount() == 1) {
                 var identifier = factorNode.getFirst().getValue();
-                return this.getVarType(identifier, paramsMap);
+                return factorNode.setType(this.getVarType(identifier, paramsMap));
             }
 
             if (!this.getNumexprType(factorNode.get(2), paramsMap).equals(new IntType())) {
@@ -261,9 +272,10 @@ public class TypeChecker {
             }
 
             var identifier = factorNode.getFirst().getValue();
-            return ((ArrayType) (this.getVarType(identifier, paramsMap))).getSubType();
+            return factorNode
+                    .setType(((ArrayType) (this.getVarType(identifier, paramsMap))).getSubType());
         } else if (childSymbol == Symbol.LEFT_PAREN) {
-            return this.getNumexprType(factorNode.get(1), paramsMap);
+            return factorNode.setType(this.getNumexprType(factorNode.get(1), paramsMap));
         } else {
             throw new TypeCheckException("Unexpected error");
         }
@@ -273,7 +285,7 @@ public class TypeChecker {
             throws TypeCheckException {
         var childSymbol = termNode.getFirst().getSymbol();
         if (childSymbol == Symbol.factor) {
-            return this.getFactorType(termNode.getFirst(), paramsMap);
+            return termNode.setType(this.getFactorType(termNode.getFirst(), paramsMap));
         } else if (childSymbol == Symbol.term) {
             var termType = this.getTermType(termNode.getFirst(), paramsMap);
             var factorType = this.getFactorType(termNode.getLast(), paramsMap);
@@ -294,9 +306,9 @@ public class TypeChecker {
             }
 
             if (termIsFloat || factorIsFloat) {
-                return new FloatType();
+                return termNode.setType(new FloatType());
             } else {
-                return new IntType();
+                return termNode.setType(new IntType());
             }
         } else {
             throw new TypeCheckException("Unexpected error");
@@ -307,7 +319,7 @@ public class TypeChecker {
             throws TypeCheckException {
         var childSymbol = numexprNode.getFirst().getSymbol();
         if (childSymbol == Symbol.term) {
-            return this.getTermType(numexprNode.getFirst(), paramsMap);
+            return numexprNode.setType(this.getTermType(numexprNode.getFirst(), paramsMap));
         } else if (childSymbol == Symbol.numexpr) {
             var numexprType = this.getNumexprType(numexprNode.getFirst(), paramsMap);
             var termType = this.getTermType(numexprNode.getLast(), paramsMap);
@@ -328,9 +340,9 @@ public class TypeChecker {
             }
 
             if (numexprIsFloat || termIsFloat) {
-                return new FloatType();
+                return numexprNode.setType(new FloatType());
             } else {
-                return new IntType();
+                return numexprNode.setType(new IntType());
             }
         } else {
             throw new TypeCheckException("Unexpected error");
@@ -348,19 +360,22 @@ public class TypeChecker {
         }
 
         var lvalueType = this.getVarType(lvalueId, paramsMap);
-        return (!arrayOffsetLvalue) ? lvalueType
+        var retType = (!arrayOffsetLvalue) ? lvalueType
                 : ((ArrayType) (lvalueType)).getSubType();
+        return lvalueNode.setType(retType);
     }
 
     private void checkPred(ASTNode predNode, Map<String, Type> paramsMap)
             throws TypeCheckException {
-        var firstNumExprType = this.getNumexprType(predNode.getFirst(), paramsMap);
-        var secondNumExprtype = this.getNumexprType(predNode.getFirst(), paramsMap);
-        if ((!firstNumExprType.equals(new IntType()) && !firstNumExprType.equals(new FloatType()))
-                || (!secondNumExprtype.equals(new IntType())
-                        && !secondNumExprtype.equals(new FloatType()))) {
+        var firstNumexprType = this.getNumexprType(predNode.getFirst(), paramsMap);
+        var secondNumexprType = this.getNumexprType(predNode.getFirst(), paramsMap);
+        if ((!firstNumexprType.equals(new IntType()) && !firstNumexprType.equals(new FloatType()))
+                || (!secondNumexprType.equals(new IntType())
+                        && !secondNumexprType.equals(new FloatType()))) {
             throw new TypeCheckException("Boolean expression must be made using numerics");
         }
+
+        predNode.setType(new IntType());
     }
 
     private void checkClause(ASTNode clauseNode, Map<String, Type> paramsMap)
@@ -374,6 +389,8 @@ public class TypeChecker {
         } else {
             throw new TypeCheckException("Unexpected error");
         }
+
+        clauseNode.setType(new IntType());
     }
 
     private void checkBoolexpr(ASTNode boolexprNode, Map<String, Type> paramsMap)
@@ -387,6 +404,8 @@ public class TypeChecker {
         } else {
             throw new TypeCheckException("Unexpected error");
         }
+
+        boolexprNode.setType(new IntType());
     }
 
     private void checkStatement(ASTNode stmtNode, FunctionTableEntry signature, boolean canBreak)
@@ -394,9 +413,9 @@ public class TypeChecker {
         var stmtType = stmtNode.getFirst().getSymbol();
         if (stmtType == Symbol.lvalue) {
             var lvalueNode = stmtNode.getFirst();
-            var lvalueType = this.getLvalueType(lvalueNode, signature.getArgs());
+            var lvalueType = this.getLvalueType(lvalueNode, signature.getParams());
 
-            var rhsType = this.getNumexprType(stmtNode.getLast(), signature.getArgs());
+            var rhsType = this.getNumexprType(stmtNode.getLast(), signature.getParams());
             if (!rhsType.canBeAssignedTo(lvalueType)) {
                 throw new TypeCheckException("Statement LHS != RHS");
             }
@@ -404,7 +423,7 @@ public class TypeChecker {
             // optstore used
             if (stmtNode.getFirst().childCount() > 1) {
                 var lvalueNode = stmtNode.getFirst().getFirst();
-                var lhsType = this.getLvalueType(lvalueNode, signature.getArgs());
+                var lhsType = this.getLvalueType(lvalueNode, signature.getParams());
 
                 var funcId = stmtNode.get(1).getValue();
                 if (!funcMap.containsKey(funcId)) {
@@ -424,7 +443,7 @@ public class TypeChecker {
                 throw new TypeCheckException("Function '" + funcId + "' not defined");
             }
 
-            var funcExpectedArgs = funcMap.get(funcId).getArgs().entrySet().iterator();
+            var funcParams = funcMap.get(funcId).getParams().entrySet().iterator();
 
             var numexprsNode = stmtNode.get(3);
             if (numexprsNode.getFirst().getSymbol() != Symbol.EPSILON) {
@@ -433,14 +452,14 @@ public class TypeChecker {
                 while (neexprsNode.childCount() > 1) {
                     var numexprNode = neexprsNode.getFirst();
                     neexprsNode = neexprsNode.getLast();
-                    var numexprType = this.getNumexprType(numexprNode, signature.getArgs());
+                    var numexprType = this.getNumexprType(numexprNode, signature.getParams());
 
-                    if (!funcExpectedArgs.hasNext()) {
+                    if (!funcParams.hasNext()) {
                         throw new TypeCheckException(
                                 "Too many arguments passed to function " + funcId);
                     }
 
-                    var expectedType = funcExpectedArgs.next().getValue();
+                    var expectedType = funcParams.next().getValue();
                     if (!numexprType.canBeAssignedTo(expectedType)) {
                         throw new TypeCheckException(
                                 "Function " + funcId + " expected argument with type "
@@ -450,14 +469,14 @@ public class TypeChecker {
 
                 // Check last neexprsNode
                 var numexprNode = neexprsNode.getFirst();
-                var numexprType = this.getNumexprType(numexprNode, signature.getArgs());
+                var numexprType = this.getNumexprType(numexprNode, signature.getParams());
 
-                if (!funcExpectedArgs.hasNext()) {
+                if (!funcParams.hasNext()) {
                     throw new TypeCheckException(
                             "Too many arguments passed to function " + funcId);
                 }
 
-                var expectedType = funcExpectedArgs.next().getValue();
+                var expectedType = funcParams.next().getValue();
                 if (!numexprType.canBeAssignedTo(expectedType)) {
                     throw new TypeCheckException(
                             "Function " + funcId + " expected argument with type "
@@ -465,7 +484,7 @@ public class TypeChecker {
                 }
             }
 
-            if (funcExpectedArgs.hasNext()) {
+            if (funcParams.hasNext()) {
                 throw new TypeCheckException("Not enough arguments passed to function " + funcId);
             }
         } else if (stmtType == Symbol.BREAK) {
@@ -477,24 +496,24 @@ public class TypeChecker {
                 throw new TypeCheckException("Return statement not in function");
             }
 
-            var actualReturnType = this.getNumexprType(stmtNode.getLast(), signature.getArgs());
+            var actualReturnType = this.getNumexprType(stmtNode.getLast(), signature.getParams());
             if (!actualReturnType.canBeAssignedTo(signature.getReturnType())) {
                 throw new TypeCheckException("Expected to return " + signature.getReturnType()
                         + " but instead returned " + actualReturnType);
             }
         } else if (stmtType == Symbol.FOR) {
             // Check range
-            if (!this.getVarType(stmtNode.get(1).getValue(), signature.getArgs())
+            if (!this.getVarType(stmtNode.get(1).getValue(), signature.getParams())
                     .equals(new IntType())) {
                 throw new TypeCheckException("For-Loop indices must be integers");
             }
 
-            if (!this.getNumexprType(stmtNode.get(3), signature.getArgs())
+            if (!this.getNumexprType(stmtNode.get(3), signature.getParams())
                     .equals(new IntType())) {
                 throw new TypeCheckException("For-Loop indices must be integers");
             }
 
-            if (!this.getNumexprType(stmtNode.get(5), signature.getArgs())
+            if (!this.getNumexprType(stmtNode.get(5), signature.getParams())
                     .equals(new IntType())) {
                 throw new TypeCheckException("For-Loop indices must be integers");
             }
@@ -502,13 +521,13 @@ public class TypeChecker {
             // Check nested statements
             this.checkStatements(stmtNode.get(7), signature, true);
         } else if (stmtType == Symbol.WHILE) {
-            this.checkBoolexpr(stmtNode.get(1), signature.getArgs());
+            this.checkBoolexpr(stmtNode.get(1), signature.getParams());
             this.checkStatements(stmtNode.get(3), signature, true);
         } else if (stmtType == Symbol.IF && stmtNode.childCount() == 5) {
-            this.checkBoolexpr(stmtNode.get(1), signature.getArgs());
+            this.checkBoolexpr(stmtNode.get(1), signature.getParams());
             this.checkStatements(stmtNode.get(3), signature, canBreak);
         } else if (stmtType == Symbol.IF && stmtNode.childCount() == 7) {
-            this.checkBoolexpr(stmtNode.get(1), signature.getArgs());
+            this.checkBoolexpr(stmtNode.get(1), signature.getParams());
             this.checkStatements(stmtNode.get(3), signature, canBreak);
             this.checkStatements(stmtNode.get(5), signature, canBreak);
         } else {
@@ -533,11 +552,6 @@ public class TypeChecker {
         this.checkStatements(stmtsNode, signature, false);
     }
 
-    private void checkStatements(ASTNode stmtsNode) throws TypeCheckException {
-        this.checkFunction(stmtsNode,
-                new FunctionTableEntry(new VoidType(), new LinkedHashMap<String, Type>()));
-    }
-
     public void checkProgram() throws TypeCheckException {
         // Determine if each declared function is well-typed.
         for (var func : this.funcMap.entrySet()) {
@@ -560,6 +574,7 @@ public class TypeChecker {
         }
 
         // Determine if the main statement of the program is well-typed.
-        this.checkStatements(this.rootNode.get(3));
+        this.checkFunction(this.rootNode.get(3),
+                new FunctionTableEntry(new VoidType(), new LinkedHashMap<String, Type>()));
     }
 }

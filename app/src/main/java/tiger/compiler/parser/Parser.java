@@ -378,20 +378,6 @@ public class Parser {
         }
     }
 
-    private void removeConst(ASTNode current) {
-        for (var node : current.getDerivation()) {
-            this.removeConst(node);
-        }
-
-        var derivation = current.getDerivation();
-        for (var i = 0; i < derivation.size(); i++) {
-            var child = derivation.get(i);
-            if (child.getSymbol() == Symbol.constNt) {
-                derivation.set(i, child.getLast());
-            }
-        }
-    }
-
     private void removeCondStmtEnd(ASTNode current) {
         for (var node : current.getDerivation()) {
             this.removeCondStmtEnd(node);

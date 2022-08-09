@@ -1,8 +1,4 @@
 package tiger.compiler.interpreter;
-import java.nio.ByteBuffer;
-
-// You shouldn't have to modify this class at all
-// But take a look to see how it works
 
 public class Memory {
 
@@ -11,17 +7,20 @@ public class Memory {
     private float[] floatMem; // Used for storing all values from all float arrays
     private int allocPointerInt = 0;
     private int allocPointerFloat = 0;
+    private double[] stack;
 
     public Memory() {
         this.MAXSIZE = 10000;
         intMem = new int[MAXSIZE];
         floatMem = new float[MAXSIZE];
+        stack = new double[MAXSIZE];
     }
 
     public Memory(int MAXSIZE) {
         this.MAXSIZE = MAXSIZE;
         intMem = new int[MAXSIZE];
         floatMem = new float[MAXSIZE];
+        stack = new double[MAXSIZE];
     }
 
     // allocates memory for a new int array
@@ -59,7 +58,16 @@ public class Memory {
     public int getInt(int base, int index) {
         return intMem[base + index];
     }
+
     public float getFloat(int base, int index) {
         return floatMem[base + index];
+    }
+
+    public void push(int sp, double value) {
+        stack[sp] = value;
+    }
+
+    public double pop(int sp) {
+        return stack[sp];
     }
 }
