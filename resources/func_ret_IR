@@ -1,6 +1,0 @@
-loadi r6 m 
-movimmi r6 #5
-label fact:
-movi r7 n 
-multimmi r8 r7 #2 
-label end: pop

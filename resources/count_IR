@@ -1,4 +1,0 @@
-loadi r6 count 
-movimmi r6 #10
-loadi r7 i 
-loadi r8 dummy 
