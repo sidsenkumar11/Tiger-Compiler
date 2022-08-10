@@ -368,7 +368,7 @@ public class TypeChecker {
     private void checkPred(ASTNode predNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var firstNumexprType = this.getNumexprType(predNode.getFirst(), paramsMap);
-        var secondNumexprType = this.getNumexprType(predNode.getFirst(), paramsMap);
+        var secondNumexprType = this.getNumexprType(predNode.getLast(), paramsMap);
         if ((!firstNumexprType.equals(new IntType()) && !firstNumexprType.equals(new FloatType()))
                 || (!secondNumexprType.equals(new IntType())
                         && !secondNumexprType.equals(new FloatType()))) {

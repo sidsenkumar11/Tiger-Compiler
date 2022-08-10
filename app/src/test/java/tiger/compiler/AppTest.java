@@ -187,12 +187,13 @@ class AppTest {
             } catch (Exception e) {
                 System.err.println(
                         "--> FAIL - Unexpected error");
+                e.printStackTrace();
                 failCount++;
             }
         }
 
         System.out.println("Failed " + failCount + "/" + testCount + " tests!");
-        // assertTrue(failCount == 0);
+        assertTrue(failCount == 0);
     }
 
     @Test

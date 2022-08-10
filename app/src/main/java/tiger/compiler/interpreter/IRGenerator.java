@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.Map;
 import tiger.compiler.interpreter.instructions.AllocArray;
 import tiger.compiler.interpreter.instructions.ArithmeticInstruction;
-import tiger.compiler.interpreter.instructions.ArithmeticInstructionImmediate;
+import tiger.compiler.interpreter.instructions.MoveConst;
 import tiger.compiler.interpreter.instructions.ArithmeticOp;
 import tiger.compiler.interpreter.instructions.Branch;
 import tiger.compiler.interpreter.instructions.Call;
 import tiger.compiler.interpreter.instructions.Cmp;
 import tiger.compiler.interpreter.instructions.ComparisonOp;
 import tiger.compiler.interpreter.instructions.Goto;
+import tiger.compiler.interpreter.instructions.Increment;
 import tiger.compiler.interpreter.instructions.Instruction;
 import tiger.compiler.interpreter.instructions.Label;
 import tiger.compiler.interpreter.instructions.Load;
@@ -99,13 +100,11 @@ public class IRGenerator {
         if (literalSymbol == Symbol.INTLIT) {
             destReg = this.newIntReg();
             var intlit = Integer.parseInt(literalStr);
-            this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, destReg, 0,
-                    intlit));
+            this.emit(new MoveConst(destReg, intlit));
         } else if (literalSymbol == Symbol.FLOATLIT) {
             destReg = this.newFloatReg();
             var floatLit = Float.parseFloat(literalStr);
-            this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, destReg, 0,
-                    floatLit));
+            this.emit(new MoveConst(destReg, floatLit));
         } else {
             throw new IRGenException("Unexpected error");
         }
@@ -154,7 +153,9 @@ public class IRGenerator {
 
             var isFloat = termNode.getType().equals(new FloatType());
             var destReg = (isFloat) ? this.newFloatReg() : this.newIntReg();
-            this.emit(new ArithmeticInstruction(op, destReg, termReg, factorReg, isFloat));
+            this.emit(new ArithmeticInstruction(op, destReg,
+                    new RegEntry(termReg, subTermNode.getType().equals(new FloatType())),
+                    new RegEntry(factorReg, factorNode.getType().equals(new FloatType()))));
             return destReg;
         } else {
             throw new IRGenException("Unexpected error");
@@ -178,7 +179,11 @@ public class IRGenerator {
 
             var isFloat = numexprNode.getType().equals(new FloatType());
             var destReg = (isFloat) ? this.newFloatReg() : this.newIntReg();
-            this.emit(new ArithmeticInstruction(op, destReg, numexprReg, termReg, isFloat));
+
+            this.emit(new ArithmeticInstruction(op, destReg,
+                    new RegEntry(numexprReg, subNumexprNode.getType().equals(new FloatType())),
+                    new RegEntry(termReg, termNode.getType().equals(new FloatType()))));
+
             return destReg;
         } else {
             throw new IRGenException("Unexpected error");
@@ -188,21 +193,26 @@ public class IRGenerator {
     private int generatePred(ASTNode predNode) throws IRGenException {
         var numexprReg1 = this.generateNumexpr(predNode.getFirst());
         var numexprReg2 = this.generateNumexpr(predNode.getLast());
+        var numexprIsFloat1 = predNode.getFirst().getType().equals(new FloatType());
+        var numexprIsFloat2 = predNode.getLast().getType().equals(new FloatType());
+        var operand1Entry = new RegEntry(numexprReg1, numexprIsFloat1);
+        var operand2Entry = new RegEntry(numexprReg2, numexprIsFloat2);
+
         var destReg = this.newIntReg();
         var opSymbol = predNode.get(1).getFirst().getSymbol();
 
         if (opSymbol == Symbol.EQUALS) {
-            this.emit(new Cmp(ComparisonOp.EQ, destReg, numexprReg1, numexprReg2));
+            this.emit(new Cmp(ComparisonOp.EQ, destReg, operand1Entry, operand2Entry));
         } else if (opSymbol == Symbol.NOT_EQUALS) {
-            this.emit(new Cmp(ComparisonOp.NEQ, destReg, numexprReg1, numexprReg2));
+            this.emit(new Cmp(ComparisonOp.NEQ, destReg, operand1Entry, operand2Entry));
         } else if (opSymbol == Symbol.LESS_OR_EQ) {
-            this.emit(new Cmp(ComparisonOp.LEQ, destReg, numexprReg1, numexprReg2));
+            this.emit(new Cmp(ComparisonOp.LEQ, destReg, operand1Entry, operand2Entry));
         } else if (opSymbol == Symbol.GREATER_OR_EQ) {
-            this.emit(new Cmp(ComparisonOp.GEQ, destReg, numexprReg1, numexprReg2));
+            this.emit(new Cmp(ComparisonOp.GEQ, destReg, operand1Entry, operand2Entry));
         } else if (opSymbol == Symbol.LESS_THAN) {
-            this.emit(new Cmp(ComparisonOp.LT, destReg, numexprReg1, numexprReg2));
+            this.emit(new Cmp(ComparisonOp.LT, destReg, operand1Entry, operand2Entry));
         } else if (opSymbol == Symbol.GREATER_THAN) {
-            this.emit(new Cmp(ComparisonOp.GT, destReg, numexprReg1, numexprReg2));
+            this.emit(new Cmp(ComparisonOp.GT, destReg, operand1Entry, operand2Entry));
         } else {
             throw new IRGenException("Unexpected error");
         }
@@ -224,8 +234,11 @@ public class IRGenerator {
             var subClauseReg = this.generateClause(subClauseNode);
             var predReg = this.generatePred(predNode);
             var destReg = this.newIntReg();
-            this.emit(new ArithmeticInstruction(ArithmeticOp.AND, destReg, subClauseReg, predReg,
-                    false));
+
+            this.emit(new ArithmeticInstruction(ArithmeticOp.AND, destReg,
+                    new RegEntry(subClauseReg, subClauseNode.getType().equals(new FloatType())),
+                    new RegEntry(predReg, predNode.getType().equals(new FloatType()))));
+
             return destReg;
         } else {
             throw new IRGenException("Unexpected error");
@@ -245,8 +258,11 @@ public class IRGenerator {
             var subBoolexprReg = this.generateBoolexpr(subBoolexprNode);
             var clauseReg = this.generateClause(clauseNode);
             var destReg = this.newIntReg();
-            this.emit(new ArithmeticInstruction(ArithmeticOp.OR, destReg, subBoolexprReg, clauseReg,
-                    false));
+
+            this.emit(new ArithmeticInstruction(ArithmeticOp.OR, destReg,
+                    new RegEntry(subBoolexprReg, subBoolexprNode.getType().equals(new FloatType())),
+                    new RegEntry(clauseReg, clauseNode.getType().equals(new FloatType()))));
+
             return destReg;
         } else {
             throw new IRGenException("Unexpected error");
@@ -335,7 +351,7 @@ public class IRGenerator {
             this.emit(new Cmp(ComparisonOp.GEQ, 0, indexReg, rightBoundReg));
             this.emit(new Branch(loopEnd));
             this.generateStatements(stmtNode.get(7), loopEnd);
-            this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, indexReg, indexReg, 1));
+            this.emit(new Increment(indexReg));
             this.emit(new Goto(loopStart));
             this.emit(new Label(loopEnd));
         } else if (stmtType == Symbol.optstore) {
@@ -461,8 +477,7 @@ public class IRGenerator {
     private int allocateArrays(ArrayType current) throws IRGenException {
         // Get array size into a register
         var arraySizeReg = this.newIntReg();
-        this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, arraySizeReg, 0,
-                current.getSize()));
+        this.emit(new MoveConst(arraySizeReg, current.getSize()));
 
         // Allocate the array based on subtype
         var baseReg = this.newIntReg();
@@ -478,7 +493,7 @@ public class IRGenerator {
             for (var i = 0; i < current.getSize(); i++) {
                 var pointerReg = this.allocateArrays(subArrayType);
                 var offsetReg = this.newIntReg();
-                this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, offsetReg, 0, i));
+                this.emit(new MoveConst(offsetReg, i));
                 this.emit(new Store(pointerReg, baseReg, offsetReg, false));
             }
         } else {
@@ -514,16 +529,13 @@ public class IRGenerator {
                 if (literalNode.getSymbol() == Symbol.INTLIT) {
                     var value = Integer.parseInt(literalStr);
                     if (varIsFloat) {
-                        this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, destReg, 0,
-                                (float) value));
+                        this.emit(new MoveConst(destReg, (float) value));
                     } else {
-                        this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, destReg, 0,
-                                value));
+                        this.emit(new MoveConst(destReg, value));
                     }
                 } else {
                     var value = Float.parseFloat(literalStr);
-                    this.emit(new ArithmeticInstructionImmediate(ArithmeticOp.ADD, destReg, 0,
-                            value));
+                    this.emit(new MoveConst(destReg, value));
                 }
             }
 
@@ -624,9 +636,62 @@ public class IRGenerator {
         }
     }
 
-    public void printIR() {
-        for (var inst : this.instructions) {
-            System.out.println(inst);
+    public void printIR() throws IRGenException {
+
+        // Construct mapping of label -> function name
+        var funcNames = new HashMap<String, String>();
+        funcNames.put("label_0", "main");
+        for (var func : this.funcMap.entrySet()) {
+            var funcEntry = func.getValue();
+            if (funcNames.put(funcEntry.getLabel(), func.getKey()) != null) {
+                throw new IRGenException("Unexpected error");
+            }
         }
+
+        // When printing instructions:
+        // - Indent code from functions / main
+        // - Replace labels with functions when possible
+        var output = new StringBuilder();
+        var shouldIndent = false;
+        for (var inst : this.instructions) {
+            if (inst instanceof Label labelInst) {
+                var name = labelInst.getName();
+                if (funcNames.containsKey(name)) {
+                    output.append(funcNames.get(name) + ":" + "\n");
+                    shouldIndent = true;
+                } else {
+                    output.append(inst.toString() + "\n");
+                }
+            } else if (inst instanceof Goto gotoInst) {
+                var name = gotoInst.getLabel();
+                if (shouldIndent) {
+                    output.append("\t");
+                }
+
+                if (funcNames.containsKey(name)) {
+                    output.append("GOTO " + funcNames.get(name) + "\n");
+                } else {
+                    output.append(inst.toString() + "\n");
+                }
+            } else if (inst instanceof Branch branchInst) {
+                var name = branchInst.getLabel();
+                if (shouldIndent) {
+                    output.append("\t");
+                }
+
+                if (funcNames.containsKey(name)) {
+                    output.append("BRANCH " + funcNames.get(name) + "\n");
+                } else {
+                    output.append(inst.toString() + "\n");
+                }
+            } else {
+                if (shouldIndent) {
+                    output.append("\t");
+                }
+                output.append(inst.toString() + "\n");
+            }
+        }
+
+        System.out.print(output.toString());
     }
 }
