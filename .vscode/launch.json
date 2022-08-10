@@ -18,8 +18,7 @@
             "projectName": "app",
             "args": [
                 "C:\\Users\\pikah\\Desktop\\Tiger-Compiler\\app\\src\\test\\resources\\p3tests\\factorial2.tgr",
-                "--runil",
-                "--debug",
+                "--ir",
             ],
         },
         {

@@ -20,6 +20,6 @@ public class Return extends Instruction {
 
     @Override
     public String toString() {
-        return "Return";
+        return "RET";
     }
 }

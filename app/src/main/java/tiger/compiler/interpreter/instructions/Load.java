@@ -36,7 +36,7 @@ public class Load extends Instruction {
 
     @Override
     public String toString() {
-        var prefix = "Load" + ((this.floatOp) ? "_F r" : " r");
+        var prefix = "LOAD" + ((this.floatOp) ? "_F r" : " r");
         return prefix + this.destReg + " r" + this.baseReg + " r" + this.offsetReg;
     }
 }

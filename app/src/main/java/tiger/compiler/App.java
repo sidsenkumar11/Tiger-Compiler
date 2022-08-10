@@ -21,6 +21,12 @@ import tiger.compiler.lexer.TokenType;
 
 public class App {
 
+    private static boolean printTokens;
+    private static boolean printAST;
+    private static boolean printIR;
+    private static boolean interpret;
+    private static boolean debug;
+
     public static String TokensString(String fileName) throws IOException {
         List<Token> tokens = App.Scan(fileName);
         StringBuilder x = new StringBuilder();
@@ -68,13 +74,11 @@ public class App {
         return astRoot;
     }
 
-    private static void Compile(
-            String fileName, boolean tokensFlag, boolean astFlag, boolean interpretFlag,
-            boolean debugFlag)
+    private static void Compile(String fileName)
             throws IOException, LexException, ParseException, TypeCheckException, IRGenException {
 
         // Scan source into tokens
-        if (tokensFlag) {
+        if (printTokens) {
             System.out.print(App.TokensString(fileName));
         }
 
@@ -85,7 +89,7 @@ public class App {
 
         // Parse tokens into AST
         var astRoot = App.Parse(tokens);
-        if (astFlag) {
+        if (printAST) {
             System.out.println(astRoot.getAST());
         }
 
@@ -96,12 +100,15 @@ public class App {
         // Generate Intermediate Code
         var codeGen = new IRGenerator(astRoot, typeChecker.getVarMap(), typeChecker.getFuncMap());
         var IR = codeGen.generateProgram();
+        if (printIR) {
+            codeGen.printIR();
+        }
 
         // Run interpreter on IR or generate machine code
-        if (interpretFlag) {
+        if (interpret) {
             try (PrintWriter printWriter = new PrintWriter(System.out)) {
                 Interpreter.Run(IR, codeGen.getIntRegCount(), codeGen.getFloatRegCount(), System.in,
-                        printWriter, debugFlag);
+                        printWriter, debug);
             }
         } else {
 
@@ -116,15 +123,17 @@ public class App {
         }
 
         String filename = args[0];
-        boolean printTokens = false, printAst = false, interpret = false, debug = false;
-
         for (String s : args) {
             if (s.equals("--tokens")) {
                 printTokens = true;
             }
 
             if (s.equals("--ast")) {
-                printAst = true;
+                printAST = true;
+            }
+
+            if (s.equals("--ir")) {
+                printIR = true;
             }
 
             if (s.equals("--runil")) {
@@ -137,7 +146,7 @@ public class App {
         }
 
         try {
-            App.Compile(filename, printTokens, printAst, interpret, debug);
+            App.Compile(filename);
         } catch (IOException e) {
             System.err.println(e.getMessage());
         } catch (LexException e) {

@@ -36,7 +36,7 @@ public class Store extends Instruction {
 
     @Override
     public String toString() {
-        var prefix = "Store" + ((this.floatOp) ? "_F r" : " r");
+        var prefix = "STORE" + ((this.floatOp) ? "_F r" : " r");
         return prefix + this.srcReg + " r" + this.baseReg + " r" + this.offsetReg;
     }
 }

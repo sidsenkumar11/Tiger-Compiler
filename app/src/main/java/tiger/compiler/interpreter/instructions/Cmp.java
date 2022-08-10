@@ -6,12 +6,14 @@ import tiger.compiler.interpreter.Memory;
 import tiger.compiler.interpreter.RegisterFile;
 
 public class Cmp extends Instruction {
+    private int destReg;
     private int srcReg1;
     private int srcReg2;
     private ComparisonOp op;
 
-    public Cmp(ComparisonOp op, int srcReg1, int srcReg2) {
+    public Cmp(ComparisonOp op, int destReg, int srcReg1, int srcReg2) {
         this.op = op;
+        this.destReg = destReg;
         this.srcReg1 = srcReg1;
         this.srcReg2 = srcReg2;
     }
@@ -47,10 +49,15 @@ public class Cmp extends Instruction {
             default:
                 regFile.setCondition(false);
         }
+
+        if (this.destReg != 0) {
+            regFile.setInt(this.destReg, (regFile.getCondition()) ? 1 : 0);
+        }
     }
 
     @Override
     public String toString() {
-        return "Cmp " + this.op.toString() + " r" + this.srcReg1 + " r" + this.srcReg2;
+        return "CMP." + this.op.toString() + " r" + this.destReg + " r" + this.srcReg1 + " r"
+                + this.srcReg2;
     }
 }

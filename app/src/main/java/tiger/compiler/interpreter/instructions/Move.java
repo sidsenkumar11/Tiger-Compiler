@@ -37,7 +37,7 @@ public class Move extends Instruction {
 
     @Override
     public String toString() {
-        var prefix = "Move." + this.moveOp.toString();
+        var prefix = "MOVE." + this.moveOp.toString();
         return prefix + " r" + this.destReg + " r" + this.srcReg;
     }
 }

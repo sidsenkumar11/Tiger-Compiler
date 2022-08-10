@@ -56,6 +56,6 @@ public class Call extends Instruction {
 
     @Override
     public String toString() {
-        return "Call " + this.label + " (" + this.destAddr + ")";
+        return "CALL " + this.label;
     }
 }

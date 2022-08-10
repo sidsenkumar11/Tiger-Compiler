@@ -4,13 +4,14 @@ import java.io.PrintWriter;
 import java.util.Scanner;
 import tiger.compiler.interpreter.Memory;
 import tiger.compiler.interpreter.RegisterFile;
-import tiger.compiler.typechecker.RegEntry;
 
 public class Push extends Instruction {
-    private RegEntry regEntry;
+    private int regNum;
+    private boolean isFloat;
 
-    public Push(RegEntry regEntry) {
-        this.regEntry = regEntry;
+    public Push(int regNum, boolean isFloat) {
+        this.regNum = regNum;
+        this.isFloat = isFloat;
     }
 
     @Override
@@ -21,10 +22,10 @@ public class Push extends Instruction {
             PrintWriter out) {
         regFile.incPC();
 
-        if (this.regEntry.isFloat()) {
-            mem.push(regFile.getSP(), regFile.getFloat(this.regEntry.regNum()));
+        if (this.isFloat) {
+            mem.push(regFile.getSP(), regFile.getFloat(this.regNum));
         } else {
-            mem.push(regFile.getSP(), regFile.getInt(this.regEntry.regNum()));
+            mem.push(regFile.getSP(), regFile.getInt(this.regNum));
         }
 
         regFile.incSP();
@@ -32,7 +33,7 @@ public class Push extends Instruction {
 
     @Override
     public String toString() {
-        var prefix = "Push" + (this.regEntry.isFloat() ? "_F r" : " r");
-        return prefix + regEntry.regNum();
+        var prefix = "PUSH" + (this.isFloat ? "_F r" : " r");
+        return prefix + this.regNum;
     }
 }

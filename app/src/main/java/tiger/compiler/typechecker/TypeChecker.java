@@ -159,19 +159,19 @@ public class TypeChecker {
 
         // Add stdlib functions
         var stdlibSig =
-                new FunctionTableEntry(new IntType(), new LinkedHashMap<String, Type>());
+                new FunctionTableEntry(new IntType(), new LinkedHashMap<String, ParamEntry>());
         this.funcMap.put("readi", stdlibSig);
         stdlibSig =
-                new FunctionTableEntry(new FloatType(), new LinkedHashMap<String, Type>());
+                new FunctionTableEntry(new FloatType(), new LinkedHashMap<String, ParamEntry>());
         this.funcMap.put("readf", stdlibSig);
 
-        var printiArgs = new LinkedHashMap<String, Type>();
-        printiArgs.put("input", new IntType());
+        var printiArgs = new LinkedHashMap<String, ParamEntry>();
+        printiArgs.put("input", new ParamEntry(new IntType()));
         stdlibSig = new FunctionTableEntry(new VoidType(), printiArgs);
         this.funcMap.put("printi", stdlibSig);
 
-        var printfArgs = new LinkedHashMap<String, Type>();
-        printfArgs.put("input", new FloatType());
+        var printfArgs = new LinkedHashMap<String, ParamEntry>();
+        printfArgs.put("input", new ParamEntry(new FloatType()));
         stdlibSig = new FunctionTableEntry(new VoidType(), printfArgs);
         this.funcMap.put("printf", stdlibSig);
 
@@ -199,7 +199,7 @@ public class TypeChecker {
                             : new VoidType();
 
             // Determine the function parameter types
-            var paramsMap = new LinkedHashMap<String, Type>();
+            var paramsMap = new LinkedHashMap<String, ParamEntry>();
             var paramsNode = funcdeclNode.get(3);
             if (paramsNode.getFirst().getSymbol() != Symbol.EPSILON) {
                 var neparamsNode = paramsNode.getFirst();
@@ -211,7 +211,7 @@ public class TypeChecker {
                     // Insert param name:type into map
                     var paramId = paramNode.getFirst().getValue();
                     var paramType = this.getTypeOfNode(paramNode.get(2));
-                    if (paramsMap.put(paramId, paramType) != null) {
+                    if (paramsMap.put(paramId, new ParamEntry(paramType)) != null) {
                         throw new TypeCheckException("Function declaration '" + identifier
                                 + "' has multiple parameters with name '" + paramId + "'");
                     }
@@ -221,7 +221,7 @@ public class TypeChecker {
                 var paramNode = neparamsNode.getFirst();
                 var paramId = paramNode.getFirst().getValue();
                 var paramType = this.getTypeOfNode(paramNode.get(2));
-                if (paramsMap.put(paramId, paramType) != null) {
+                if (paramsMap.put(paramId, new ParamEntry(paramType)) != null) {
                     throw new TypeCheckException("Function declaration '" + identifier
                             + "' has multiple parameters with name '" + paramId + "'");
                 }
@@ -233,10 +233,10 @@ public class TypeChecker {
         }
     }
 
-    private Type getVarType(String identifier, Map<String, Type> paramsMap)
+    private Type getVarType(String identifier, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         if (paramsMap.containsKey(identifier)) {
-            return paramsMap.get(identifier);
+            return paramsMap.get(identifier).getType();
         } else if (this.varMap.containsKey(identifier)) {
             return this.varMap.get(identifier).getType();
         } else {
@@ -255,7 +255,7 @@ public class TypeChecker {
         }
     }
 
-    private Type getFactorType(ASTNode factorNode, Map<String, Type> paramsMap)
+    private Type getFactorType(ASTNode factorNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var childSymbol = factorNode.getFirst().getSymbol();
         if (childSymbol == Symbol.constNt) {
@@ -281,7 +281,7 @@ public class TypeChecker {
         }
     }
 
-    private Type getTermType(ASTNode termNode, Map<String, Type> paramsMap)
+    private Type getTermType(ASTNode termNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var childSymbol = termNode.getFirst().getSymbol();
         if (childSymbol == Symbol.factor) {
@@ -315,7 +315,7 @@ public class TypeChecker {
         }
     }
 
-    private Type getNumexprType(ASTNode numexprNode, Map<String, Type> paramsMap)
+    private Type getNumexprType(ASTNode numexprNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var childSymbol = numexprNode.getFirst().getSymbol();
         if (childSymbol == Symbol.term) {
@@ -349,7 +349,7 @@ public class TypeChecker {
         }
     }
 
-    private Type getLvalueType(ASTNode lvalueNode, Map<String, Type> paramsMap)
+    private Type getLvalueType(ASTNode lvalueNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var lvalueId = lvalueNode.getFirst().getValue();
         var arrayOffsetLvalue = lvalueNode.getLast().childCount() > 1;
@@ -365,7 +365,7 @@ public class TypeChecker {
         return lvalueNode.setType(retType);
     }
 
-    private void checkPred(ASTNode predNode, Map<String, Type> paramsMap)
+    private void checkPred(ASTNode predNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var firstNumexprType = this.getNumexprType(predNode.getFirst(), paramsMap);
         var secondNumexprType = this.getNumexprType(predNode.getFirst(), paramsMap);
@@ -378,7 +378,7 @@ public class TypeChecker {
         predNode.setType(new IntType());
     }
 
-    private void checkClause(ASTNode clauseNode, Map<String, Type> paramsMap)
+    private void checkClause(ASTNode clauseNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var childSymbol = clauseNode.getFirst().getSymbol();
         if (childSymbol == Symbol.pred) {
@@ -393,7 +393,7 @@ public class TypeChecker {
         clauseNode.setType(new IntType());
     }
 
-    private void checkBoolexpr(ASTNode boolexprNode, Map<String, Type> paramsMap)
+    private void checkBoolexpr(ASTNode boolexprNode, Map<String, ParamEntry> paramsMap)
             throws TypeCheckException {
         var childSymbol = boolexprNode.getFirst().getSymbol();
         if (childSymbol == Symbol.clause) {
@@ -459,7 +459,7 @@ public class TypeChecker {
                                 "Too many arguments passed to function " + funcId);
                     }
 
-                    var expectedType = funcParams.next().getValue();
+                    var expectedType = funcParams.next().getValue().getType();
                     if (!numexprType.canBeAssignedTo(expectedType)) {
                         throw new TypeCheckException(
                                 "Function " + funcId + " expected argument with type "
@@ -476,7 +476,7 @@ public class TypeChecker {
                             "Too many arguments passed to function " + funcId);
                 }
 
-                var expectedType = funcParams.next().getValue();
+                var expectedType = funcParams.next().getValue().getType();
                 if (!numexprType.canBeAssignedTo(expectedType)) {
                     throw new TypeCheckException(
                             "Function " + funcId + " expected argument with type "
@@ -575,6 +575,6 @@ public class TypeChecker {
 
         // Determine if the main statement of the program is well-typed.
         this.checkFunction(this.rootNode.get(3),
-                new FunctionTableEntry(new VoidType(), new LinkedHashMap<String, Type>()));
+                new FunctionTableEntry(new VoidType(), new LinkedHashMap<String, ParamEntry>()));
     }
 }

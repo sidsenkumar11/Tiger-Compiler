@@ -38,7 +38,7 @@ public class AllocArray extends Instruction {
 
     @Override
     public String toString() {
-        var prefix = "AllocArray" + ((this.floatOp) ? "_F r" : " r");
+        var prefix = "ALLOC" + ((this.floatOp) ? "_F r" : " r");
         return prefix + this.destReg + " r" + this.arraySizeReg + " r" + this.valueReg;
     }
 }

@@ -4,13 +4,14 @@ import java.io.PrintWriter;
 import java.util.Scanner;
 import tiger.compiler.interpreter.Memory;
 import tiger.compiler.interpreter.RegisterFile;
-import tiger.compiler.typechecker.RegEntry;
 
 public class Pop extends Instruction {
-    private RegEntry regEntry;
+    private int regNum;
+    private boolean isFloat;
 
-    public Pop(RegEntry regEntry) {
-        this.regEntry = regEntry;
+    public Pop(int regNum, boolean isFloat) {
+        this.regNum = regNum;
+        this.isFloat = isFloat;
     }
 
     @Override
@@ -23,16 +24,16 @@ public class Pop extends Instruction {
         regFile.decSP();
 
         var data = mem.pop(regFile.getSP());
-        if (this.regEntry.isFloat()) {
-            regFile.setFloat(this.regEntry.regNum(), (float) data);
+        if (this.isFloat) {
+            regFile.setFloat(this.regNum, (float) data);
         } else {
-            regFile.setInt(this.regEntry.regNum(), (int) data);
+            regFile.setInt(this.regNum, (int) data);
         }
     }
 
     @Override
     public String toString() {
-        var prefix = "Pop" + (this.regEntry.isFloat() ? "_F r" : " r");
-        return prefix + regEntry.regNum();
+        var prefix = "POP" + (this.isFloat ? "_F r" : " r");
+        return prefix + this.regNum;
     }
 }

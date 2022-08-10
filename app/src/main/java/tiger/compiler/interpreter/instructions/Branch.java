@@ -36,6 +36,6 @@ public class Branch extends Instruction {
 
     @Override
     public String toString() {
-        return "Branch " + this.label + " (" + this.destAddr + ")";
+        return "BRANCH " + this.label;
     }
 }

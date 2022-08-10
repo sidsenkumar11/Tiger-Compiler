@@ -32,6 +32,6 @@ public class Goto extends Instruction {
 
     @Override
     public String toString() {
-        return "Goto " + this.label + " (" + this.destAddr + ")";
+        return "GOTO " + this.label;
     }
 }

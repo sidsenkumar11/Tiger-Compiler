@@ -94,7 +94,7 @@ public class ArithmeticInstructionImmediate extends Instruction {
 
     @Override
     public String toString() {
-        String prefix = this.op.toString() + ((this.floatOp) ? "_F r" : " r");
+        String prefix = this.op.toString() + "I" + ((this.floatOp) ? "_F r" : " r");
 
         if (this.floatOp) {
             return prefix + this.destReg + " r" + this.srcReg + " " + this.floatImm;
