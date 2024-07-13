@@ -1,0 +1,13 @@
+let
+        var a, b : int;
+        var res : int;
+in
+    a := 7;
+    b := 17;
+    if a = b then
+        res := 1;
+    else
+        res := 0;
+    endif;
+    printi(res);
+end

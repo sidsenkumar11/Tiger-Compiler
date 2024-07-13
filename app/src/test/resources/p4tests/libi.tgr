@@ -1,0 +1,7 @@
+let
+    var count : int;
+in
+    count := 12;
+    count := count + 1;
+    printi(count);
+end
